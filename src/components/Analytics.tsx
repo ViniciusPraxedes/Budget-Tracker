@@ -46,56 +46,53 @@ const Analytics: React.FC = () => {
         return null;
     };
 
-    const CustomLegend = ({ payload }: any) => {
-        return (
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr auto auto',
-                gap: '1rem 1.5rem',
-                padding: '0 1rem',
-                fontSize: '0.9rem',
-                color: 'var(--text-secondary)'
-            }}>
-                {payload.map((entry: any, index: number) => {
-                    const item = data.find(d => d.name === entry.value);
-                    if (!item) return null;
-                    return (
+    return (
+        <Box title="Expenses Breakdown" style={{ marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                            <Pie
+                                data={data}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={100}
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {data.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                                ))}
+                            </Pie>
+                            <Tooltip content={<CustomTooltip />} />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr auto auto',
+                    gap: '0.75rem 1.5rem',
+                    padding: '0 1rem',
+                    fontSize: '0.9rem',
+                    color: 'var(--text-secondary)',
+                    maxHeight: '240px',
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
+                    paddingRight: '0.5rem' // Space for scrollbar
+                }}>
+                    {data.map((item, index) => (
                         <React.Fragment key={`legend-${index}`}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: item.color }} />
                             </div>
                             <div style={{ color: 'white', fontWeight: 500 }}>{item.name}</div>
                             <div style={{ textAlign: 'right' }}>{formatCurrency(item.value)}</div>
-                            <div style={{ textAlign: 'right', width: '40px' }}>{formatPercentage(item.value)}</div>
+                            <div style={{ textAlign: 'right', width: '45px' }}>{formatPercentage(item.value)}</div>
                         </React.Fragment>
-                    );
-                })}
-            </div>
-        );
-    };
-
-    return (
-        <Box title="Expenses Breakdown" style={{ marginBottom: '2rem' }}>
-            <div style={{ height: '300px', marginBottom: '1rem' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={data}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
-                            paddingAngle={5}
-                            dataKey="value"
-                        >
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                            ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend content={<CustomLegend />} verticalAlign="bottom" height={undefined} />
-                    </PieChart>
-                </ResponsiveContainer>
+                    ))}
+                </div>
             </div>
         </Box>
     );
