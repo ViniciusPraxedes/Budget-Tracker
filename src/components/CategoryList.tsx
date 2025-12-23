@@ -2,40 +2,129 @@ import React, { useState } from 'react';
 import { useBudget } from '../context/BudgetContext';
 import CategoryBox from './CategoryBox';
 import { PREDEFINED_COLORS } from '../constants';
+import { getUsedColors, getAvailableColors, getUnusedColor } from '../utils/colors';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    rectSortingStrategy,
+} from '@dnd-kit/sortable';
 
 const CategoryList: React.FC = () => {
-    const { categories, addCategory, copyPreviousMonthData } = useBudget();
+    const { categories, addCategory, copyPreviousMonthData, reorderCategories } = useBudget();
     const [isAdding, setIsAdding] = useState(false);
     const [newName, setNewName] = useState('');
+
     const [newColor, setNewColor] = useState(PREDEFINED_COLORS[0]);
+    const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+
+    const usedColors = getUsedColors(categories);
+    const availableColors = getAvailableColors(usedColors);
 
     const handleAdd = () => {
         if (newName) {
             addCategory(newName, newColor);
             setNewName('');
-            setNewColor(PREDEFINED_COLORS[0]);
+            setNewColor(getUnusedColor(usedColors)); // Reset to a new unused color
             setIsAdding(false);
+        }
+    };
+
+    const handleAutoPick = () => {
+        setNewColor(getUnusedColor(usedColors));
+    };
+
+    const toggleCategory = (id: string) => {
+        setExpandedCategories(prev =>
+            prev.includes(id) ? prev.filter(catId => catId !== id) : [...prev, id]
+        );
+    };
+
+    const expandAll = () => {
+        setExpandedCategories(categories.map(c => c.id));
+    };
+
+    const collapseAll = () => {
+        setExpandedCategories([]);
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(TouchSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (over && active.id !== over.id) {
+            const oldIndex = categories.findIndex((cat) => cat.id === active.id);
+            const newIndex = categories.findIndex((cat) => cat.id === over.id);
+
+            reorderCategories(arrayMove(categories, oldIndex, newIndex));
         }
     };
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ margin: 0 }}>Categories</h2>
-                <button
-                    onClick={() => setIsAdding(!isAdding)}
-                    style={{
-                        background: 'var(--firebase-yellow)',
-                        color: 'black',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '4px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                    }}
-                >
-                    {isAdding ? 'Cancel' : '+ New Category'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={expandAll}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-secondary)',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        Expand All
+                    </button>
+                    <button
+                        onClick={collapseAll}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-secondary)',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        Collapse All
+                    </button>
+                    <button
+                        onClick={() => setIsAdding(!isAdding)}
+                        style={{
+                            background: 'var(--firebase-yellow)',
+                            color: 'black',
+                            border: 'none',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {isAdding ? 'Cancel' : '+ New Category'}
+                    </button>
+                </div>
             </div>
 
             {isAdding && (
@@ -73,9 +162,25 @@ const CategoryList: React.FC = () => {
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Choose Color:</div>
+                        <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>Choose Color:</span>
+                            <button
+                                onClick={handleAutoPick}
+                                style={{
+                                    background: 'transparent',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-secondary)',
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem'
+                                }}
+                            >
+                                ✨ Auto Pick
+                            </button>
+                        </div>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            {PREDEFINED_COLORS.map(color => (
+                            {availableColors.map(color => (
                                 <div
                                     key={color}
                                     onClick={() => setNewColor(color)}
@@ -122,11 +227,27 @@ const CategoryList: React.FC = () => {
                 </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {categories.map(category => (
-                    <CategoryBox key={category.id} category={category} />
-                ))}
-            </div>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={categories.map(c => c.id)}
+                    strategy={rectSortingStrategy}
+                >
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                        {categories.map(category => (
+                            <CategoryBox
+                                key={category.id}
+                                category={category}
+                                isExpanded={expandedCategories.includes(category.id)}
+                                onToggle={() => toggleCategory(category.id)}
+                            />
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
 
             {categories.length === 0 && (
                 <div style={{ textAlign: 'center', marginTop: '3rem', opacity: 0.7 }}>

@@ -10,6 +10,7 @@ export interface Category {
     name: string;
     color: string;
     expenses: Expense[];
+    order?: number;
 }
 
 export interface MonthData {
@@ -35,4 +36,8 @@ export interface BudgetContextType {
     deleteExpense: (categoryId: string, expenseId: string) => void;
     changeMonth: (month: number, year: number) => void;
     copyPreviousMonthData: () => void;
+    moveCategory: (id: string, direction: 'up' | 'down') => void;
+    reorderCategories: (newCategories: Category[]) => void;
+    saveDefaultMonth: (month: number, year: number) => void;
+    defaultMonthSettings: { month: number, year: number } | null;
 }

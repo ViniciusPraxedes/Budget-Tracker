@@ -18,7 +18,7 @@ export default function RootLayout({
             <head>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
             </head>
-            <body>
+            <body suppressHydrationWarning>
                 <AuthProvider>
                     <BudgetProvider>
                         {children}

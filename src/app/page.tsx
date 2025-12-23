@@ -5,6 +5,7 @@ import Summary from "@/components/Summary";
 import CategoryList from "@/components/CategoryList";
 import MonthSelector from "@/components/MonthSelector";
 import Analytics from "@/components/Analytics";
+import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
@@ -70,7 +71,9 @@ export default function Home() {
             <MonthSelector />
             <Summary />
             <Analytics />
+
             <CategoryList />
+            <ScrollToTop />
         </div>
     );
 }

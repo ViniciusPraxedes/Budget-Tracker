@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { BudgetContextType, Category, Expense, MonthData } from '../types';
 import { db } from '../firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
 const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
@@ -19,6 +19,65 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [income, setIncomeState] = useState(0);
     const [categories, setCategoriesState] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    const [defaultMonthSettings, setDefaultMonthSettings] = useState<{ month: number, year: number } | null>(null);
+
+    // Initialize to latest month with data on load
+    useEffect(() => {
+        const initializeMonth = async () => {
+            if (!user || isInitialized) return;
+
+            try {
+                // 1. Check for user default preference
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    if (userData.defaultMonth !== undefined && userData.defaultYear !== undefined) {
+                        setCurrentMonth(userData.defaultMonth);
+                        setCurrentYear(userData.defaultYear);
+                        setDefaultMonthSettings({ month: userData.defaultMonth, year: userData.defaultYear });
+                        setIsInitialized(true);
+                        return; // Preference found, stop here
+                    }
+                }
+
+                // 2. Fallback to latest month with data
+                const monthsRef = collection(db, 'users', user.uid, 'months');
+                const q = query(monthsRef, orderBy('year', 'desc'), orderBy('month', 'desc'), limit(1));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    const latestDoc = querySnapshot.docs[0].data() as MonthData;
+                    if (latestDoc.month !== undefined && latestDoc.year !== undefined) {
+                        setCurrentMonth(latestDoc.month);
+                        setCurrentYear(latestDoc.year);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching initialization data:", error);
+            } finally {
+                setIsInitialized(true);
+            }
+        };
+
+        initializeMonth();
+    }, [user]);
+
+    const saveDefaultMonth = async (month: number, year: number) => {
+        if (!user) return;
+        try {
+            await setDoc(doc(db, 'users', user.uid), {
+                defaultMonth: month,
+                defaultYear: year
+            }, { merge: true });
+            setDefaultMonthSettings({ month, year });
+        } catch (error) {
+            console.error("Error saving default month:", error);
+        }
+    };
 
     const currentKey = getMonthKey(currentMonth, currentYear);
 
@@ -38,7 +97,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (docSnap.exists()) {
                 const data = docSnap.data() as MonthData;
                 setIncomeState(data.income || 0);
-                setCategoriesState(data.categories || []);
+                const fetchedCategories = data.categories || [];
+                // Sort by order
+                fetchedCategories.sort((a, b) => (a.order || 0) - (b.order || 0));
+                setCategoriesState(fetchedCategories);
             } else {
                 // Initialize if doesn't exist
                 setIncomeState(0);
@@ -84,6 +146,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             name,
             color,
             expenses: [],
+            order: categories.length, // Append to end
         };
         updateFirestore(income, [...categories, newCategory]);
     };
@@ -172,6 +235,36 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
     };
 
+    const moveCategory = (id: string, direction: 'up' | 'down') => {
+        const sortedCategories = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+        const index = sortedCategories.findIndex(c => c.id === id);
+
+        if (index === -1) return;
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === sortedCategories.length - 1) return;
+
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+        // Swap orders
+        const currentOrder = sortedCategories[index].order ?? index;
+        const targetOrder = sortedCategories[targetIndex].order ?? targetIndex;
+
+        sortedCategories[index].order = targetOrder;
+        sortedCategories[targetIndex].order = currentOrder;
+
+        updateFirestore(income, sortedCategories);
+    };
+
+    const reorderCategories = (newCategories: Category[]) => {
+        // Ensure order field is updated based on index
+        const orderedCategories = newCategories.map((cat, index) => ({
+            ...cat,
+            order: index
+        }));
+        setCategoriesState(orderedCategories);
+        updateFirestore(income, orderedCategories);
+    };
+
     return (
         <BudgetContext.Provider value={{
             currentMonth,
@@ -189,6 +282,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             deleteExpense,
             changeMonth,
             copyPreviousMonthData,
+            moveCategory,
+            reorderCategories,
+            saveDefaultMonth,
+            defaultMonthSettings,
         }}>
             {children}
         </BudgetContext.Provider>
