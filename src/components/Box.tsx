@@ -2,7 +2,7 @@ import React from 'react';
 
 interface BoxProps {
     children: React.ReactNode;
-    title?: string;
+    title?: React.ReactNode;
     className?: string;
     style?: React.CSSProperties;
 }
@@ -21,16 +21,16 @@ const Box: React.FC<BoxProps> = ({ children, title, className = '', style = {} }
             }}
         >
             {title && (
-                <h3 style={{
-                    marginTop: 0,
+                <div style={{
                     marginBottom: '1rem',
                     color: 'var(--text-secondary)',
                     fontSize: '0.9rem',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
+                    letterSpacing: '0.05em',
+                    fontWeight: 'bold'
                 }}>
                     {title}
-                </h3>
+                </div>
             )}
             {children}
         </div>

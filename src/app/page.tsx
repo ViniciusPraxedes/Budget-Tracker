@@ -5,6 +5,8 @@ import Summary from "@/components/Summary";
 import CategoryList from "@/components/CategoryList";
 import MonthSelector from "@/components/MonthSelector";
 import Analytics from "@/components/Analytics";
+import SavingsCalculator from "@/components/SavingsCalculator";
+import BitcoinTracker from "@/components/BitcoinTracker";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/context/AuthContext";
 
@@ -47,23 +49,47 @@ export default function Home() {
     }
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        <div className="mobile-padding" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ margin: 0 }}>Budget Tracker</h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>{user.displayName}</span>
+                <h1 className="mobile-title" style={{ margin: 0 }}>Budget Tracker</h1>
+                <div className="mobile-header-user" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        {user.photoURL && (
+                            <img
+                                src={user.photoURL}
+                                alt="Profile"
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    border: '2px solid var(--border-color)'
+                                }}
+                            />
+                        )}
+                        <span style={{ color: 'var(--text-secondary)' }}>{user.displayName}</span>
+                    </div>
                     <button
                         onClick={logout}
+                        className="mobile-logout-btn"
                         style={{
                             background: 'transparent',
                             border: '1px solid var(--border-color)',
                             color: 'var(--text-secondary)',
                             padding: '0.5rem 1rem',
                             borderRadius: '4px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
                         }}
                     >
-                        Logout
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span className="mobile-hide-text">Log out</span>
                     </button>
                 </div>
             </div>
@@ -71,6 +97,8 @@ export default function Home() {
             <MonthSelector />
             <Summary />
             <Analytics />
+            <SavingsCalculator />
+            <BitcoinTracker />
 
             <CategoryList />
             <ScrollToTop />

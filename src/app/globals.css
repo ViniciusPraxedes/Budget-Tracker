@@ -27,7 +27,9 @@ a {
   text-decoration: none;
 }
 
-input, button, select {
+input,
+button,
+select {
   font-family: inherit;
 }
 
@@ -47,4 +49,42 @@ input, button, select {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #333;
+}
+
+
+@media (max-width: 768px) {
+  .mobile-flex-col {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .mobile-w-full {
+    width: 100% !important;
+  }
+
+  .mobile-header-user {
+    /* Reset to auto width for side-by-side layout */
+    width: auto !important;
+    margin-top: 0 !important;
+    gap: 0.5rem !important;
+  }
+
+  .mobile-padding {
+    padding: 1rem !important;
+  }
+
+  .mobile-title {
+    font-size: 1.25rem !important;
+    /* Even smaller to fit */
+  }
+
+  .mobile-hide-text {
+    display: none !important;
+  }
+
+  .mobile-logout-btn {
+    padding: 0.5rem !important;
+    /* Smaller padding */
+  }
 }

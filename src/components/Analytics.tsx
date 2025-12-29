@@ -46,6 +46,26 @@ const Analytics: React.FC = () => {
         return null;
     };
 
+    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+        const RADIAN = Math.PI / 180;
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="white"
+                textAnchor="middle"
+                dominantBaseline="central"
+                style={{ fontSize: '0.8rem', fontWeight: 'bold', textShadow: '0px 0px 2px rgba(0,0,0,0.8)', pointerEvents: 'none' }}
+            >
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
+        );
+    };
+
     return (
         <Box title="Expenses Breakdown" style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -60,6 +80,8 @@ const Analytics: React.FC = () => {
                                 outerRadius={100}
                                 paddingAngle={5}
                                 dataKey="value"
+                                label={renderCustomizedLabel}
+                                labelLine={false}
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
