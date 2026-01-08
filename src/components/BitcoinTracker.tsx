@@ -109,36 +109,52 @@ const BitcoinTracker: React.FC = () => {
                         </div>
 
                         {prices && (
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
-                                <div style={{
-                                    padding: '1rem',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-color)'
-                                }}>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                                        Value (USD)
+                            <>
+                                <div style={{ marginBottom: '1.5rem', padding: '0.75rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px' }}>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                                        Current Price
                                     </div>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#00E676' }}>
-                                        {formatCurrency(hasAmount ? amount * prices.usd : prices.usd, 'USD')}
-                                        {!hasAmount && <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: '0.25rem' }}>/ BTC</span>}
-                                    </div>
-                                </div>
-                                <div style={{
-                                    padding: '1rem',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-color)'
-                                }}>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                                        Value (SEK)
-                                    </div>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--firebase-yellow)' }}>
-                                        {formatCurrency(hasAmount ? amount * prices.sek : prices.sek, 'SEK')}
-                                        {!hasAmount && <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: '0.25rem' }}>/ BTC</span>}
+                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'baseline' }}>
+                                        <span style={{ fontSize: '1rem', color: '#00E676', fontWeight: 'bold' }}>
+                                            {formatCurrency(prices.usd, 'USD')}
+                                        </span>
+                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                            /
+                                        </span>
+                                        <span style={{ fontSize: '1rem', color: 'var(--firebase-yellow)', fontWeight: 'bold' }}>
+                                            {formatCurrency(prices.sek, 'SEK')}
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                                    <div style={{
+                                        padding: '1rem',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)'
+                                    }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                                            Your Value (USD)
+                                        </div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#00E676' }}>
+                                            {formatCurrency(hasAmount ? amount * prices.usd : 0, 'USD')}
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        padding: '1rem',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        borderRadius: '8px',
+                                        border: '1px solid var(--border-color)'
+                                    }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                                            Your Value (SEK)
+                                        </div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--firebase-yellow)' }}>
+                                            {formatCurrency(hasAmount ? amount * prices.sek : 0, 'SEK')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
                         )}
 
                         {lastUpdated && (
