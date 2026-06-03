@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Category, Expense } from '../types';
 import { useLocalization } from '../context/LocalizationContext';
 import { useBudget } from '../context/BudgetContext';
@@ -292,7 +293,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                 </div>
             </Box>
 
-            {showDeleteConfirm && (
+            {showDeleteConfirm && typeof document !== 'undefined' && createPortal(
                 <div style={{
                     position: 'fixed',
                     top: 0,
@@ -307,7 +308,7 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                     padding: '1rem'
                 }}>
                     <div style={{
-                        background: 'var(--background-card)',
+                        background: '#121212',
                         padding: '1.5rem',
                         borderRadius: '8px',
                         maxWidth: '400px',
@@ -352,7 +353,8 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

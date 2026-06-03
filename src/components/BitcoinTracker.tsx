@@ -60,7 +60,7 @@ const BitcoinTracker: React.FC = () => {
     const hasAmount = !isNaN(amount) && amount > 0;
 
     return (
-        <div style={{ marginBottom: '3rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
             <Box title={
                 <div
                     onClick={() => setIsCollapsed(!isCollapsed)}

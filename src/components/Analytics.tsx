@@ -4,6 +4,87 @@ import { useBudget } from '../context/BudgetContext';
 import { useLocalization } from '../context/LocalizationContext';
 import Box from './Box';
 
+// Define mathematical constant to convert degrees to radians
+const RADIAN = Math.PI / 180;
+
+// Define properties interface for PieLabel parameters
+interface PieLabelProps {
+    // The center X coordinate of the pie
+    cx: number;
+    // The center Y coordinate of the pie
+    cy: number;
+    // The middle angle degree of the slice
+    midAngle: number;
+    // The inner radius of the donut
+    innerRadius: number;
+    // The outer radius of the donut
+    outerRadius: number;
+    // The decimal percentage of the slice
+    percent: number;
+    // The index position of the slice
+    index: number;
+// Close the interface declaration
+}
+
+// Function to render custom inner labels for pie segments
+const renderCustomizedLabel = ({
+    // Map X center coordinate parameter
+    cx,
+    // Map Y center coordinate parameter
+    cy,
+    // Map angle calculation parameter
+    midAngle,
+    // Map inner radius bounds parameter
+    innerRadius,
+    // Map outer radius bounds parameter
+    outerRadius,
+    // Map slice percentage parameter
+    percent,
+// Provide type declaration matching the component interface
+}: PieLabelProps) => {
+    // Calculate standard mid-radius placement position
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    // Project horizontal center position using cosine conversion
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    // Project vertical center position using sine conversion
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    // Hide percentage label for extremely thin slices to avoid text layout collisions
+    if (percent < 0.01) {
+        // Render no label output
+        return null;
+    // Close conditional block
+    }
+
+    // Return inline SVG text layout segment
+    return (
+        // Define graphic text tag element
+        <text
+            // Assign mapped horizontal projection
+            x={x}
+            // Assign mapped vertical projection
+            y={y}
+            // Apply white fill color for visual contrast
+            fill="white"
+            // Align text element anchors horizontally
+            textAnchor="middle"
+            // Align text baseline anchors vertically
+            dominantBaseline="central"
+            // Apply small font size rules
+            fontSize="0.75rem"
+            // Apply bold styling weight rules
+            fontWeight="bold"
+        // Close opening tag attributes
+        >
+            {/* Print evaluated percentage values */}
+            {`${(percent * 100).toFixed(1)}%`}
+        {/* Close graphic text element */}
+        </text>
+    // Close return statement
+    );
+// Close function declaration
+};
+
 const Analytics: React.FC = () => {
     const { categories } = useBudget();
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -55,17 +136,31 @@ const Analytics: React.FC = () => {
                 <div style={{ height: '300px', position: 'relative' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
+                            {/* Render Pie component with customized labels inside slices */}
                             <Pie
+                                // Set data array source
                                 data={data}
+                                // Align center horizontally
                                 cx="50%"
+                                // Align center vertically
                                 cy="50%"
+                                // Set inner radius of donut ring
                                 innerRadius={70}
+                                // Set outer radius of donut ring
                                 outerRadius={110}
+                                // Set padding angle between slices
                                 paddingAngle={5}
+                                // Set key mapping to evaluate values
                                 dataKey="value"
+                                // Disable connecting label lines
                                 labelLine={false}
+                                // Assign custom slice label renderer function
+                                label={renderCustomizedLabel}
+                                // Handle hover enter event
                                 onMouseEnter={(_, index) => setActiveIndex(index)}
+                                // Handle hover leave event
                                 onMouseLeave={() => setActiveIndex(null)}
+                            // Close opening component properties
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />

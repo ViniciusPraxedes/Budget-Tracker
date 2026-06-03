@@ -59,7 +59,7 @@ const SavingsCalculator: React.FC = () => {
     };
 
     return (
-        <div style={{ marginBottom: '3rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
             <Box title={
                 <div
                     onClick={() => setIsCollapsed(!isCollapsed)}

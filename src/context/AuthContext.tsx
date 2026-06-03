@@ -18,46 +18,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Execute hook on component mount to initialize user authentication state
+    // Hook executes on component mount to initialize the authentication state
     useEffect(() => {
-        // Retrieve any stored mock user from localStorage
-        const savedMockUser = typeof window !== 'undefined' ? window.localStorage.getItem('mock_user') : null;
-        // Check if a saved mock user is present in localStorage
-        if (savedMockUser) {
-            // Set the user state with the parsed mock user object
-            setUser(JSON.parse(savedMockUser) as User);
-            // Set loading state to false
+        // Check if code is running in a browser context
+        const isClient = typeof window !== 'undefined';
+        // Check if hostname matches localhost or local IP addresses
+        const isLocal = isClient && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'));
+        // Check if local run mode is enabled
+        if (isLocal) {
+            // Initialize default test user properties
+            const mockUser = {
+                // Set fixed test uid
+                uid: 'test-user',
+                // Set test display name
+                displayName: 'Test User',
+                // Set test email address
+                email: 'test@example.com',
+            };
+            // Update React user state with mock object
+            setUser(mockUser as User);
+            // Turn off auth loader
             setLoading(false);
-            // Return an empty cleanup function for mock auth
+            // Return empty cleanup callback
             return () => {};
-        // End of savedMockUser conditional check
         }
-        // Subscribe to standard Firebase auth state changes
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-            // Update the React user state with current Firebase user
-            setUser(currentUser);
-            // Set loading state to false once state is retrieved
+        // Fetch saved mock user from browser storage
+        const savedMockUser = typeof window !== 'undefined' ? window.localStorage.getItem('mock_user') : null;
+        // Check if storage has mock user data
+        if (savedMockUser) {
+            // Update user state using parsed data
+            setUser(JSON.parse(savedMockUser) as User);
+            // Turn off active loading indicator
             setLoading(false);
-        // End of unsubscribe callback parameter
+            // Return empty destructor callback
+            return () => {};
+        }
+        // Listen to firebase authentication state changes
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            // Update state with authenticated user
+            setUser(currentUser);
+            // Set loading status to complete
+            setLoading(false);
         });
-        // Return standard Firebase unsubscriber function
+        // Return unsubscriber function reference
         return () => unsubscribe();
-    // Empty dependency array ensures hook runs once on mount
     }, []);
 
     // Define function to login with Google using Firebase authentication popup
     const signInWithGoogle = async () => {
-        // Attempt popup sign in process
-        try {
-            // Call Google authentication popup SDK
-            await signInWithPopup(auth, googleProvider);
-        // Catch authentication flow errors
-        } catch (error) {
-            // Log authentication errors
-            console.error("Error signing in with Google", error);
-        // End of catch block
+        // Check browser environment status
+        const isClient = typeof window !== 'undefined';
+        // Verify if local configuration matches
+        const isLocal = isClient && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'));
+        // Check if app is running locally
+        if (isLocal) {
+            // Trigger test user authentication sequence
+            await loginAsTestUser();
+            // Terminate sign in process early
+            return;
         }
-    // End of signInWithGoogle function definition
+        // Attempt standard Firebase login flow
+        try {
+            // Open standard Google provider sign-in overlay popup
+            await signInWithPopup(auth, googleProvider);
+        // Handle active Google authentication exceptions
+        } catch (error) {
+            // Print exceptions out to console
+            console.error("Error signing in with Google", error);
+        }
     };
 
     // Define function to sign in locally as the mock test user
@@ -85,25 +113,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Define function to sign out and clear active session
     const logout = async () => {
-        // Remove mock user token from local storage
-        if (typeof window !== 'undefined') {
-            // Clear mock user key
-            window.localStorage.removeItem('mock_user');
-        // End of window storage clean check
+        // Check browser environment status
+        const isClient = typeof window !== 'undefined';
+        // Verify if local configuration matches
+        const isLocal = isClient && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'));
+        // Check if local dev environment is active
+        if (isLocal) {
+            // Prevent logout sequence to maintain local session consistency
+            return;
         }
-        // Attempt Firebase sign out sequence
+        // Clear storage mock information
+        if (typeof window !== 'undefined') {
+            // Remove local storage user item
+            window.localStorage.removeItem('mock_user');
+        }
+        // Execute standard authentication logout workflow
         try {
-            // Call Firebase signOut SDK
+            // Invalidate credentials using Firebase signOut SDK
             await signOut(auth);
-            // Set user state back to null
+            // Clear user profile context
             setUser(null);
-        // Catch logout SDK errors
+        // Handle logging out exceptions
         } catch (error) {
             // Log logout process errors
             console.error("Error signing out", error);
-        // End of catch block
         }
-    // End of logout function definition
     };
 
     return (

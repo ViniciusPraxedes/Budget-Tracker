@@ -13,16 +13,9 @@
             {
               "id": "lt6cz9182",
               "name": "Entertainment",
-              "color": "#9C27B0",
+              "color": "#DD2C00",
               "order": 0,
               "expenses": [
-                {
-                  "id": "o0fcm90l5",
-                  "name": "Netflix",
-                  "amount": 159,
-                  "paymentDay": 18,
-                  "isRecurring": true
-                },
                 {
                   "id": "ps6eg5u5e",
                   "name": "Spotify",
@@ -35,7 +28,14 @@
                   "name": "Movies",
                   "amount": 300,
                   "paymentDay": 14,
-                  "isRecurring": false
+                  "isRecurring": true
+                },
+                {
+                  "name": "Banana",
+                  "amount": 12,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "id": "kmlvf78cy"
                 }
               ]
             },
@@ -76,39 +76,10 @@
               ]
             },
             {
-              "id": "sizq67u46",
-              "name": "Food",
-              "color": "#4CAF50",
-              "order": 2,
-              "expenses": [
-                {
-                  "id": "z6dhvoxfg",
-                  "name": "Groceries",
-                  "amount": 4000,
-                  "paymentDay": 10,
-                  "isRecurring": false
-                },
-                {
-                  "id": "so6jkcz3e",
-                  "name": "Dining Out",
-                  "amount": 1200,
-                  "paymentDay": 15,
-                  "isRecurring": false
-                },
-                {
-                  "id": "qlrc3dy8l",
-                  "name": "Coffee",
-                  "amount": 400,
-                  "paymentDay": 20,
-                  "isRecurring": false
-                }
-              ]
-            },
-            {
               "id": "d13tc6vkj",
               "name": "Transportation",
               "color": "#2196F3",
-              "order": 3,
+              "order": 2,
               "expenses": [
                 {
                   "id": "98czjnyet",
@@ -129,6 +100,35 @@
                   "name": "Public Transit",
                   "amount": 300,
                   "paymentDay": 2,
+                  "isRecurring": false
+                }
+              ]
+            },
+            {
+              "id": "sizq67u46",
+              "name": "Food",
+              "color": "#4CAF50",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "z6dhvoxfg",
+                  "name": "Groceries",
+                  "amount": 4000,
+                  "paymentDay": 10,
+                  "isRecurring": false
+                },
+                {
+                  "id": "so6jkcz3e",
+                  "name": "Dining Out",
+                  "amount": 1200,
+                  "paymentDay": 15,
+                  "isRecurring": false
+                },
+                {
+                  "id": "qlrc3dy8l",
+                  "name": "Coffee",
+                  "amount": 400,
+                  "paymentDay": 20,
                   "isRecurring": false
                 }
               ]

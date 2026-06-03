@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Expense } from '../types';
 import { useLocalization } from '../context/LocalizationContext';
 
@@ -34,6 +35,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ expense, onUpdate, onDelete }
     const [editedAmount, setEditedAmount] = useState(expense.amount.toString());
     const [editedDay, setEditedDay] = useState(expense.paymentDay.toString());
     const [editedRecurring, setEditedRecurring] = useState(!!expense.isRecurring);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const handleSave = () => {
         onUpdate({
@@ -153,7 +155,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ expense, onUpdate, onDelete }
                         ✎
                     </button>
                     <button
-                        onClick={() => onDelete(expense.id)}
+                        onClick={() => setShowDeleteConfirm(true)}
                         style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--firebase-red)', fontSize: '1rem' }}
                         title="Delete"
                     >
@@ -161,6 +163,70 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ expense, onUpdate, onDelete }
                     </button>
                 </div>
             </div>
+
+            {showDeleteConfirm && typeof document !== 'undefined' && createPortal(
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.7)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                    padding: '1rem'
+                }}>
+                    <div style={{
+                        background: '#121212',
+                        padding: '1.5rem',
+                        borderRadius: '8px',
+                        maxWidth: '400px',
+                        width: '100%',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                    }}>
+                        <h3 style={{ marginTop: 0, color: 'white' }}>Delete Expense?</h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                            Are you sure you want to delete <strong>{expense.name}</strong>?
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                style={{
+                                    background: 'transparent',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'white',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    onDelete(expense.id);
+                                    setShowDeleteConfirm(false);
+                                }}
+                                style={{
+                                    background: 'var(--firebase-red)',
+                                    border: 'none',
+                                    color: 'white',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
