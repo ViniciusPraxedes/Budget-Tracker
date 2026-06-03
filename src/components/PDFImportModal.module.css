@@ -1,0 +1,704 @@
+/* Modal overlay wrapper */
+.overlay {
+  /* Fix position to cover viewport */
+  position: fixed;
+  /* Align to top */
+  top: 0;
+  /* Align to left */
+  left: 0;
+  /* Cover full width */
+  width: 100%;
+  /* Cover full height */
+  height: 100%;
+  /* Set dark translucent background */
+  background: rgba(0, 0, 0, 0.85);
+  /* Apply backdrop blur effect */
+  backdrop-filter: blur(10px);
+  /* Webkit support for blur */
+  -webkit-backdrop-filter: blur(10px);
+  /* Center align content */
+  display: flex;
+  /* Center horizontally */
+  justify-content: center;
+  /* Center vertically */
+  align-items: center;
+  /* Stack above standard page content */
+  z-index: 1100;
+  /* Fade-in animation duration and curve */
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modal content container */
+.modal {
+  /* Fill up to 90 percent of view width */
+  width: 90%;
+  /* Restrict max width on desktop */
+  max-width: 600px;
+  /* Set max height on viewport */
+  max-height: 85vh;
+  /* Render as vertical flex column */
+  display: flex;
+  /* Set flex direction to column */
+  flex-direction: column;
+  /* Set background using surface variable */
+  background: #151515;
+  /* Set rounded corners */
+  border-radius: 16px;
+  /* Add glowing border */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Add subtle box shadow */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  /* Avoid content overflow */
+  overflow: hidden;
+  /* Apply slide-up animation */
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modal Header styling */
+.header {
+  /* Add padding to header */
+  padding: 1.25rem;
+  /* Add bottom border separator */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Render header as horizontal flex container */
+  display: flex;
+  /* Distribute items to opposite ends */
+  justify-content: space-between;
+  /* Center align items vertically */
+  align-items: center;
+}
+
+/* Header title typography */
+.title {
+  /* Remove default margins */
+  margin: 0;
+  /* Set font size for title */
+  font-size: 1.25rem;
+  /* Make header title bold */
+  font-weight: 700;
+  /* Set title color to white */
+  color: #fff;
+}
+
+/* Close button styling */
+.closeBtn {
+  /* Set transparent background */
+  background: transparent;
+  /* Remove default border */
+  border: none;
+  /* Set color to secondary text */
+  color: var(--text-secondary);
+  /* Set dimensions */
+  width: 32px;
+  /* Set height matching width */
+  height: 32px;
+  /* Make button circular */
+  border-radius: 50%;
+  /* Render contents in flex center */
+  display: flex;
+  /* Align content horizontally */
+  justify-content: center;
+  /* Align content vertically */
+  align-items: center;
+  /* Set pointer cursor */
+  cursor: pointer;
+  /* Transition background changes */
+  transition: background 0.2s ease;
+}
+
+/* Hover style for close button */
+.closeBtn:hover {
+  /* Dark background on hover */
+  background: rgba(255, 255, 255, 0.1);
+  /* Set hover color to white */
+  color: #fff;
+}
+
+/* Modal Body container */
+.body {
+  /* Add padding around body */
+  padding: 1.25rem;
+  /* Allow vertical scrolling */
+  overflow-y: auto;
+  /* Set flex grow to fill space */
+  flex-grow: 1;
+}
+
+/* File Picker target zone */
+.pickerZone {
+  /* Make dropzone dashed */
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  /* Rounded corner layout */
+  border-radius: 12px;
+  /* Set inner padding */
+  padding: 2.5rem 1.5rem;
+  /* Align center */
+  text-align: center;
+  /* Pointer cursor for touch interaction */
+  cursor: pointer;
+  /* Smooth color transition */
+  transition: all 0.2s ease;
+  /* Render as vertical layout */
+  display: flex;
+  /* Set column direction */
+  flex-direction: column;
+  /* Center components horizontally */
+  align-items: center;
+  /* Center components vertically */
+  justify-content: center;
+  /* Add gap between children */
+  gap: 1rem;
+}
+
+/* Drag over active state */
+.pickerZoneActive {
+  /* Light up borders on drag */
+  border-color: var(--firebase-yellow);
+  /* Highlight background */
+  background: rgba(255, 196, 0, 0.05);
+}
+
+/* Large touch targets description text */
+.pickerText {
+  /* Secondary text color */
+  color: var(--text-secondary);
+  /* Font size */
+  font-size: 0.95rem;
+  /* Remove default margins */
+  margin: 0;
+}
+
+/* Hidden input element */
+.hiddenInput {
+  /* Hide from display */
+  display: none;
+}
+
+/* Loading/Status container */
+.statusContainer {
+  /* Render vertical centering layout */
+  display: flex;
+  /* Direction column */
+  flex-direction: column;
+  /* Align horizontal center */
+  align-items: center;
+  /* Align vertical center */
+  justify-content: center;
+  /* Top-bottom padding */
+  padding: 2rem 0;
+  /* Gap between indicator and label */
+  gap: 1rem;
+}
+
+/* Spinning loading indicator */
+.spinner {
+  /* Width dimensions */
+  width: 40px;
+  /* Height dimensions */
+  height: 40px;
+  /* Circular layout */
+  border-radius: 50%;
+  /* Gray bottom track */
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  /* Yellow active spinner edge */
+  border-top-color: var(--firebase-yellow);
+  /* Spinning animation details */
+  animation: spin 1s linear infinite;
+}
+
+/* Spinner keyframe rotation */
+@keyframes spin {
+  /* Rotate from 0 */
+  0% {
+    /* Transform rotate 0 deg */
+    transform: rotate(0deg);
+  }
+  /* Rotate to 360 */
+  100% {
+    /* Transform rotate 360 deg */
+    transform: rotate(360deg);
+  }
+}
+
+/* List container for parsed transactions */
+.transactionList {
+  /* Display as flex column */
+  display: flex;
+  /* Stack items vertically */
+  flex-direction: column;
+  /* Set gap between cards */
+  gap: 0.75rem;
+  /* Padding top */
+  padding-top: 0.5rem;
+}
+
+/* Individual transaction row card */
+.transactionCard {
+  /* Glass background panel style */
+  background: rgba(255, 255, 255, 0.03);
+  /* Subtle border line */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  /* Card border radius */
+  border-radius: 12px;
+  /* Card padding space */
+  padding: 1rem;
+  /* Row flex display */
+  display: flex;
+  /* Align items to center line */
+  align-items: center;
+  /* Space out items */
+  gap: 0.75rem;
+}
+
+/* Checkbox touch target container */
+.checkboxContainer {
+  /* Display as flex */
+  display: flex;
+  /* Center checkbox items */
+  align-items: center;
+  /* Center horizontal */
+  justify-content: center;
+  /* Ensure target size is at least 44px for iOS */
+  min-width: 44px;
+  /* Height touch size */
+  min-height: 44px;
+}
+
+/* Big custom checkbox scale */
+.checkbox {
+  /* Large width scale */
+  width: 20px;
+  /* Matching height */
+  height: 20px;
+  /* Accent color */
+  accent-color: var(--firebase-yellow);
+  /* Touch pointer cursor */
+  cursor: pointer;
+}
+
+/* Transaction content fields */
+.cardContent {
+  /* Take available space */
+  flex-grow: 1;
+  /* Flex direction column layout */
+  display: flex;
+  /* Column layout */
+  flex-direction: column;
+  /* Gap size */
+  gap: 0.5rem;
+}
+
+/* Card details row layout */
+.cardHeaderRow {
+  /* Display inline layout */
+  display: flex;
+  /* Set spacing to separate date and amount */
+  justify-content: space-between;
+  /* Align vertically */
+  align-items: center;
+}
+
+/* Date bubble styling */
+.dateBubble {
+  /* Background accent tint */
+  background: rgba(255, 255, 255, 0.08);
+  /* Rounded pill styling */
+  border-radius: 4px;
+  /* Inner padding spacing */
+  padding: 0.2rem 0.5rem;
+  /* Font styling size */
+  font-size: 0.8rem;
+  /* Slightly bold font */
+  font-weight: 500;
+  /* Gray color */
+  color: var(--text-secondary);
+}
+
+/* Card amount styling */
+.amount {
+  /* Font weight bold */
+  font-weight: 700;
+  /* Font scale */
+  font-size: 1.05rem;
+  /* Currency tabular numbers alignment */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Input element for editing description name */
+.nameInput {
+  /* Background color set */
+  background: rgba(0, 0, 0, 0.3);
+  /* Flat border design */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Input text color */
+  color: #fff;
+  /* Set inner input padding */
+  padding: 0.4rem 0.6rem;
+  /* Rounded text corners */
+  border-radius: 6px;
+  /* Font scale size */
+  font-size: 0.9rem;
+  /* Span width fully */
+  width: 100%;
+}
+
+/* Dropdown select box for category classification */
+.categorySelect {
+  /* Background selector element */
+  background: #202020;
+  /* Border highlight border */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Text color selector selection */
+  color: #fff;
+  /* Input selector padding */
+  padding: 0.5rem 0.6rem;
+  /* Rounded corners select */
+  border-radius: 6px;
+  /* Font size text select */
+  font-size: 0.85rem;
+  /* Full width target */
+  width: 100%;
+  /* Touch target height compliant with iOS */
+  min-height: 40px;
+}
+
+/* Sticky Action Bar layout */
+.footer {
+  /* Inner spacing */
+  padding: 1.25rem;
+  /* Separator border */
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* Row alignment */
+  display: flex;
+  /* Push to edges */
+  justify-content: flex-end;
+  /* Space between buttons */
+  gap: 0.75rem;
+  /* Background overlay color */
+  background: #181818;
+}
+
+/* Standard button interface styling */
+.btn {
+  /* Rounded padding spacing styling */
+  padding: 0.75rem 1.25rem;
+  /* Shape size borders */
+  border-radius: 8px;
+  /* Bold weight text buttons */
+  font-weight: 600;
+  /* Standard font size buttons */
+  font-size: 0.9rem;
+  /* Interactive cursor setup */
+  cursor: pointer;
+  /* Transitions click hover animation */
+  transition: all 0.2s ease;
+  /* Touch compliance sizing height */
+  min-height: 44px;
+}
+
+/* Secondary Button design */
+.btnSecondary {
+  /* Flat transparent background design */
+  background: transparent;
+  /* Outline edge line */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* White color */
+  color: #fff;
+}
+
+/* Secondary hover */
+.btnSecondary:hover {
+  /* White tint hover backdrop */
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Primary Action button yellow styling */
+.btnPrimary {
+  /* Background color set to standard Firebase Yellow */
+  background: var(--firebase-yellow);
+  /* Border unset border */
+  border: none;
+  /* Dark text color contrast */
+  color: #000;
+}
+
+/* Primary hover active */
+.btnPrimary:hover {
+  /* Light scale brightness */
+  filter: brightness(1.1);
+}
+
+/* Disabled button state controls */
+.btnPrimary:disabled {
+  /* Gray styling */
+  background: #444;
+  /* Gray text colors */
+  color: #777;
+  /* Cursor not allowed */
+  cursor: not-allowed;
+}
+
+/* Mobile responsive adjustments styling media query */
+@media (max-width: 480px) {
+  /* Modal responsive wrapper */
+  .modal {
+    /* Span wider screen space */
+    width: 95%;
+    /* Keep high relative height */
+    max-height: 90vh;
+  }
+}
+
+/* Tabs list wrapper container */
+.tabsContainer {
+  /* Render horizontal flex layout */
+  display: flex;
+  /* Bottom border separator */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Inner padding space */
+  padding: 0 1.25rem;
+  /* Background header fill */
+  background: #181818;
+}
+
+/* Individual tab navigation button */
+.tabButton {
+  /* Inner spacer padding */
+  padding: 1rem 1.25rem;
+  /* Flat transparent background design */
+  background: transparent;
+  /* Remove default border */
+  border: none;
+  /* Text color secondary style */
+  color: var(--text-secondary);
+  /* Make tab titles bold */
+  font-weight: 600;
+  /* Font size text buttons */
+  font-size: 0.9rem;
+  /* Touch selector pointer cursor */
+  cursor: pointer;
+  /* Smooth color transition animation */
+  transition: all 0.2s ease;
+  /* Bottom active highlight border placeholder */
+  border-bottom: 2px solid transparent;
+  /* Touch target height compliant with iOS */
+  min-height: 44px;
+}
+
+/* Active tab style overlay highlight */
+.tabButtonActive {
+  /* Contrast white text color active */
+  color: var(--firebase-yellow);
+  /* Bottom border highlight */
+  border-bottom-color: var(--firebase-yellow);
+}
+
+/* Tab button hover state */
+.tabButton:hover {
+  /* Highlight text color on hover */
+  color: #fff;
+}
+
+/* Configuration settings panel section */
+.settingsSection {
+  /* Flex vertical grid layout */
+  display: flex;
+  /* Stack list rows vertically */
+  flex-direction: column;
+  /* Spacing gap size */
+  gap: 0.75rem;
+  /* Margin separation bottom */
+  margin-bottom: 2rem;
+}
+
+/* Section title label typography */
+.sectionTitle {
+  /* Font size headers scale */
+  font-size: 1rem;
+  /* Make headings bold */
+  font-weight: 700;
+  /* Highlight white color contrast */
+  color: #fff;
+  /* Margin spacing bottom list */
+  margin: 0 0 0.25rem 0;
+  /* Subtle bottom border separators */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  /* Spacing space details label */
+  padding-bottom: 0.5rem;
+}
+
+/* Standard key value settings line row */
+.settingsRow {
+  /* Glass background panel style */
+  background: rgba(255, 255, 255, 0.02);
+  /* Subtle border highlight line */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  /* Row border radius */
+  border-radius: 8px;
+  /* Row padding space */
+  padding: 0.75rem 1rem;
+  /* Render horizontal flex layout */
+  display: flex;
+  /* Align items vertically to center line */
+  align-items: center;
+  /* Spacing gap details */
+  gap: 0.75rem;
+  /* Wrap columns if on narrow screens */
+  flex-wrap: wrap;
+}
+
+/* Section description name label text */
+.settingsLabel {
+  /* Font weight medium style */
+  font-weight: 500;
+  /* Set color text */
+  color: #fff;
+  /* Flex grow take up spacing */
+  flex-grow: 1;
+  /* Min width bounds to wrap cleanly */
+  min-width: 150px;
+  /* Keep text in boundaries */
+  word-break: break-all;
+}
+
+/* Row action delete mappings trash icon button styling */
+.deleteActionBtn {
+  /* Flat transparent background design */
+  background: transparent;
+  /* Remove default border */
+  border: none;
+  /* Red color alert indicator */
+  color: var(--firebase-red);
+  /* Sizing dimensions */
+  width: 36px;
+  /* Sizing height matching width */
+  height: 36px;
+  /* Circular border container */
+  border-radius: 50%;
+  /* Flex centering layout */
+  display: flex;
+  /* Center horizontally */
+  justify-content: center;
+  /* Center vertically */
+  align-items: center;
+  /* Touch target pointer cursor */
+  cursor: pointer;
+  /* Transition background changes animations */
+  transition: background 0.2s ease;
+  /* Flex shrink prevent sizing anomalies */
+  flex-shrink: 0;
+}
+
+/* Delete button hover active */
+.deleteActionBtn:hover {
+  /* Red backdrop overlay highlights on hover */
+  background: rgba(221, 44, 0, 0.1);
+}
+
+/* Add mapping new settings rules inline forms styling */
+.addForm {
+  /* Row horizontal layout flex display */
+  display: flex;
+  /* Spacing gap details form */
+  gap: 0.5rem;
+  /* Align components vertically to center line */
+  align-items: center;
+  /* Span width fully */
+  width: 100%;
+  /* Wrap inline grid elements on narrow screens */
+  flex-wrap: wrap;
+  /* Background panel style */
+  background: rgba(255, 255, 255, 0.04);
+  /* Padding form spacing */
+  padding: 0.75rem;
+  /* Border radius rounded corners shape */
+  border-radius: 8px;
+  /* Highlight edge line */
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+/* Small input inline text field */
+.inlineInput {
+  /* Background styling */
+  background: rgba(0, 0, 0, 0.3);
+  /* Border selector outline lines */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Text color selector selection */
+  color: #fff;
+  /* Input selector padding */
+  padding: 0.5rem 0.6rem;
+  /* Rounded corners input */
+  border-radius: 6px;
+  /* Font size text input */
+  font-size: 0.85rem;
+  /* Flexible width scale */
+  flex: 1;
+  /* Min width bounds to wrap cleanly */
+  min-width: 150px;
+  /* Touch target height compliant with iOS */
+  min-height: 40px;
+}
+
+/* Small dropdown category selector */
+.inlineSelect {
+  /* Background selector */
+  background: #202020;
+  /* Border selector outline lines */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Text color selector selection */
+  color: #fff;
+  /* Input selector padding */
+  padding: 0.5rem 0.6rem;
+  /* Rounded corners input */
+  border-radius: 6px;
+  /* Font size text input */
+  font-size: 0.85rem;
+  /* Flexible width scale */
+  flex: 1;
+  /* Min width bounds to wrap cleanly */
+  min-width: 150px;
+  /* Touch target height compliant with iOS */
+  min-height: 40px;
+}
+
+/* Tiny primary action button icon */
+.tinyBtn {
+  /* Dimension width */
+  width: 40px;
+  /* Dimension height */
+  height: 40px;
+  /* Circular border container */
+  border-radius: 8px;
+  /* Flex centering layout */
+  display: flex;
+  /* Center horizontally */
+  justify-content: center;
+  /* Center vertically */
+  align-items: center;
+  /* Background color set to standard Firebase Yellow */
+  background: var(--firebase-yellow);
+  /* Border unset */
+  border: none;
+  /* Dark text color contrast */
+  color: #000;
+  /* Touch pointer cursor */
+  cursor: pointer;
+  /* Flex shrink prevent sizing anomalies */
+  flex-shrink: 0;
+}
+
+/* Tiny hover active style */
+.tinyBtn:hover {
+  /* Brightness filter */
+  filter: brightness(1.1);
+}
+
+/* Tiny disabled state controls */
+.tinyBtn:disabled {
+  /* Gray styling */
+  background: #444;
+  /* Gray text colors */
+  color: #777;
+  /* Cursor not allowed */
+  cursor: not-allowed;
+}

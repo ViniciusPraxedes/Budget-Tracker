@@ -44,4 +44,12 @@ export interface BudgetContextType {
     loadMockData: (income: number, categories: Category[]) => void;
     totalSavings: number;
     updateTotalSavings: (amount: number) => void;
+    // Function to add multiple categories at once if they are missing
+    addMissingCategories: (missing: { name: string, color: string }[]) => void;
+    // Function to add multiple expenses at once (batch import)
+    addExpenses: (expenses: { categoryId: string, expense: Omit<Expense, 'id'> }[]) => void;
+    // Saved configuration for PDF importing name mappings and ignores
+    pdfConfig: { mappings: Record<string, string>; ignored: string[] } | null;
+    // Function to save updated PDF configuration preferences
+    updatePDFConfig: (config: { mappings: Record<string, string>; ignored: string[] }) => Promise<void>;
 }

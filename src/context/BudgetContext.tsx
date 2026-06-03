@@ -25,6 +25,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [totalSavings, setTotalSavings] = useState(0);
 
     const [defaultMonthSettings, setDefaultMonthSettings] = useState<{ month: number, year: number } | null>(null);
+    // Declare state for importing PDF mappings and ignored lists
+    const [pdfConfig, setPdfConfig] = useState<{ mappings: Record<string, string>; ignored: string[] } | null>(null);
 
     // Initialize user landing month and total savings preference from remote or local storage
     useEffect(() => {
@@ -41,6 +43,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     // Update total savings state
                     setTotalSavings(userData.totalSavings);
                 // End of totalSavings check
+                }
+                // Check if pdfConfig is defined in mock database response
+                if (userData.pdfConfig !== undefined) {
+                    // Update pdfConfig state
+                    setPdfConfig(userData.pdfConfig);
+                // End of pdfConfig check
                 }
                 // Check if defaultMonth and defaultYear are set
                 if (userData.defaultMonth !== undefined && userData.defaultMonth !== null && userData.defaultYear !== undefined && userData.defaultYear !== null) {
@@ -109,6 +117,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         // Set savings state
                         setTotalSavings(userData.totalSavings);
                     // End of totalSavings validation
+                    }
+                    // If pdfConfig is defined in Firestore record
+                    if (userData.pdfConfig !== undefined) {
+                        // Set pdfConfig state
+                        setPdfConfig(userData.pdfConfig);
+                    // End of pdfConfig validation
                     }
                     // If default landing month and year preferences are set
                     if (userData.defaultMonth !== undefined && userData.defaultYear !== undefined) {
@@ -309,6 +323,71 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // End of updateTotalSavings definition
     };
 
+    // Function to update and persist PDF import configurations mapping
+    const updatePDFConfig = async (config: { mappings: Record<string, string>; ignored: string[] }) => {
+        // Set local state immediately
+        setPdfConfig(config);
+        // Return early if no active user session
+        if (!user) return;
+        // Check if user is the mock test user
+        if (user.uid === 'test-user') {
+            // Attempt to update mock database PDF settings
+            try {
+                // Post new settings to local API
+                await fetch('/api/mock-db', {
+                    // Use POST HTTP method
+                    method: 'POST',
+                    // Set request headers to JSON content type
+                    headers: {
+                        // Specify application/json content type
+                        'Content-Type': 'application/json'
+                    // End of headers object definition
+                    },
+                    // Stringify mock POST request parameters
+                    body: JSON.stringify({
+                        // User ID identifying mock session
+                        userId: 'test-user',
+                        // Specify update_settings action
+                        action: 'update_settings',
+                        // Settings details payload
+                        settings: {
+                            // Update PDF configuration settings
+                            pdfConfig: config
+                        // End of settings object
+                        }
+                    // End of body stringification
+                    })
+                // End of fetch options definition
+                });
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log error details to console
+                console.error("Error saving mock PDF config:", error);
+            // End of catch block
+            }
+            // Exit early
+            return;
+        // End of test-user PDF config check
+        }
+        // Attempt Firestore write
+        try {
+            // Lazy load setDoc function from Firestore
+            const { setDoc: lazySetDoc } = await import('firebase/firestore');
+            // Write updated PDF configurations to user document
+            await lazySetDoc(doc(db, 'users', user.uid), {
+                // Set PDF import configurations
+                pdfConfig: config
+            // Merge to preserve existing preferences
+            }, { merge: true });
+        // Catch database update errors
+        } catch (error) {
+            // Log update PDF configurations errors
+            console.error("Error saving PDF config:", error);
+        // End of catch block
+        }
+    // End of updatePDFConfig definition
+    };
+
     // Helper to update Firestore
     const updateFirestoreWrapper = async (newIncome: number, newCategories: Category[]) => {
         await updateFirestore(newIncome, newCategories, currentMonth, currentYear);
@@ -340,7 +419,26 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             expenses: [],
             order: categories.length, // Append to end
         };
+        // Update database with new categories array
         updateFirestoreWrapper(income, [...categories, newCategory]);
+    };
+    // Function to add multiple categories at once if they are missing
+    const addMissingCategories = (missing: { name: string, color: string }[]) => {
+        // Map missing category parameters into structured Category models
+        const newCats: Category[] = missing.map((c, idx) => ({
+            // Generate unique random string identifier
+            id: Math.random().toString(36).substr(2, 9),
+            // Assign name
+            name: c.name,
+            // Assign color
+            color: c.color,
+            // Initialize empty expenses collection
+            expenses: [],
+            // Set ordering position index
+            order: categories.length + idx,
+        }));
+        // Update database with concatenated categories collection
+        updateFirestoreWrapper(income, [...categories, ...newCats]);
     };
 
     const updateCategory = (id: string, name: string, color: string) => {
@@ -366,6 +464,33 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
             return cat;
         });
+        updateFirestoreWrapper(income, newCategories);
+    };
+
+    // Function to add multiple expenses at once (batch import)
+    const addExpenses = (newExpensesList: { categoryId: string, expense: Omit<Expense, 'id'> }[]) => {
+        // Map categories array to inject corresponding batched items
+        const newCategories = categories.map((cat) => {
+            // Filter list matching current category ID index
+            const catExpenses = newExpensesList
+                // Check if category matches
+                .filter((item) => item.categoryId === cat.id)
+                // Map properties to set unique expense identifiers
+                .map((item) => ({
+                    // Copy existing expense properties
+                    ...item.expense,
+                    // Generate new identifier string
+                    id: Math.random().toString(36).substr(2, 9)
+                }));
+            // Check if any expenses are matching
+            if (catExpenses.length > 0) {
+                // Return category copy containing batched expenses list
+                return { ...cat, expenses: [...cat.expenses, ...catExpenses] };
+            }
+            // Return category untouched
+            return cat;
+        });
+        // Update database with batch category changes
         updateFirestoreWrapper(income, newCategories);
     };
 
@@ -563,6 +688,15 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         totalSavings,
         updateTotalSavings,
         setMonth: changeMonth,
+        // Add batch category adder helper function
+        addMissingCategories,
+        // Add batch expenses adder helper function
+        addExpenses,
+        // Expose pdfConfig state
+        pdfConfig,
+        // Expose updatePDFConfig callback function
+        updatePDFConfig,
+        // Loading state flag
         loading
     };
 

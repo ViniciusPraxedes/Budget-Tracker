@@ -40,8 +40,8 @@ const renderCustomizedLabel = ({
     outerRadius,
     // Map slice percentage parameter
     percent,
-// Provide type declaration matching the component interface
-}: PieLabelProps) => {
+// Provide type declaration using any to satisfy Recharts library types
+}: any) => {
     // Calculate standard mid-radius placement position
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     // Project horizontal center position using cosine conversion

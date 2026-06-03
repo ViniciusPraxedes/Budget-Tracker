@@ -64,6 +64,13 @@ interface MockUser {
     defaultYear: number | null;
     // Dictionary mapping month keys to month data
     months: Record<string, MonthData>;
+    // Configuration options for PDF transactions import parsing mapping
+    pdfConfig?: {
+        // Maps transaction name keys to target category identifiers
+        mappings: Record<string, string>;
+        // Collection of transaction names flagged to ignore
+        ignored: string[];
+    };
 // End of MockUser interface
 }
 
@@ -348,6 +355,12 @@ export async function POST(request: NextRequest) {
                 // Update default year number
                 user.defaultYear = settings.defaultYear;
             // End of defaultYear check
+            }
+            // Check if pdfConfig setting is provided in payload
+            if (settings.pdfConfig) {
+                // Update user pdfConfig configuration values
+                user.pdfConfig = settings.pdfConfig;
+            // End of pdfConfig check
             }
         // End of settings object check
         }
