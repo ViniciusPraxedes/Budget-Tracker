@@ -411,7 +411,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(amount, categories);
     };
 
-    const addCategory = (name: string, color: string) => {
+    // Function to add a new custom category
+    const addCategory = (name: string, color: string): Category => {
         const newCategory: Category = {
             id: Math.random().toString(36).substr(2, 9),
             name,
@@ -421,6 +422,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         };
         // Update database with new categories array
         updateFirestoreWrapper(income, [...categories, newCategory]);
+        return newCategory;
     };
     // Function to add multiple categories at once if they are missing
     const addMissingCategories = (missing: { name: string, color: string }[]) => {
@@ -471,24 +473,49 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const addExpenses = (newExpensesList: { categoryId: string, expense: Omit<Expense, 'id'> }[]) => {
         // Map categories array to inject corresponding batched items
         const newCategories = categories.map((cat) => {
-            // Filter list matching current category ID index
-            const catExpenses = newExpensesList
-                // Check if category matches
-                .filter((item) => item.categoryId === cat.id)
-                // Map properties to set unique expense identifiers
-                .map((item) => ({
-                    // Copy existing expense properties
-                    ...item.expense,
-                    // Generate new identifier string
-                    id: Math.random().toString(36).substr(2, 9)
-                }));
-            // Check if any expenses are matching
-            if (catExpenses.length > 0) {
-                // Return category copy containing batched expenses list
-                return { ...cat, expenses: [...cat.expenses, ...catExpenses] };
+            // Create a mutable copy of existing expenses for this category
+            const updatedExpenses = [...cat.expenses];
+            // Filter incoming list matching current category ID index
+            const catExpensesToAdd = newExpensesList.filter((item) => item.categoryId === cat.id);
+            // Loop through each expense details object to insert or update
+            for (const item of catExpensesToAdd) {
+                // Find matching index of expense with same name (case-insensitive)
+                const existingIndex = updatedExpenses.findIndex(
+                    // Compare lowercased name values to identify matches
+                    (exp) => exp.name.toLowerCase() === item.expense.name.toLowerCase()
+                );
+                // Check if duplicate entry index was found
+                if (existingIndex > -1) {
+                    // Update existing expense item fields in list
+                    updatedExpenses[existingIndex] = {
+                        // Spread properties of matching record
+                        ...updatedExpenses[existingIndex],
+                        // Overwrite amount value
+                        amount: item.expense.amount,
+                        // Overwrite payment day value
+                        paymentDay: item.expense.paymentDay
+                    // End of updated expense object
+                    };
+                // If matching name doesn't exist
+                } else {
+                    // Add new expense details block
+                    updatedExpenses.push({
+                        // Spread payload details
+                        ...item.expense,
+                        // Generate random unique identifier string
+                        id: Math.random().toString(36).substr(2, 9)
+                    // End of new expense object
+                    });
+                }
             }
-            // Return category untouched
-            return cat;
+            // Return updated category containing modified expenses
+            return {
+                // Spread category fields
+                ...cat,
+                // Assign updated expenses array
+                expenses: updatedExpenses
+            // End of returned category object
+            };
         });
         // Update database with batch category changes
         updateFirestoreWrapper(income, newCategories);
@@ -660,8 +687,27 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             order: index
         }));
         setIncomeState(mockIncome);
+        // Update local categories state
         setCategoriesState(orderedCategories);
+        // Persist mock data to Firestore database
         updateFirestoreWrapper(mockIncome, orderedCategories);
+    };
+
+    // Function to clear all expenses and reset income for the current month
+    const clearMonthData = () => {
+        // Map categories to clear their expenses lists
+        const clearedCategories = categories.map(cat => ({
+            // Spread category properties
+            ...cat,
+            // Reset expenses list to empty array
+            expenses: []
+        }));
+        // Update local income state to zero
+        setIncomeState(0);
+        // Update local categories state with cleared expenses
+        setCategoriesState(clearedCategories);
+        // Persist zero income and cleared categories to database storage
+        updateFirestoreWrapper(0, clearedCategories);
     };
 
     const budgetContextValue = {
@@ -697,7 +743,9 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Expose updatePDFConfig callback function
         updatePDFConfig,
         // Loading state flag
-        loading
+        loading,
+        // Expose clearMonthData callback function
+        clearMonthData
     };
 
     React.useEffect(() => {

@@ -497,6 +497,23 @@
 .tabButton:hover {
   /* Highlight text color on hover */
   color: #fff;
+/* End of tabButton:hover rule block */
+}
+
+/* Disabled tab navigation button state */
+.tabButton:disabled {
+  /* Reduce opacity for disabled look */
+  opacity: 0.4;
+  /* Show not-allowed cursor */
+  cursor: not-allowed;
+/* End of tabButton:disabled rule block */
+}
+
+/* Disabled tab hover style prevention */
+.tabButton:disabled:hover {
+  /* Maintain secondary text color on hover */
+  color: var(--text-secondary);
+/* End of tabButton:disabled:hover rule block */
 }
 
 /* Configuration settings panel section */
@@ -508,7 +525,15 @@
   /* Spacing gap size */
   gap: 0.75rem;
   /* Margin separation bottom */
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  /* Background card tint */
+  background: rgba(255, 255, 255, 0.02);
+  /* Rounded corners shape */
+  border-radius: 12px;
+  /* Glowing border outline boundary styling */
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Inner padding space */
+  padding: 1.25rem;
 }
 
 /* Section title label typography */
@@ -536,15 +561,15 @@
   /* Row border radius */
   border-radius: 8px;
   /* Row padding space */
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   /* Render horizontal flex layout */
   display: flex;
   /* Align items vertically to center line */
   align-items: center;
   /* Spacing gap details */
-  gap: 0.75rem;
-  /* Wrap columns if on narrow screens */
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  /* Do not wrap columns by default on desktop */
+  flex-wrap: nowrap;
 }
 
 /* Section description name label text */
@@ -702,3 +727,346 @@
   /* Cursor not allowed */
   cursor: not-allowed;
 }
+
+/* Container for settings row input controls and action buttons */
+.settingsControls {
+  /* Render horizontal flex layout */
+  display: flex;
+  /* Center items vertically */
+  align-items: center;
+  /* Spacing gap details */
+  gap: 0.5rem;
+  /* Prevent scaling shrinkage */
+  flex-shrink: 0;
+}
+
+/* Category mapping dropdown selector specifically for settings view */
+.settingsSelect {
+  /* Width dimensions */
+  width: 110px;
+  /* Minimum width dimensions */
+  min-width: 110px;
+  /* Minimum height bounds */
+  min-height: 28px;
+  /* Inner padding space */
+  padding: 0.15rem 0.35rem;
+  /* Font size styling */
+  font-size: 0.75rem;
+  /* Truncate text on overflow */
+  text-overflow: ellipsis;
+  /* Background selector */
+  background: #202020;
+  /* Border selector outline */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Text color select */
+  color: #fff;
+  /* Rounded corners shape */
+  border-radius: 6px;
+}
+
+/* Column layout container wrapper for row action buttons */
+.settingsActionWrapper {
+  /* Width bounds mapping columns */
+  width: 70px;
+  /* Minimum width bounds column */
+  min-width: 70px;
+  /* Flex layout display */
+  display: flex;
+  /* Pull controls right side */
+  justify-content: flex-end;
+}
+
+/* Divider block spacer matching dropdown select width */
+.settingsSpacer {
+  /* Width bounds spacer column */
+  width: 110px;
+  /* Minimum width bounds spacer */
+  min-width: 110px;
+}
+
+/* Responsive mobile breakpoint media query override options */
+@media (max-width: 600px) {
+  /* Allow row elements wrap */
+  .settingsRow {
+    /* Set flex wrap direction wrapping options */
+    flex-wrap: wrap;
+  }
+  /* Expand merchant text description to occupy entire line */
+  .settingsLabel {
+    /* Span full width on top row */
+    flex: 1 0 100%;
+    /* Extra margin spacer bottom text label */
+    margin-bottom: 0.25rem;
+  }
+  /* Expand settings inputs controls container full width below description */
+  .settingsControls {
+    /* Span full container width */
+    width: 100%;
+    /* Align elements right edge */
+    justify-content: flex-end;
+  }
+  /* Stretch settings dropdown selectors on mobile viewports */
+  .settingsSelect {
+    /* Grow dropdown to fill available space */
+    flex: 1;
+    /* Unset desktop fixed width setting */
+    width: auto;
+    /* Reset min width constraint */
+    min-width: 0;
+  }
+  /* Compress settings action buttons column wrapper on mobile */
+  .settingsActionWrapper {
+    /* Set width automatic fit */
+    width: auto;
+    /* Unset min width constraint settings */
+    min-width: 0;
+  }
+  /* Hide spacer blocks on narrow screen sizes */
+  .settingsSpacer {
+    /* Do not render element */
+    display: none;
+  }
+}
+
+/* Confirmation modal overlay screen */
+.confirmOverlay {
+  /* Fix position to cover viewport */
+  position: fixed;
+  /* Align to top */
+  top: 0;
+  /* Align to left */
+  left: 0;
+  /* Cover full width */
+  width: 100%;
+  /* Cover full height */
+  height: 100%;
+  /* Set dark translucent background */
+  background: rgba(0, 0, 0, 0.85);
+  /* Apply backdrop blur effect */
+  backdrop-filter: blur(10px);
+  /* Webkit support for blur */
+  -webkit-backdrop-filter: blur(10px);
+  /* Center align content */
+  display: flex;
+  /* Center horizontally */
+  justify-content: center;
+  /* Center vertically */
+  align-items: center;
+  /* Stack above standard modal */
+  z-index: 1200;
+  /* Fade-in animation duration and curve */
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Confirmation modal container box */
+.confirmModal {
+  /* Fill up to 90 percent of view width */
+  width: 90%;
+  /* Restrict max width */
+  max-width: 420px;
+  /* Render as vertical flex column */
+  display: flex;
+  /* Set flex direction to column */
+  flex-direction: column;
+  /* Set background using dark card style */
+  background: #181818;
+  /* Set rounded corners */
+  border-radius: 16px;
+  /* Add glowing border outline */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Add subtle box shadow */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  /* Avoid content overflow */
+  overflow: hidden;
+  /* Apply slide-up scale animation */
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Styling for category badge */
+.categoryBadge {
+  /* Set display mode */
+  display: inline-flex;
+  /* Align items center */
+  align-items: center;
+  /* Set vertical and horizontal padding */
+  padding: 0.2rem 0.5rem;
+  /* Set border radius to make corners rounded */
+  border-radius: 4px;
+  /* Set font size to be smaller */
+  font-size: 0.75rem;
+  /* Set font weight to be semi-bold */
+  font-weight: 600;
+  /* Set thin border */
+  border: 1px solid transparent;
+}
+
+/* Styling for unmapped warning badge */
+.unmappedBadge {
+  /* Set display mode */
+  display: inline-flex;
+  /* Align items center */
+  align-items: center;
+  /* Set vertical and horizontal padding */
+  padding: 0.2rem 0.5rem;
+  /* Set border radius to make corners rounded */
+  border-radius: 4px;
+  /* Set font size to be smaller */
+  font-size: 0.75rem;
+  /* Set font weight to be semi-bold */
+  font-weight: 600;
+  /* Set semi-transparent red background */
+  background: rgba(244, 67, 54, 0.15);
+  /* Set red text color */
+  color: #ff5252;
+  /* Set thin semi-transparent red border */
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Steps progress indicators wrapper */
+.stepsContainer {
+  /* Flexbox display */
+  display: flex;
+  /* Space steps evenly */
+  justify-content: space-between;
+  /* Vertically center align */
+  align-items: center;
+  /* Top, bottom, left, right padding */
+  padding: 1rem 1.25rem;
+  /* Thin bottom separator line */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Dark background fill */
+  background: #181818;
+}
+
+/* Individual wizard progress step item */
+.stepItem {
+  /* Flex container layout */
+  display: flex;
+  /* Center items vertically */
+  align-items: center;
+  /* Gap spacing */
+  gap: 0.5rem;
+  /* Font size scale */
+  font-size: 0.85rem;
+  /* Bold font weight */
+  font-weight: 600;
+  /* Secondary text color */
+  color: var(--text-secondary);
+}
+
+/* Active step color override */
+.stepActive {
+  /* Highlight active color yellow */
+  color: var(--firebase-yellow);
+}
+
+/* Completed step color override */
+.stepCompleted {
+  /* Green color for finished steps */
+  color: #4CAF50;
+}
+
+/* Rounded numerical step indicator badge */
+.stepBadge {
+  /* Center items layout */
+  display: flex;
+  /* Align horizontal center */
+  justify-content: center;
+  /* Align vertical center */
+  align-items: center;
+  /* Width dimension */
+  width: 20px;
+  /* Height dimension */
+  height: 20px;
+  /* Circular border radius */
+  border-radius: 50%;
+  /* Fine-tuned font size */
+  font-size: 0.75rem;
+  /* Gray tint background */
+  background: rgba(255, 255, 255, 0.1);
+  /* White text color */
+  color: #fff;
+}
+
+/* Active state numerical step badge */
+.stepBadgeActive {
+  /* Highlight badge background yellow */
+  background: var(--firebase-yellow);
+  /* Dark text contrast color */
+  color: #000;
+}
+
+/* Completed state numerical step badge */
+.stepBadgeCompleted {
+  /* Green badge background */
+  background: #4CAF50;
+  /* White text color contrast */
+  color: #fff;
+}
+
+/* Filter controls bar container */
+.filterBar {
+  /* Vertical layout display */
+  display: flex;
+  /* Stack search input and selectors container vertically */
+  flex-direction: column;
+  /* Column spacing gap */
+  gap: 0.5rem;
+  /* Padding margin bottom */
+  margin-bottom: 1rem;
+}
+
+/* Search input box element specifically for filtering */
+.filterInput {
+  /* Dark input box background */
+  background: rgba(0, 0, 0, 0.3);
+  /* Highlight border edge line */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Text color */
+  color: #fff;
+  /* Inner input padding */
+  padding: 0.5rem 0.75rem;
+  /* Rounded input corner radius matching selectors */
+  border-radius: 8px;
+  /* Font size scale */
+  font-size: 0.85rem;
+  /* Full width container layout */
+  width: 100%;
+  /* Match height with dropdown selectors */
+  min-height: 42px;
+}
+
+/* Container for select dropdowns inside filter bar */
+.filterSelectGroup {
+  /* Flex row layout display */
+  display: flex;
+  /* Space between dropdown elements */
+  gap: 0.5rem;
+  /* Span container width fully */
+  width: 100%;
+}
+
+/* Category or status dropdown select box for filtering */
+.filterSelect {
+  /* Selector dropdown background */
+  background: #202020;
+  /* Selector dropdown border line */
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Text color */
+  color: #fff;
+  /* Selector inner dropdown padding */
+  padding: 0.5rem 0.75rem;
+  /* Rounded select corner radius matching search input */
+  border-radius: 8px;
+  /* Font size scale */
+  font-size: 0.85rem;
+  /* Fill half the selectors container space */
+  flex: 1;
+  /* Set width percentage */
+  width: 50%;
+  /* Set touch pointer cursor */
+  cursor: pointer;
+  /* Height layout bounds */
+  min-height: 42px;
+}
+

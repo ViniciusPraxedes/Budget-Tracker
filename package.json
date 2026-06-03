@@ -17,7 +17,8 @@
     "pdfjs-dist": "^4.3.136",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "recharts": "^3.5.1"
+    "recharts": "^3.5.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

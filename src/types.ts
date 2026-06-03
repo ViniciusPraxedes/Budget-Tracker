@@ -29,7 +29,7 @@ export interface BudgetContextType {
     totalExpenses: number;
     savings: number;
     setIncome: (amount: number) => void;
-    addCategory: (name: string, color: string) => void;
+    addCategory: (name: string, color: string) => Category;
     updateCategory: (id: string, name: string, color: string) => void;
     deleteCategory: (id: string) => void;
     addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => void;
@@ -52,4 +52,6 @@ export interface BudgetContextType {
     pdfConfig: { mappings: Record<string, string>; ignored: string[] } | null;
     // Function to save updated PDF configuration preferences
     updatePDFConfig: (config: { mappings: Record<string, string>; ignored: string[] }) => Promise<void>;
+    // Function to clear all expenses and reset income for the current month
+    clearMonthData: () => void;
 }

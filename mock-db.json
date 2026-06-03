@@ -8,535 +8,94 @@
         "2026-5": {
           "month": 5,
           "year": 2026,
-          "income": 45000,
+          "income": 0,
           "categories": [
             {
-              "id": "w62m1bvxi",
+              "id": "1x03f89eh",
               "name": "Housing",
               "color": "#FF5722",
-              "expenses": [
-                {
-                  "name": "UNIONEN",
-                  "amount": 235,
-                  "paymentDay": 29,
-                  "isRecurring": false,
-                  "id": "jm185avdz"
-                },
-                {
-                  "name": "Vimla",
-                  "amount": 200,
-                  "paymentDay": 28,
-                  "isRecurring": false,
-                  "id": "suktmoa9r"
-                },
-                {
-                  "name": "FRISKTANDV",
-                  "amount": 65,
-                  "paymentDay": 28,
-                  "isRecurring": false,
-                  "id": "opp6c1ub8"
-                },
-                {
-                  "name": "CSN",
-                  "amount": 842,
-                  "paymentDay": 26,
-                  "isRecurring": false,
-                  "id": "1t9e3ze6y"
-                },
-                {
-                  "name": "Avier Unione",
-                  "amount": 160,
-                  "paymentDay": 26,
-                  "isRecurring": false,
-                  "id": "s2lf4b4ml"
-                },
-                {
-                  "name": "Capio",
-                  "amount": 100,
-                  "paymentDay": 26,
-                  "isRecurring": false,
-                  "id": "dyhh5znhd"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 10000,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "bh9tnj4d6"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 200,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "3o6h20a3m"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 4700,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "9exyyos0k"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 5000,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "mo8u1bg0f"
-                },
-                {
-                  "name": "CAPIO PRIM#R",
-                  "amount": 50,
-                  "paymentDay": 21,
-                  "isRecurring": false,
-                  "id": "ivvw86pl3"
-                },
-                {
-                  "name": "PAYPAL",
-                  "amount": 116.32,
-                  "paymentDay": 15,
-                  "isRecurring": false,
-                  "id": "wmkyx45k4"
-                },
-                {
-                  "name": "SQSP* DOMAIN",
-                  "amount": 187.5,
-                  "paymentDay": 13,
-                  "isRecurring": false,
-                  "id": "45hwh739u"
-                },
-                {
-                  "name": "CAPIO PRIM#R",
-                  "amount": 50,
-                  "paymentDay": 12,
-                  "isRecurring": false,
-                  "id": "hc84ldw4k"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 200,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "qkzis1o74"
-                },
-                {
-                  "name": "Överföring v",
-                  "amount": 100,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "dkw9ese4l"
-                },
-                {
-                  "name": "YAM TAM TEAM",
-                  "amount": 179,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "ks1rt2wr7"
-                },
-                {
-                  "name": "CAKTO PAY LT",
-                  "amount": 45.66,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "z2p15ncpr"
-                },
-                {
-                  "name": "CLAS OHLSON",
-                  "amount": 39.9,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "309fdxpfo"
-                },
-                {
-                  "name": "NYX*Kuario",
-                  "amount": 12,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "eo9zcve9q"
-                }
-              ],
+              "expenses": [],
               "order": 0
             },
             {
-              "id": "g1xowxbs3",
+              "id": "ervjbi8kp",
               "name": "Food",
               "color": "#4CAF50",
-              "expenses": [
-                {
-                  "name": "Hono",
-                  "amount": 148,
-                  "paymentDay": 27,
-                  "isRecurring": false,
-                  "id": "s6gty3v3x"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 258.46,
-                  "paymentDay": 27,
-                  "isRecurring": false,
-                  "id": "7w7bz0t8u"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 50.58,
-                  "paymentDay": 27,
-                  "isRecurring": false,
-                  "id": "q6a00bvkm"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 250.89,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "rw9a7ein2"
-                },
-                {
-                  "name": "DONER FACTOR",
-                  "amount": 140,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "jgj5hifvc"
-                },
-                {
-                  "name": "DONER FACTOR",
-                  "amount": 140,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "pzq5cw7oi"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 206.17,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "j32bj7ddy"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 119.4,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "xrf3z441l"
-                },
-                {
-                  "name": "Hono",
-                  "amount": 138,
-                  "paymentDay": 22,
-                  "isRecurring": false,
-                  "id": "rpy11vxno"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 145.33,
-                  "paymentDay": 21,
-                  "isRecurring": false,
-                  "id": "zkn8scs83"
-                },
-                {
-                  "name": "Hono",
-                  "amount": 148,
-                  "paymentDay": 20,
-                  "isRecurring": false,
-                  "id": "309kh7tkv"
-                },
-                {
-                  "name": "NORMAL M@LND",
-                  "amount": 235,
-                  "paymentDay": 20,
-                  "isRecurring": false,
-                  "id": "0756m9e9d"
-                },
-                {
-                  "name": "COOP LUNDBY",
-                  "amount": 40.18,
-                  "paymentDay": 19,
-                  "isRecurring": false,
-                  "id": "s23v4gt2e"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 189.21,
-                  "paymentDay": 18,
-                  "isRecurring": false,
-                  "id": "fpa00gg5x"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 349.61,
-                  "paymentDay": 18,
-                  "isRecurring": false,
-                  "id": "t9nzpuf5e"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 223.3,
-                  "paymentDay": 15,
-                  "isRecurring": false,
-                  "id": "4f7rdpext"
-                },
-                {
-                  "name": "DONER FACTOR",
-                  "amount": 140,
-                  "paymentDay": 15,
-                  "isRecurring": false,
-                  "id": "lq3gnob4c"
-                },
-                {
-                  "name": "Hono",
-                  "amount": 138,
-                  "paymentDay": 15,
-                  "isRecurring": false,
-                  "id": "r8d1qec8n"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 106.74,
-                  "paymentDay": 15,
-                  "isRecurring": false,
-                  "id": "wukqyggjp"
-                },
-                {
-                  "name": "DONER FACTOR",
-                  "amount": 140,
-                  "paymentDay": 13,
-                  "isRecurring": false,
-                  "id": "t0a9qgs59"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 193.87,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "pvc84q10o"
-                },
-                {
-                  "name": "NORMAL M@LND",
-                  "amount": 78,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "q6il8n3ae"
-                },
-                {
-                  "name": "DONER FACTOR",
-                  "amount": 140,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "yr44ltuh7"
-                },
-                {
-                  "name": "Hono",
-                  "amount": 138,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "lkhtr2o9u"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 154.28,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "xk8bkf2ht"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 47.97,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "2fhspym1f"
-                },
-                {
-                  "name": "NORMAL M@LND",
-                  "amount": 19,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "jmga3rf7p"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 62.35,
-                  "paymentDay": 6,
-                  "isRecurring": false,
-                  "id": "ibh0r1ruo"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 197.24,
-                  "paymentDay": 5,
-                  "isRecurring": false,
-                  "id": "zvcyt80sb"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 181.14,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "mvnwz0wt5"
-                },
-                {
-                  "name": "M/S GOTAPETT",
-                  "amount": 79,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "2bkiak5da"
-                },
-                {
-                  "name": "ICA KVANTUM",
-                  "amount": 101.95,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "aimpttner"
-                },
-                {
-                  "name": "HEMKOP MOLND",
-                  "amount": 368.76,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "5op373vov"
-                }
-              ],
+              "expenses": [],
               "order": 1
             },
             {
-              "id": "fzk0b4civ",
+              "id": "ahe21xzep",
               "name": "Transportation",
               "color": "#2196F3",
-              "expenses": [
-                {
-                  "name": "Västtrafik T Swish Västtr",
-                  "amount": 860,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "hlxb01clh"
-                },
-                {
-                  "name": "Billetto Swish Billet",
-                  "amount": 220,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "yrll65q82"
-                }
-              ],
+              "expenses": [],
               "order": 2
             },
             {
-              "id": "hhrmn9ozh",
+              "id": "oehpvjv51",
               "name": "Entertainment",
               "color": "#9C27B0",
-              "expenses": [
-                {
-                  "name": "PAYPAL *G2A",
-                  "amount": 104.62,
-                  "paymentDay": 29,
-                  "isRecurring": false,
-                  "id": "2idgf5aad"
-                },
-                {
-                  "name": "PAYPAL *G2A",
-                  "amount": 115.07,
-                  "paymentDay": 27,
-                  "isRecurring": false,
-                  "id": "vuo5d5grr"
-                },
-                {
-                  "name": "PAYPAL *G2A",
-                  "amount": 115.07,
-                  "paymentDay": 27,
-                  "isRecurring": false,
-                  "id": "h1oydfyay"
-                },
-                {
-                  "name": "nordicwell",
-                  "amount": 629,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "dzh7m2r06"
-                },
-                {
-                  "name": "PAYPAL *G2A",
-                  "amount": 160.89,
-                  "paymentDay": 25,
-                  "isRecurring": false,
-                  "id": "8x5rmy1za"
-                },
-                {
-                  "name": "GOOGLE *Goog",
-                  "amount": 255,
-                  "paymentDay": 19,
-                  "isRecurring": false,
-                  "id": "45508yfp6"
-                },
-                {
-                  "name": "APPLE.COM/BI",
-                  "amount": 85,
-                  "paymentDay": 18,
-                  "isRecurring": false,
-                  "id": "g1xenx5cs"
-                },
-                {
-                  "name": "NETFLIX.COM",
-                  "amount": 115.76,
-                  "paymentDay": 18,
-                  "isRecurring": false,
-                  "id": "xgtdg3efz"
-                },
-                {
-                  "name": "MICROSOFT*XB",
-                  "amount": 13.5,
-                  "paymentDay": 13,
-                  "isRecurring": false,
-                  "id": "raht70ncz"
-                },
-                {
-                  "name": "PAYPAL *DISN",
-                  "amount": 129.29,
-                  "paymentDay": 11,
-                  "isRecurring": false,
-                  "id": "o1rz2djpc"
-                },
-                {
-                  "name": "help.hbomax.",
-                  "amount": 89,
-                  "paymentDay": 8,
-                  "isRecurring": false,
-                  "id": "x6ziq9kpf"
-                },
-                {
-                  "name": "MICROSOFT*XB",
-                  "amount": 70.2,
-                  "paymentDay": 8,
-                  "isRecurring": false,
-                  "id": "3sttk6j1p"
-                },
-                {
-                  "name": "UDEMY: ONLIN",
-                  "amount": 110.54,
-                  "paymentDay": 7,
-                  "isRecurring": false,
-                  "id": "izokzms8t"
-                },
-                {
-                  "name": "APPLE.COM/BI",
-                  "amount": 199,
-                  "paymentDay": 5,
-                  "isRecurring": false,
-                  "id": "2p0yhcjzw"
-                },
-                {
-                  "name": "Amazon Prime",
-                  "amount": 69,
-                  "paymentDay": 4,
-                  "isRecurring": false,
-                  "id": "34rtj9ynw"
-                }
-              ],
+              "expenses": [],
               "order": 3
+            },
+            {
+              "id": "5idjxbqrb",
+              "name": "Fixed",
+              "color": "#DD2C00",
+              "expenses": [],
+              "order": 4
+            },
+            {
+              "id": "rowv5oret",
+              "name": "Beauty",
+              "color": "#FF5252",
+              "expenses": [],
+              "order": 5
             }
           ]
         }
       },
       "pdfConfig": {
-        "mappings": {},
+        "mappings": {
+          "nordicwell": "5idjxbqrb",
+          "HEMKOP MOLNDAL C": "ervjbi8kp",
+          "DONER FACTORY": "ervjbi8kp",
+          "GOOGLE *Google O": "5idjxbqrb",
+          "PAYPAL *G2A COM": "oehpvjv51",
+          "Swish Billetto": "oehpvjv51",
+          "Hono": "ervjbi8kp",
+          "CAPIO PRIM#RV$R": "5idjxbqrb",
+          "NORMAL M@LNDAL": "rowv5oret",
+          "COOP LUNDBY": "ervjbi8kp",
+          "APPLE.COM/BILL": "5idjxbqrb",
+          "NETFLIX.COM": "5idjxbqrb",
+          "PAYPAL *MIC": "5idjxbqrb",
+          "MICROSOFT*XBOX": "5idjxbqrb",
+          "SQSP* DOMAINÄ234": "oehpvjv51",
+          "PAYPAL *DISNEYPL": "5idjxbqrb",
+          "help.hbomax.com": "5idjxbqrb",
+          "UDEMY: ONLINE CO": "oehpvjv51",
+          "YAM TAM TEAM": "ervjbi8kp",
+          "M/S GOTAPETTER": "oehpvjv51",
+          "ICA KVANTUM MOLN": "ervjbi8kp",
+          "CAKTO PAY LT*com": "5idjxbqrb",
+          "CLAS OHLSON 258": "1x03f89eh",
+          "NYX*Kuario": "1x03f89eh",
+          "Amazon Prime": "5idjxbqrb",
+          "UNIONEN": "5idjxbqrb",
+          "Pressbyran 40502": "ervjbi8kp",
+          "OLSTUGAN TULLEN": "oehpvjv51",
+          "Vimla": "5idjxbqrb",
+          "FRISKTANDV": "5idjxbqrb",
+          "Swish Hemköp": "ervjbi8kp",
+          "Avier Unionen A-": "5idjxbqrb",
+          "SE01057 TZ-SHOP": "oehpvjv51",
+          "AmazonRetail*NN2": "oehpvjv51",
+          "Kronans Apotek A": "5idjxbqrb",
+          "CSN": "5idjxbqrb",
+          "Thai Express": "ervjbi8kp",
+          "KAGE BAREN": "ervjbi8kp"
+        },
         "ignored": []
       }
     }
