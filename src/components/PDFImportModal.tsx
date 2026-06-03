@@ -27,6 +27,10 @@ interface ParsedTx {
   date: string;
   // Extracted day of the month
   paymentDay: number;
+  // Month of the transaction (0-indexed)
+  month: number;
+  // Year of the transaction (4-digit)
+  year: number;
   // Description or name of merchant
   description: string;
   // Cost value of transaction
@@ -47,8 +51,8 @@ interface PDFImportModalProps {
 
 // Implement the React functional component for bank statement importing
 const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
-  // Get active categories list, addExpenses, addMissingCategories, pdfConfig, and updatePDFConfig helper from context
-  const { categories, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig } = useBudget();
+  // Get active categories list, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, and currentYear helper from context
+  const { categories, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, currentYear } = useBudget();
   // Get formatCurrency helper function from localization hook context
   const { formatCurrency } = useLocalization();
   // Manage file drag-over hover state
@@ -136,12 +140,23 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     };
     // Loop through keyword mappings
     for (const [catName, keywords] of Object.entries(keywordMappings)) {
-      // Check if any keyword matches search query
-      if (keywords.some((kw) => search.includes(kw))) {
+      // Check if any keyword matches the search query, with special handling for internet utility transfers
+      if (keywords.some((kw) => {
+        // Skip matching if keyword is internet but description refers to a transfer
+        if (kw === 'internet' && (search.includes('överföring') || search.includes('overforing') || search.includes('transfer'))) {
+          // Do not match this keyword
+          return false;
+        // Close conditional block for internet transfer check
+        }
+        // Match if the search text contains the keyword
+        return search.includes(kw);
+      // Close keyword verification check
+      })) {
         // Find existing category matching mapped name
         const match = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
         // Return category identifier if found
         if (match) return match.id;
+      // Close condition check
       }
     }
     // Loop through list of existing categories
@@ -154,8 +169,42 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         return cat.id;
       }
     }
-    // Return first category as fallback if any exist
-    return categories.length > 0 ? categories[0].id : '';
+    // Return empty string as fallback indicating unmapped
+    return '';
+  };
+
+  // Helper to parse year, month (0-indexed), and day from date string
+  const parseDateParts = (dateStr: string): { year: number; month: number; day: number } => {
+    // Match numeric segments in the date string
+    const parts = dateStr.match(/\d+/g);
+    // Return default values if segments count is insufficient
+    if (!parts || parts.length < 3) {
+      // Fallback object representation
+      return { year: currentYear, month: currentMonth, day: 1 };
+    }
+    // Parse first segment
+    const p0 = parseInt(parts[0]);
+    // Parse second segment
+    const p1 = parseInt(parts[1]);
+    // Parse third segment
+    const p2 = parseInt(parts[2]);
+    // Check if first segment is 4-digit year
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD format
+      return { year: p0, month: p1 - 1, day: p2 };
+    }
+    // Check if third segment is 4-digit year
+    if (parts[2].length === 4) {
+      // DD-MM-YYYY or MM-DD-YYYY format (assume European style DD-MM-YYYY)
+      return { year: p2, month: p1 - 1, day: p0 };
+    }
+    // Check if first segment is 2-digit year (assume YY-MM-DD)
+    if (p0 < 100) {
+      // YY-MM-DD format
+      return { year: 2000 + p0, month: p1 - 1, day: p2 };
+    }
+    // Fallback default
+    return { year: currentYear, month: currentMonth, day: 1 };
   };
 
   // Helper to parse CSV format statement text
@@ -365,23 +414,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           // Continue loop
           continue;
         }
-        // Match numbers in date string to extract day
-        const dateParts = dateMatch[0].match(/\d+/g);
-        // Default payment day value
-        let payDay = 1;
-        // Verify segments size
-        if (dateParts && dateParts.length >= 2) {
-          // If first segment is four-digit year
-          if (dateParts[0].length === 4) {
-            // Set payDay to third segment
-            payDay = parseInt(dateParts[2]) || 1;
-          }
-          // Otherwise set payDay to first segment
-          else {
-            // Set payDay to first segment
-            payDay = parseInt(dateParts[0]) || 1;
-          }
-        }
+        // Parse date segments using helper
+        const { year: parsedYear, month: parsedMonth, day: parsedDay } = parseDateParts(dateMatch[0]);
         // Clean spaces and replace decimal comma with dot
         const cleanAmtStr = rawAmount.replace(/\s/g, '').replace(/,/g, '.');
         // Parse float value from cleaned string representation
@@ -394,7 +428,9 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         // Clean description text
         const cleanDesc = rawDesc.replace(/\s+/g, ' ').trim() || 'CSV Transaction';
         // Check saved mappings configuration
-        const savedCategoryId = pdfConfig?.mappings[cleanDesc];
+        const rawSavedCategoryId = pdfConfig?.mappings[cleanDesc];
+        // Validate saved category ID still exists in the current categories list
+        const savedCategoryId = rawSavedCategoryId && categories.some((c) => c.id === rawSavedCategoryId) ? rawSavedCategoryId : undefined;
         // Check saved ignored configuration
         const isIgnored = pdfConfig?.ignored.includes(cleanDesc);
         // Check transaction type based on original amountVal sign
@@ -406,13 +442,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           // Set date
           date: dateMatch[0],
           // Set payment day constrained between 1 and 31
-          paymentDay: Math.min(Math.max(payDay, 1), 31),
+          paymentDay: Math.min(Math.max(parsedDay, 1), 31),
+          // Set parsed month
+          month: parsedMonth,
+          // Set parsed year
+          year: parsedYear,
           // Set description
           description: cleanDesc,
           // Set absolute amount value
           amount: Math.abs(amountVal),
-          // Set selected state
-          selected: !isIgnored,
+          // Set selected state — deselect received (income) transactions by default
+          selected: !isIgnored && txType === 'sent',
           // Assign resolved category ID
           categoryId: savedCategoryId || findMatchingCategory(cleanDesc),
           // Assign transaction type
@@ -652,23 +692,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           if (dateMatch) {
             // Assign date string to matched segment
             dateStr = dateMatch[0];
-            // Extract numbers from date format
-            const dateNumbers = dateStr.match(/\d+/g);
-            // Verify segments count
-            if (dateNumbers && dateNumbers.length >= 2) {
-              // If first segment is four-digit year
-              if (dateNumbers[0].length === 4) {
-                // Set payDay to third segment
-                payDay = parseInt(dateNumbers[2]) || 1;
-              }
-              // Otherwise set payDay to first segment
-              else {
-                // Set payDay to first segment
-                payDay = parseInt(dateNumbers[0]) || 1;
-              }
-            }
           }
         }
+        // Parse date segments using helper
+        const { year: parsedYear, month: parsedMonth, day: parsedDay } = parseDateParts(dateStr);
         // Clean spaces and parse float value from amount
         const amountVal = typeof rawAmount === 'number' ? rawAmount : parseFloat(String(rawAmount).replace(/\s/g, '').replace(/,/g, '.'));
         // Skip row if parsing resulted in non-numeric values
@@ -679,7 +706,9 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         // Clean description text representation
         const cleanDesc = String(rawDesc).replace(/\s+/g, ' ').trim() || 'Excel Transaction';
         // Check saved mappings configuration
-        const savedCategoryId = pdfConfig?.mappings[cleanDesc];
+        const rawSavedCategoryId2 = pdfConfig?.mappings[cleanDesc];
+        // Validate saved category ID still exists in the current categories list
+        const savedCategoryId = rawSavedCategoryId2 && categories.some((c) => c.id === rawSavedCategoryId2) ? rawSavedCategoryId2 : undefined;
         // Check saved ignored configuration
         const isIgnored = pdfConfig?.ignored.includes(cleanDesc);
         // Check transaction type based on original amountVal sign
@@ -691,13 +720,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           // Set date
           date: dateStr,
           // Set payment day constrained between 1 and 31
-          paymentDay: Math.min(Math.max(payDay, 1), 31),
+          paymentDay: Math.min(Math.max(parsedDay, 1), 31),
+          // Set parsed month
+          month: parsedMonth,
+          // Set parsed year
+          year: parsedYear,
           // Set description
           description: cleanDesc,
           // Set absolute amount value
           amount: Math.abs(amountVal),
-          // Set selected state
-          selected: !isIgnored,
+          // Set selected state — deselect received (income) transactions by default
+          selected: !isIgnored && txType === 'sent',
           // Assign resolved category ID
           categoryId: savedCategoryId || findMatchingCategory(cleanDesc),
           // Assign transaction type
@@ -1185,23 +1218,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         const amountVal = parseFloat(cleanAmountStr);
         // Skip row if parsing resulted in non-numeric values
         if (isNaN(amountVal)) continue;
-        // Match digits inside date string format
-        const numbers = dateMatch[0].match(/\d+/g);
-        // Declare day index fallback
-        let paymentDay = 1;
-        // Verify digits array content count
-        if (numbers && numbers.length >= 2) {
-          // Determine format starting with four-digit year
-          if (numbers[0].length === 4) {
-            // Take third segment as day
-            paymentDay = parseInt(numbers[2]) || 1;
-          } else {
-            // Take first segment as day
-            paymentDay = parseInt(numbers[0]) || 1;
-          }
-        }
         // Save matched date string text
         const dateStr = dateMatch[0];
+        // Parse date segments using helper
+        const { year: parsedYear, month: parsedMonth, day: parsedDay } = parseDateParts(dateStr);
         // Clean description by removing date, amounts, references, and extra spaces
         let cleanDesc = line;
         // Remove date sequences from description
@@ -1236,7 +1256,9 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         // Fallback name if description resolved empty
         if (!cleanDesc) cleanDesc = 'Bank Transaction';
         // Check if there is a saved mapping for this description
-        const savedCategoryId = pdfConfig?.mappings[cleanDesc];
+        const rawSavedCategoryId3 = pdfConfig?.mappings[cleanDesc];
+        // Validate saved category ID still exists in the current categories list
+        const savedCategoryId = rawSavedCategoryId3 && categories.some((c) => c.id === rawSavedCategoryId3) ? rawSavedCategoryId3 : undefined;
         // Check if this description is flagged to ignore
         const isIgnored = pdfConfig?.ignored.includes(cleanDesc);
         // Check transaction type based on original amountVal sign
@@ -1248,7 +1270,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           // Set raw date
           date: dateStr,
           // Constrain paymentDay between 1 and 31
-          paymentDay: Math.min(Math.max(paymentDay, 1), 31),
+          paymentDay: Math.min(Math.max(parsedDay, 1), 31),
+          // Set parsed month
+          month: parsedMonth,
+          // Set parsed year
+          year: parsedYear,
           // Assign description
           description: cleanDesc,
           // Save absolute amount values converted to SEK
@@ -1358,10 +1384,12 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Perform actual import operation saving config and inserting selected expenses
   const executeImport = () => {
-    // Filter active items checked selected
-    const toImport = transactions.filter((tx) => tx.selected && tx.categoryId);
-    // Map transactions into formatted batch expense items
-    const expensesPayload = toImport.map((tx) => ({
+    // Filter active items checked selected and matching current month/year
+    const toImport = transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear);
+    // Filter out transactions whose category ID no longer exists in the categories list
+    const validToImport = toImport.filter((tx) => categories.some((c) => c.id === tx.categoryId));
+    // Map valid transactions into formatted batch expense items
+    const expensesPayload = validToImport.map((tx) => ({
       // Target category ID
       categoryId: tx.categoryId,
       // Target expense payload
@@ -1417,12 +1445,19 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Import selected transaction entries into context database
   const handleImport = () => {
-    // Extract all selected transactions
-    const selectedTxs = transactions.filter((tx) => tx.selected);
+    // Extract all selected transactions for current month/year
+    const selectedTxs = transactions.filter((tx) => tx.selected && tx.month === currentMonth && tx.year === currentYear);
+    // Block import if no transactions match current month/year
+    if (selectedTxs.length === 0) {
+      // Show error message
+      setStatusMessage("No transactions for the current month to import.");
+      // Stop execution
+      return;
+    }
     // Identify selected transactions that have a valid category
     const validToImport = selectedTxs.filter((tx) => tx.categoryId);
     // Block import if any selected transaction is missing a category
-    if (selectedTxs.length > 0 && validToImport.length !== selectedTxs.length) {
+    if (validToImport.length !== selectedTxs.length) {
       // Show error message
       setStatusMessage("Please map categories for all selected transactions before importing.");
       // Stop execution
@@ -1699,8 +1734,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     updatePDFConfig({ mappings: pdfConfig?.mappings || {}, ignored });
   };
 
-  // Filter transactions list dynamically matching search and selections
+  // Filter transactions list dynamically matching search, selections, and active month/year
   const filteredTransactions = transactions.filter((tx) => {
+    // Verify transaction belongs to currently viewed month and year
+    const matchesMonthYear = tx.month === currentMonth && tx.year === currentYear;
     // Check search query text match
     const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase());
     // Track selection status verification
@@ -1731,8 +1768,53 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
       matchesStatus = tx.type === 'sent';
     }
     // Return combined evaluation matches
-    return matchesSearch && matchesStatus;
+    return matchesMonthYear && matchesSearch && matchesStatus;
   });
+
+  // Count how many loaded transactions belong to other months
+  const otherMonthsCount = transactions.filter((tx) => tx.month !== currentMonth || tx.year !== currentYear).length;
+
+  // Check if status message represents an error
+  const isErrorStatus = statusMessage.toLowerCase().includes('error') || 
+                        // Match unsupported file format keyword
+                        statusMessage.toLowerCase().includes('unsupported') || 
+                        // Match no transactions keyword
+                        statusMessage.toLowerCase().includes('no transactions') || 
+                        // Match category mapping warning keyword
+                        statusMessage.toLowerCase().includes('please map');
+  // Check if status message represents a success transaction count load
+  const isSuccessStatus = statusMessage.toLowerCase().includes('found');
+  // Determine dynamic text color based on message types
+  const statusColor = isErrorStatus 
+    // Return red for errors
+    ? 'var(--firebase-red)' 
+    // Check success status
+    : (isSuccessStatus 
+      // Return green for success
+      ? '#4caf50' 
+      // Return secondary text color for info/progress messages
+      : 'var(--text-secondary)');
+
+  // Helper method to safely render status messages without inline JSX comment issues
+  const renderStatus = () => {
+    // Check if status message is empty
+    if (!statusMessage) {
+      // Return null if empty
+      return null;
+    // Close check
+    }
+    // Return colored paragraph element
+    return (
+      // Paragraph container with dynamic color
+      <p style={{ color: statusColor, fontSize: '0.85rem', margin: 0 }}>
+        {/* Render text */}
+        {statusMessage}
+      {/* End paragraph */}
+      </p>
+    // Close return statement
+    );
+  // Close helper method
+  };
 
   // Render modal layout template
   return (
@@ -1848,14 +1930,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   {/* Descriptive mobile touch message */}
                   Tap to choose a statement PDF, CSV, or Excel file
                 </p>
-                {/* Display dynamic helper status error texts */}
-                {statusMessage && (
-                  // Paragraph status display text
-                  <p style={{ color: 'var(--firebase-red)', fontSize: '0.85rem', margin: 0 }}>
-                    {/* Dynamic value */}
-                    {statusMessage}
-                  </p>
-                )}
+                {/* Render dynamic status message element */}
+                {renderStatus()}
               </div>
             )
           ) : step === 2 ? (
@@ -1903,6 +1979,27 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                 </div>
               </div>
 
+              {/* Check if transactions from other months were found */}
+              {otherMonthsCount > 0 && (
+                // Warning container banner
+                <div 
+                  // CSS styles matching theme
+                  style={{
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    border: '1px solid rgba(255, 152, 0, 0.3)',
+                    borderRadius: '8px',
+                    padding: '0.6rem 0.8rem',
+                    marginBottom: '0.75rem',
+                    color: '#ffa726',
+                    fontSize: '0.8rem',
+                    lineHeight: '1.4'
+                  }}
+                >
+                  {/* Warning message text */}
+                  ⚠️ {otherMonthsCount} transactions from other months were skipped. Change the active month on the dashboard to import them.
+                </div>
+              )}
+
               {/* Selection summary statistics row toolbar */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0 0.75rem 0' }}>
                 {/* Filtered count matching description search query */}
@@ -1936,7 +2033,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               </div>
 
               {/* Scrollable list containing filtered transaction entries */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '45vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Iterate transactions row cards */}
                 {filteredTransactions.map((tx) => {
                   // Resolve category color
@@ -1970,7 +2067,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                       </div>
                       {/* Text card content block display as horizontal row container */}
                       <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
-                        {/* Center block to stack description and date vertically */}
+                        {/* Center block to stack description, date, and category selector vertically */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
                           {/* Display read-only transaction description text */}
                           <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1982,6 +2079,38 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                             {/* Print raw date */}
                             {tx.date}
                           </span>
+                          {/* Category select dropdown */}
+                          <select
+                            // Selected bound value
+                            value={tx.categoryId}
+                            // Category changed update handler
+                            onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
+                            // Dropdown styling
+                            style={{
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              borderRadius: '4px',
+                              color: '#fff',
+                              fontSize: '0.75rem',
+                              padding: '0.15rem 0.35rem',
+                              marginTop: '0.25rem',
+                              width: '100%',
+                              maxWidth: '180px',
+                              cursor: 'pointer',
+                              outline: 'none'
+                            }}
+                          >
+                            {/* Option label placeholder */}
+                            <option value="" style={{ backgroundColor: '#1e1e1e' }}>-- Map Category --</option>
+                            {/* Loop categories option items */}
+                            {categories.map((cat) => (
+                              // Option element
+                              <option key={cat.id} value={cat.id} style={{ backgroundColor: '#1e1e1e' }}>
+                                {/* Category name */}
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                         {/* Right aligned transaction amount */}
                         <span className={styles.amount} style={{ color: tx.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
@@ -2040,6 +2169,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                     const isIgnored = pdfConfig?.ignored.includes(name);
                     // Resolve mapped category ID if present
                     const currentCatId = pdfConfig?.mappings[name] || '';
+                    // Determine if mapped category ID still exists in the categories list
+                    const isMappedCatDeleted = currentCatId !== '' && !categories.some((c) => c.id === currentCatId);
                     // Return individual merchant row layout
                     return (
                       // Card container row
@@ -2049,11 +2180,13 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                         {/* Category map dropdown selector */}
                         <select
                           // Selected bound value
-                          value={currentCatId}
+                          value={isMappedCatDeleted ? '__DELETED__' : currentCatId}
                           // Selection changed update callback
                           onChange={(e) => {
                             // Extract target value string
                             const val = e.target.value;
+                            // Skip deleted sentinel value selections
+                            if (val === '__DELETED__') return;
                             // Check if option is to create new category
                             if (val === 'CREATE_NEW') {
                               // Trigger create category modal for this merchant mapping
@@ -2083,6 +2216,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                         >
                           {/* Option label placeholder */}
                           <option value="">-- Map Category --</option>
+                          {/* Show deleted category sentinel option when mapped cat no longer exists */}
+                          {isMappedCatDeleted && (
+                            // Disabled placeholder option indicating the previously mapped category was deleted
+                            <option value="__DELETED__" disabled style={{ color: '#ef4444' }}>⚠ (Deleted Category)</option>
+                          )}
                           {/* Option to create a new category inline */}
                           <option value="CREATE_NEW">+ Create New Category</option>
                           {/* Loop database categories */}
@@ -2427,13 +2565,13 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
             </div>
             {/* Confirmation modal body */}
             <div className={styles.body}>
-              {/* Count of transactions text */}
+              {/* Count of transactions text — filtered to current month/year and existing categories matching executeImport logic */}
               <p className={styles.pickerText} style={{ marginBottom: '0.75rem' }}>
-                You are about to import {transactions.filter((tx) => tx.selected).length} transactions.
+                You are about to import {transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear && categories.some((c) => c.id === tx.categoryId)).length} transactions.
               </p>
-              {/* Total sum text */}
+              {/* Total sum text — filtered to current month/year and existing categories matching executeImport logic */}
               <p className={styles.pickerText} style={{ fontWeight: 600 }}>
-                Total amount: {formatCurrency(transactions.filter((tx) => tx.selected).reduce((sum, tx) => sum + tx.amount, 0))}
+                Total amount: {formatCurrency(transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear && categories.some((c) => c.id === tx.categoryId)).reduce((sum, tx) => sum + tx.amount, 0))}
               </p>
             </div>
             {/* Confirmation modal footer */}
