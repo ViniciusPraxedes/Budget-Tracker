@@ -1,0 +1,86 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.title {
+    margin: 0;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.userProfile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.userImage {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.userName {
+    color: var(--text-secondary);
+}
+
+.logoutBtn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.loginContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 2rem;
+}
+
+.loginTitle {
+    font-size: 2.5rem;
+    color: var(--firebase-yellow);
+}
+
+.loginBtn {
+    background: white;
+    color: #333;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.googleIcon {
+    width: 24px;
+    height: 24px;
+}

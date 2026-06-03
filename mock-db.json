@@ -1,0 +1,141 @@
+{
+  "users": {
+    "test-user": {
+      "totalSavings": 15000,
+      "defaultMonth": 5,
+      "defaultYear": 2026,
+      "months": {
+        "2026-5": {
+          "month": 5,
+          "year": 2026,
+          "income": 45000,
+          "categories": [
+            {
+              "id": "lt6cz9182",
+              "name": "Entertainment",
+              "color": "#9C27B0",
+              "order": 0,
+              "expenses": [
+                {
+                  "id": "o0fcm90l5",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "ps6eg5u5e",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                },
+                {
+                  "id": "vsfa1ce1r",
+                  "name": "Movies",
+                  "amount": 300,
+                  "paymentDay": 14,
+                  "isRecurring": false
+                }
+              ]
+            },
+            {
+              "id": "0fk5zajjl",
+              "name": "Housing",
+              "color": "#FF5722",
+              "order": 1,
+              "expenses": [
+                {
+                  "id": "954t4ppwe",
+                  "name": "Rent",
+                  "amount": 12000,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "a6sacknzq",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "vk88u90jt",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                },
+                {
+                  "id": "utt1bq98s",
+                  "name": "Test Expense",
+                  "amount": 100,
+                  "paymentDay": 10,
+                  "isRecurring": false
+                }
+              ]
+            },
+            {
+              "id": "sizq67u46",
+              "name": "Food",
+              "color": "#4CAF50",
+              "order": 2,
+              "expenses": [
+                {
+                  "id": "z6dhvoxfg",
+                  "name": "Groceries",
+                  "amount": 4000,
+                  "paymentDay": 10,
+                  "isRecurring": false
+                },
+                {
+                  "id": "so6jkcz3e",
+                  "name": "Dining Out",
+                  "amount": 1200,
+                  "paymentDay": 15,
+                  "isRecurring": false
+                },
+                {
+                  "id": "qlrc3dy8l",
+                  "name": "Coffee",
+                  "amount": 400,
+                  "paymentDay": 20,
+                  "isRecurring": false
+                }
+              ]
+            },
+            {
+              "id": "d13tc6vkj",
+              "name": "Transportation",
+              "color": "#2196F3",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "98czjnyet",
+                  "name": "Gas",
+                  "amount": 1000,
+                  "paymentDay": 12,
+                  "isRecurring": false
+                },
+                {
+                  "id": "pnv1yxcyk",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                },
+                {
+                  "id": "hxg96jbr6",
+                  "name": "Public Transit",
+                  "amount": 300,
+                  "paymentDay": 2,
+                  "isRecurring": false
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

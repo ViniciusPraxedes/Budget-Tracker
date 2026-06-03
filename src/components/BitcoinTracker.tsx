@@ -8,6 +8,14 @@ const BitcoinTracker: React.FC = () => {
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(true);
 
+    const formatCurrency = (val: number, currency: 'USD' | 'SEK') => {
+        return new Intl.NumberFormat(currency === 'SEK' ? 'sv-SE' : 'en-US', {
+            style: 'currency',
+            currency: currency,
+            maximumFractionDigits: 0
+        }).format(val);
+    };
+
     // Load saved amount on mount
     useEffect(() => {
         const savedAmount = localStorage.getItem('btcAmount');
@@ -46,13 +54,6 @@ const BitcoinTracker: React.FC = () => {
         const val = e.target.value;
         setBtcAmount(val);
         localStorage.setItem('btcAmount', val);
-    };
-
-    const formatCurrency = (val: number, currency: 'USD' | 'SEK') => {
-        return new Intl.NumberFormat(currency === 'SEK' ? 'sv-SE' : 'en-US', {
-            style: 'currency',
-            currency: currency
-        }).format(val);
     };
 
     const amount = parseFloat(btcAmount);

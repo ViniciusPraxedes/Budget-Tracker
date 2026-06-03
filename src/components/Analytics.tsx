@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useBudget } from '../context/BudgetContext';
+import { useLocalization } from '../context/LocalizationContext';
 import Box from './Box';
 
 const Analytics: React.FC = () => {
     const { categories } = useBudget();
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const data = categories.map(cat => ({
         name: cat.name,
@@ -14,9 +16,7 @@ const Analytics: React.FC = () => {
 
     const totalValue = data.reduce((sum, item) => sum + item.value, 0);
 
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(val);
-    };
+    const { formatCurrency } = useLocalization();
 
     const formatPercentage = (val: number) => {
         return `${((val / totalValue) * 100).toFixed(1)}%`;
@@ -46,42 +46,26 @@ const Analytics: React.FC = () => {
         return null;
     };
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
-        const RADIAN = Math.PI / 180;
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-        return (
-            <text
-                x={x}
-                y={y}
-                fill="white"
-                textAnchor="middle"
-                dominantBaseline="central"
-                style={{ fontSize: '0.8rem', fontWeight: 'bold', textShadow: '0px 0px 2px rgba(0,0,0,0.8)', pointerEvents: 'none' }}
-            >
-                {`${(percent * 100).toFixed(0)}%`}
-            </text>
-        );
-    };
+    const centerValue = activeIndex !== null && data[activeIndex] ? data[activeIndex].value : totalValue;
+    const centerLabel = activeIndex !== null && data[activeIndex] ? data[activeIndex].name : 'Total';
 
     return (
         <Box title="Expenses Breakdown" style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ height: '300px' }}>
+                <div style={{ height: '300px', position: 'relative' }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={data}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={100}
+                                innerRadius={70}
+                                outerRadius={110}
                                 paddingAngle={5}
                                 dataKey="value"
-                                label={renderCustomizedLabel}
                                 labelLine={false}
+                                onMouseEnter={(_, index) => setActiveIndex(index)}
+                                onMouseLeave={() => setActiveIndex(null)}
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
@@ -90,6 +74,22 @@ const Analytics: React.FC = () => {
                             <Tooltip content={<CustomTooltip />} />
                         </PieChart>
                     </ResponsiveContainer>
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                        transition: 'all 0.3s ease'
+                    }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {centerLabel}
+                        </div>
+                        <div className="tabular-nums" style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', marginTop: '0.2rem' }}>
+                            {formatCurrency(centerValue)}
+                        </div>
+                    </div>
                 </div>
 
                 <div style={{

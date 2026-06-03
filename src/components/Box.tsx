@@ -10,13 +10,10 @@ interface BoxProps {
 const Box: React.FC<BoxProps> = ({ children, title, className = '', style = {} }) => {
     return (
         <div
-            className={`box ${className}`}
+            className={`box glass-panel fade-in ${className}`}
             style={{
-                backgroundColor: 'var(--surface-dark)',
                 borderRadius: '12px',
                 padding: '1.5rem',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
                 ...style
             }}
         >

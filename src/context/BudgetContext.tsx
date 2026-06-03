@@ -2,8 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { BudgetContextType, Category, Expense, MonthData } from '../types';
+// Import Firestore database connection from local config
 import { db } from '../firebase';
-import { doc, onSnapshot, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+// Import required document, collection, and query methods from Firebase Firestore SDK
+import { doc, getDoc, collection, query, orderBy, limit, getDocs, setDoc } from 'firebase/firestore';
+import { useFirestoreSync } from './useFirestoreSync';
 import { useAuth } from './AuthContext';
 
 const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
@@ -16,101 +19,300 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-    const [income, setIncomeState] = useState(0);
-    const [categories, setCategoriesState] = useState<Category[]>([]);
-    const [loading, setLoading] = useState(true);
+    const currentKey = getMonthKey(currentMonth, currentYear);
+    const { incomeState: income, categoriesState: categories, setIncomeState, setCategoriesState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [totalSavings, setTotalSavings] = useState(0);
 
     const [defaultMonthSettings, setDefaultMonthSettings] = useState<{ month: number, year: number } | null>(null);
 
-    // Initialize to latest month with data on load
+    // Initialize user landing month and total savings preference from remote or local storage
     useEffect(() => {
+        // Define helper function to initialize month/year preference from local mock database
+        const initializeMockMonth = async () => {
+            // Attempt to query mock settings API
+            try {
+                // Fetch mock user object from API
+                const res = await fetch('/api/mock-db?userId=test-user', { cache: 'no-store' });
+                // Parse API response JSON
+                const userData = await res.json();
+                // Check if totalSavings is defined
+                if (userData.totalSavings !== undefined) {
+                    // Update total savings state
+                    setTotalSavings(userData.totalSavings);
+                // End of totalSavings check
+                }
+                // Check if defaultMonth and defaultYear are set
+                if (userData.defaultMonth !== undefined && userData.defaultMonth !== null && userData.defaultYear !== undefined && userData.defaultYear !== null) {
+                    // Update current month state
+                    setCurrentMonth(userData.defaultMonth);
+                    // Update current year state
+                    setCurrentYear(userData.defaultYear);
+                    // Update default month settings state
+                    setDefaultMonthSettings({ month: userData.defaultMonth, year: userData.defaultYear });
+                    // Exit early as default preference found
+                    return;
+                // End of default preferences check
+                }
+                // Fallback: search for latest month in months dictionary
+                if (userData.months && Object.keys(userData.months).length > 0) {
+                    // Get keys of all months
+                    const keys = Object.keys(userData.months);
+                    // Sort month keys in descending order (newest first)
+                    keys.sort((a, b) => {
+                        // Compare key strings directly
+                        return b.localeCompare(a);
+                    // End of sort callback
+                    });
+                    // Get latest month data
+                    const latestMonth = userData.months[keys[0]];
+                    // Check if latest month exists
+                    if (latestMonth && latestMonth.month !== undefined && latestMonth.year !== undefined) {
+                        // Set current month to latest month
+                        setCurrentMonth(latestMonth.month);
+                        // Set current year to latest year
+                        setCurrentYear(latestMonth.year);
+                    // End of latestMonth check
+                    }
+                // End of months check
+                }
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log mock initialization errors
+                console.error("Error fetching mock initialization data:", error);
+            // End of catch block
+            } finally {
+                // Toggle initialization loading status to true
+                setIsInitialized(true);
+            // End of finally block
+            }
+        // End of initializeMockMonth definition
+        };
+        // Define helper function to initialize month/year preference from Firestore
         const initializeMonth = async () => {
+            // Return early if no user logged in or initialization complete
             if (!user || isInitialized) return;
 
+            // Attempt to retrieve preferences from Firestore
             try {
-                // 1. Check for user default preference
+                // Get user configuration document reference
                 const userDocRef = doc(db, 'users', user.uid);
+                // Fetch document snapshot from Firestore
                 const userDocSnap = await getDoc(userDocRef);
 
+                // If user document exists in Firestore
                 if (userDocSnap.exists()) {
+                    // Parse data from document snapshot
                     const userData = userDocSnap.data();
-                    if (userData.defaultMonth !== undefined && userData.defaultYear !== undefined) {
-                        setCurrentMonth(userData.defaultMonth);
-                        setCurrentYear(userData.defaultYear);
-                        setDefaultMonthSettings({ month: userData.defaultMonth, year: userData.defaultYear });
-                        setIsInitialized(true);
-                        return; // Preference found, stop here
+                    // If total savings is defined
+                    if (userData.totalSavings !== undefined) {
+                        // Set savings state
+                        setTotalSavings(userData.totalSavings);
+                    // End of totalSavings validation
                     }
+                    // If default landing month and year preferences are set
+                    if (userData.defaultMonth !== undefined && userData.defaultYear !== undefined) {
+                        // Set month state
+                        setCurrentMonth(userData.defaultMonth);
+                        // Set year state
+                        setCurrentYear(userData.defaultYear);
+                        // Set default month settings state
+                        setDefaultMonthSettings({ month: userData.defaultMonth, year: userData.defaultYear });
+                        // Complete initialization
+                        setIsInitialized(true);
+                        // Exit early
+                        return;
+                    // End of default settings validation
+                    }
+                // End of document existence check
                 }
 
-                // 2. Fallback to latest month with data
+                // Query collections reference for months to fallback to latest active month
                 const monthsRef = collection(db, 'users', user.uid, 'months');
+                // Construct query to find latest month document
                 const q = query(monthsRef, orderBy('year', 'desc'), orderBy('month', 'desc'), limit(1));
+                // Fetch matching documents snapshot
                 const querySnapshot = await getDocs(q);
 
+                // Check if any month data is returned
                 if (!querySnapshot.empty) {
+                    // Get latest month document data
                     const latestDoc = querySnapshot.docs[0].data() as MonthData;
+                    // If month and year are defined
                     if (latestDoc.month !== undefined && latestDoc.year !== undefined) {
+                        // Set month state
                         setCurrentMonth(latestDoc.month);
+                        // Set year state
                         setCurrentYear(latestDoc.year);
+                    // End of latest month validation
                     }
+                // End of snapshot empty validation
                 }
+            // Catch Firestore document read errors
             } catch (error) {
+                // Log initialization errors
                 console.error("Error fetching initialization data:", error);
+            // End of catch block
             } finally {
+                // Complete initialization regardless of success
                 setIsInitialized(true);
+            // End of finally block
             }
+        // End of initializeMonth definition
         };
 
+        // If user is logged in as test user
+        if (user && user.uid === 'test-user') {
+            // Trigger mock initialization
+            initializeMockMonth();
+            // Return out
+            return;
+        // End of test user check
+        }
+
+        // Trigger standard initialization
         initializeMonth();
+    // Re-run initialization effect if user changes
     }, [user]);
 
+    // Function to persist user's default month preference
     const saveDefaultMonth = async (month: number, year: number) => {
+        // Return early if no active user session
         if (!user) return;
-        try {
-            await setDoc(doc(db, 'users', user.uid), {
-                defaultMonth: month,
-                defaultYear: year
-            }, { merge: true });
-            setDefaultMonthSettings({ month, year });
-        } catch (error) {
-            console.error("Error saving default month:", error);
+        // Check if user is the mock test user
+        if (user.uid === 'test-user') {
+            // Attempt to update mock database default month settings
+            try {
+                // Post new default settings to local API
+                await fetch('/api/mock-db', {
+                    // Use POST HTTP method
+                    method: 'POST',
+                    // Set request headers to JSON content type
+                    headers: {
+                        // Specify application/json content type
+                        'Content-Type': 'application/json'
+                    // End of headers object definition
+                    },
+                    // Stringify mock POST request parameters
+                    body: JSON.stringify({
+                        // User ID identifying mock session
+                        userId: 'test-user',
+                        // Specify update_settings action
+                        action: 'update_settings',
+                        // Settings details payload
+                        settings: {
+                            // Update default month index
+                            defaultMonth: month,
+                            // Update default year number
+                            defaultYear: year
+                        // End of settings object
+                        }
+                    // End of body stringification
+                    })
+                // End of fetch options definition
+                });
+                // Update default month settings state locally
+                setDefaultMonthSettings({ month, year });
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log error details to console
+                console.error("Error saving mock default month:", error);
+            // End of catch block
+            }
+            // Exit early
+            return;
+        // End of test-user default month conditional check
         }
+        // Attempt to write preference to Firestore
+        try {
+            // Write default month and year preference to user record
+            await setDoc(doc(db, 'users', user.uid), {
+                // Set default month
+                defaultMonth: month,
+                // Set default year
+                defaultYear: year
+            // Enable merge option to preserve other fields
+            }, { merge: true });
+            // Set state locally
+            setDefaultMonthSettings({ month, year });
+        // Catch database update errors
+        } catch (error) {
+            // Log saving preference errors
+            console.error("Error saving default month:", error);
+        // End of catch block
+        }
+    // End of saveDefaultMonth definition
     };
 
-    const currentKey = getMonthKey(currentMonth, currentYear);
-
-    // Subscribe to Firestore updates
-    useEffect(() => {
-        if (!user) {
-            setIncomeState(0);
-            setCategoriesState([]);
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        const docRef = doc(db, 'users', user.uid, 'months', currentKey);
-
-        const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data() as MonthData;
-                setIncomeState(data.income || 0);
-                const fetchedCategories = data.categories || [];
-                // Sort by order
-                fetchedCategories.sort((a, b) => (a.order || 0) - (b.order || 0));
-                setCategoriesState(fetchedCategories);
-            } else {
-                // Initialize if doesn't exist
-                setIncomeState(0);
-                setCategoriesState([]);
+    // Function to update and persist total savings amount
+    const updateTotalSavings = async (amount: number) => {
+        // Set local total savings state immediately
+        setTotalSavings(amount);
+        // Return early if no active user session
+        if (!user) return;
+        // Check if user is the mock test user
+        if (user.uid === 'test-user') {
+            // Attempt to update mock database total savings
+            try {
+                // Post new savings amount to local API
+                await fetch('/api/mock-db', {
+                    // Use POST HTTP method
+                    method: 'POST',
+                    // Set request headers to JSON content type
+                    headers: {
+                        // Specify application/json content type
+                        'Content-Type': 'application/json'
+                    // End of headers object definition
+                    },
+                    // Stringify mock POST request parameters
+                    body: JSON.stringify({
+                        // User ID identifying mock session
+                        userId: 'test-user',
+                        // Specify update_settings action
+                        action: 'update_settings',
+                        // Settings details payload
+                        settings: {
+                            // Update total savings
+                            totalSavings: amount
+                        // End of settings object
+                        }
+                    // End of body stringification
+                    })
+                // End of fetch options definition
+                });
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log error details to console
+                console.error("Error saving mock total savings:", error);
+            // End of catch block
             }
-            setLoading(false);
-        });
+            // Exit early
+            return;
+        // End of test-user total savings conditional check
+        }
+        // Attempt Firestore write
+        try {
+            // Lazy load setDoc function from Firestore
+            const { setDoc: lazySetDoc } = await import('firebase/firestore');
+            // Write updated savings amount to user document
+            await lazySetDoc(doc(db, 'users', user.uid), {
+                // Set savings amount
+                totalSavings: amount
+            // Merge to preserve existing preferences
+            }, { merge: true });
+        // Catch saving errors
+        } catch (error) {
+            // Log update total savings errors
+            console.error("Error saving total savings:", error);
+        // End of catch block
+        }
+    // End of updateTotalSavings definition
+    };
 
-        return () => unsubscribe();
-    }, [currentKey, user]);
+    // Helper to update Firestore
+    const updateFirestoreWrapper = async (newIncome: number, newCategories: Category[]) => {
+        await updateFirestore(newIncome, newCategories, currentMonth, currentYear);
+    };
 
     // Calculate totals
     const totalExpenses = useMemo(() => {
@@ -124,20 +326,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return income - totalExpenses;
     }, [income, totalExpenses]);
 
-    // Helper to update Firestore
-    const updateFirestore = async (newIncome: number, newCategories: Category[]) => {
-        if (!user) return;
-        const docRef = doc(db, 'users', user.uid, 'months', currentKey);
-        await setDoc(docRef, {
-            month: currentMonth,
-            year: currentYear,
-            income: newIncome,
-            categories: newCategories
-        });
-    };
+
 
     const setIncome = (amount: number) => {
-        updateFirestore(amount, categories);
+        updateFirestoreWrapper(amount, categories);
     };
 
     const addCategory = (name: string, color: string) => {
@@ -148,19 +340,19 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             expenses: [],
             order: categories.length, // Append to end
         };
-        updateFirestore(income, [...categories, newCategory]);
+        updateFirestoreWrapper(income, [...categories, newCategory]);
     };
 
     const updateCategory = (id: string, name: string, color: string) => {
         const newCategories = categories.map(cat =>
             cat.id === id ? { ...cat, name, color } : cat
         );
-        updateFirestore(income, newCategories);
+        updateFirestoreWrapper(income, newCategories);
     };
 
     const deleteCategory = (id: string) => {
         const newCategories = categories.filter(cat => cat.id !== id);
-        updateFirestore(income, newCategories);
+        updateFirestoreWrapper(income, newCategories);
     };
 
     const addExpense = (categoryId: string, expense: Omit<Expense, 'id'>) => {
@@ -174,7 +366,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
             return cat;
         });
-        updateFirestore(income, newCategories);
+        updateFirestoreWrapper(income, newCategories);
     };
 
     const updateExpense = (categoryId: string, expense: Expense) => {
@@ -187,7 +379,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
             return cat;
         });
-        updateFirestore(income, newCategories);
+        updateFirestoreWrapper(income, newCategories);
     };
 
     const deleteExpense = (categoryId: string, expenseId: string) => {
@@ -200,7 +392,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
             return cat;
         });
-        updateFirestore(income, newCategories);
+        updateFirestoreWrapper(income, newCategories);
     };
 
     const changeMonth = (month: number, year: number) => {
@@ -208,31 +400,102 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentYear(year);
     };
 
+    // Function to clone categories and recurring expenses from previous active month
     const copyPreviousMonthData = async () => {
+        // Return early if no active user session
         if (!user) return;
-        // Calculate previous month date
+        // Calculate previous month date object
         const prevDate = new Date(currentYear, currentMonth - 1, 1);
+        // Generate previous month key string
         const prevKey = getMonthKey(prevDate.getMonth(), prevDate.getFullYear());
-
+        // Check if user is the mock test user
+        if (user.uid === 'test-user') {
+            // Attempt to copy previous month details from mock database
+            try {
+                // Fetch previous month data from API
+                const res = await fetch(`/api/mock-db?userId=test-user&monthKey=${prevKey}`, { cache: 'no-store' });
+                // Parse API response JSON
+                const prevData = await res.json();
+                // Check if categories exist in previous month data
+                if (prevData && prevData.categories && prevData.categories.length > 0) {
+                    // Deep copy categories and regenerate unique IDs
+                    const newCategories = prevData.categories.map((cat: any) => {
+                        // Return mapped category copy
+                        return {
+                            // Set generated category ID
+                            id: Math.random().toString(36).substr(2, 9),
+                            // Copy category name
+                            name: cat.name,
+                            // Copy color code
+                            color: cat.color,
+                            // Copy position ordering index
+                            order: cat.order,
+                            // Map categories expenses list
+                            expenses: cat.expenses.map((exp: any) => {
+                                // Return mapped expense copy
+                                return {
+                                    // Set generated expense ID
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    // Copy expense name
+                                    name: exp.name,
+                                    // Copy amount
+                                    amount: exp.amount,
+                                    // Copy payment day
+                                    paymentDay: exp.paymentDay,
+                                    // Copy recurring flag status
+                                    isRecurring: exp.isRecurring
+                                // End of expense mapping
+                                };
+                            // End of expenses mapping call
+                            })
+                        // End of category mapping
+                        };
+                    // End of categories mapping call
+                    });
+                    // Save copied data to current month
+                    await updateFirestoreWrapper(prevData.income, newCategories);
+                // End of categories presence check
+                }
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log mock data copy errors
+                console.error("Error copying mock previous month data:", error);
+            // End of catch block
+            }
+            // Exit early
+            return;
+        // End of test-user check
+        }
+        // Get document reference for previous month
         const prevDocRef = doc(db, 'users', user.uid, 'months', prevKey);
+        // Fetch document snapshot from database
         const prevSnap = await getDoc(prevDocRef);
 
+        // Check if previous month document exists
         if (prevSnap.exists()) {
+            // Retrieve document data as MonthData
             const prevData = prevSnap.data() as MonthData;
 
-            // Deep copy and regenerate IDs
+            // Map and deep clone categories and expenses with fresh random IDs
             const newCategories = prevData.categories.map(cat => ({
+                // Copy all properties
                 ...cat,
+                // Regenerate category ID
                 id: Math.random().toString(36).substr(2, 9),
+                // Map over expenses array
                 expenses: cat.expenses.map(exp => ({
+                    // Copy all expense properties
                     ...exp,
+                    // Regenerate expense ID
                     id: Math.random().toString(36).substr(2, 9)
                 }))
             }));
 
-            // Write to current month
-            updateFirestore(prevData.income, newCategories);
+            // Save cloned data to current month database entry
+            updateFirestoreWrapper(prevData.income, newCategories);
+        // End of prevSnap check
         }
+    // End of copyPreviousMonthData definition
     };
 
     const moveCategory = (id: string, direction: 'up' | 'down') => {
@@ -252,7 +515,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sortedCategories[index].order = targetOrder;
         sortedCategories[targetIndex].order = currentOrder;
 
-        updateFirestore(income, sortedCategories);
+        updateFirestoreWrapper(income, sortedCategories);
     };
 
     const reorderCategories = (newCategories: Category[]) => {
@@ -262,31 +525,53 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             order: index
         }));
         setCategoriesState(orderedCategories);
-        updateFirestore(income, orderedCategories);
+        updateFirestoreWrapper(income, orderedCategories);
     };
 
+    const loadMockData = (mockIncome: number, mockCategories: Category[]) => {
+        // Ensure order field is set
+        const orderedCategories = mockCategories.map((cat, index) => ({
+            ...cat,
+            order: index
+        }));
+        setIncomeState(mockIncome);
+        setCategoriesState(orderedCategories);
+        updateFirestoreWrapper(mockIncome, orderedCategories);
+    };
+
+    const budgetContextValue = {
+        currentMonth,
+        currentYear,
+        income,
+        categories,
+        totalExpenses,
+        savings,
+        setIncome,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        addExpense,
+        updateExpense,
+        deleteExpense,
+        changeMonth,
+        copyPreviousMonthData,
+        moveCategory,
+        reorderCategories,
+        saveDefaultMonth,
+        defaultMonthSettings,
+        loadMockData,
+        totalSavings,
+        updateTotalSavings,
+        setMonth: changeMonth,
+        loading
+    };
+
+    React.useEffect(() => {
+        (window as any).budget = budgetContextValue;
+    }, [budgetContextValue]);
+
     return (
-        <BudgetContext.Provider value={{
-            currentMonth,
-            currentYear,
-            income,
-            categories,
-            totalExpenses,
-            savings,
-            setIncome,
-            addCategory,
-            updateCategory,
-            deleteCategory,
-            addExpense,
-            updateExpense,
-            deleteExpense,
-            changeMonth,
-            copyPreviousMonthData,
-            moveCategory,
-            reorderCategories,
-            saveDefaultMonth,
-            defaultMonthSettings,
-        }}>
+        <BudgetContext.Provider value={budgetContextValue}>
             {children}
         </BudgetContext.Provider>
     );

@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from './Box';
+import { useBudget } from '../context/BudgetContext';
 
 const SavingsCalculator: React.FC = () => {
-    const [currentSavings, setCurrentSavings] = useState('');
+    const { totalSavings } = useBudget();
+    const [currentSavings, setCurrentSavings] = useState(totalSavings.toString());
     const [monthlyContribution, setMonthlyContribution] = useState('');
     const [goal, setGoal] = useState('');
     const [result, setResult] = useState<{ months: number; date: string } | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(true);
+
+    useEffect(() => {
+        setCurrentSavings(totalSavings.toString());
+    }, [totalSavings]);
 
     const calculateSavings = () => {
         const current = parseFloat(currentSavings);

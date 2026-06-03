@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Category, Expense } from '../types';
+import { useLocalization } from '../context/LocalizationContext';
 import { useBudget } from '../context/BudgetContext';
 import Box from './Box';
 import ExpenseItem from './ExpenseItem';
@@ -16,7 +17,7 @@ interface CategoryBoxProps {
 }
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggle }) => {
-    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory } = useBudget();
+    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses } = useBudget();
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState(category.name);
     const [editedColor, setEditedColor] = useState(category.color);
@@ -31,18 +32,26 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
         isDragging
     } = useSortable({ id: category.id });
 
-    const style = {
+    const style: React.CSSProperties = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.9 : 1,
+        zIndex: isDragging ? 99 : 1,
+        boxShadow: isDragging ? '0 16px 32px rgba(0,0,0,0.6)' : 'none',
+        scale: isDragging ? 1.02 : 1,
+        rotate: isDragging ? '1deg' : '0deg',
+        position: 'relative',
+        borderRadius: '12px'
     };
 
     const [isAddingExpense, setIsAddingExpense] = useState(false);
     const [newExpenseName, setNewExpenseName] = useState('');
     const [newExpenseAmount, setNewExpenseAmount] = useState('');
     const [newExpenseDay, setNewExpenseDay] = useState('');
+    const [newExpenseRecurring, setNewExpenseRecurring] = useState(false);
 
     const subtotal = category.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const percentage = totalExpenses > 0 ? (subtotal / totalExpenses) * 100 : 0;
 
     const handleCategorySave = () => {
         updateCategory(category.id, editedName, editedColor);
@@ -55,17 +64,17 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                 name: newExpenseName,
                 amount: parseFloat(newExpenseAmount) || 0,
                 paymentDay: parseInt(newExpenseDay) || 1,
+                isRecurring: newExpenseRecurring,
             });
             setNewExpenseName('');
             setNewExpenseAmount('');
             setNewExpenseDay('');
+            setNewExpenseRecurring(false);
             setIsAddingExpense(false);
         }
     };
 
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(val);
-    };
+    const { formatCurrency } = useLocalization();
 
     return (
         <div ref={setNodeRef} style={style}>
@@ -183,14 +192,22 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                     )}
                 </div>
 
-                {isExpanded && (
-                    <>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                                <span>Subtotal</span>
-                                <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(subtotal)}</span>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateRows: isExpanded ? '1fr' : '0fr',
+                    transition: 'grid-template-rows 0.3s ease',
+                }}>
+                    <div style={{ overflow: 'hidden' }}>
+                        <div style={{ paddingTop: '0.5rem' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                                    <span>Subtotal</span>
+                                    <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(subtotal)}</span>
+                                </div>
+                                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${percentage}%`, background: category.color, transition: 'width 0.5s ease-out' }} />
+                                </div>
                             </div>
-                        </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {category.expenses.map(expense => (
@@ -230,6 +247,14 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                             style={{ background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.5rem', borderRadius: '4px' }}
                                         />
                                     </div>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={newExpenseRecurring} 
+                                            onChange={e => setNewExpenseRecurring(e.target.checked)} 
+                                        />
+                                        Recurring Expense (copies to new months)
+                                    </label>
                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                         <button onClick={handleAddExpense} style={{ flex: 1, background: 'var(--firebase-yellow)', border: 'none', padding: '0.5rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', color: 'black' }}>Add</button>
                                         <button onClick={() => setIsAddingExpense(false)} style={{ flex: 1, background: 'transparent', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '4px', cursor: 'pointer', color: 'white' }}>Cancel</button>
@@ -262,8 +287,9 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                 + Add Expense
                             </button>
                         )}
-                    </>
-                )}
+                        </div>
+                    </div>
+                </div>
             </Box>
 
             {showDeleteConfirm && (

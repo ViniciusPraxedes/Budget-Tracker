@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { useBudget } from '../context/BudgetContext';
+import { useLocalization } from '../context/LocalizationContext';
 import Box from './Box';
+import styles from './Summary.module.css';
 
 const Summary: React.FC = () => {
-    const { income, totalExpenses, savings, setIncome } = useBudget();
+    const { income, totalExpenses, savings, setIncome, categories, totalSavings, updateTotalSavings } = useBudget();
+    const { formatCurrency } = useLocalization();
     const [isEditingIncome, setIsEditingIncome] = useState(false);
     const [tempIncome, setTempIncome] = useState(income.toString());
+    
+    const [isEditingTotalSavings, setIsEditingTotalSavings] = useState(false);
+    const [tempTotalSavings, setTempTotalSavings] = useState(totalSavings.toString());
 
     const handleIncomeSave = () => {
         const val = parseFloat(tempIncome);
@@ -15,40 +21,44 @@ const Summary: React.FC = () => {
         setIsEditingIncome(false);
     };
 
-    const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(val);
+    const handleTotalSavingsSave = () => {
+        const val = parseFloat(tempTotalSavings);
+        if (!isNaN(val)) {
+            updateTotalSavings(val);
+        }
+        setIsEditingTotalSavings(false);
     };
 
+    // Generate heatmap gradient based on categories
+    let currentPercentage = 0;
+    const gradientStops = categories.map(cat => {
+        const catTotal = cat.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const catPercentage = totalExpenses > 0 ? (catTotal / totalExpenses) * 100 : 0;
+        if (catPercentage === 0) return null;
+        
+        const start = currentPercentage;
+        currentPercentage += catPercentage;
+        const end = currentPercentage;
+        return `${cat.color} ${start}%, ${cat.color} ${end}%`;
+    }).filter(Boolean).join(', ');
+
+    const heatMapBackground = gradientStops ? `linear-gradient(to right, ${gradientStops})` : 'var(--border-color)';
+
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            <Box title="Monthly Income" style={{ borderLeft: '4px solid var(--firebase-yellow)' }}>
+        <div className={styles.container}>
+            <Box title="Monthly Income" className={styles.incomeBox}>
                 {isEditingIncome ? (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className={styles.editContainer}>
                         <input
                             type="number"
                             value={tempIncome}
                             onChange={(e) => setTempIncome(e.target.value)}
-                            style={{
-                                background: 'var(--background-dark)',
-                                border: '1px solid var(--border-color)',
-                                color: 'white',
-                                padding: '0.5rem',
-                                borderRadius: '4px',
-                                width: '100%'
-                            }}
+                            className={styles.editInput}
                             autoFocus
                         />
                         <button
                             onClick={handleIncomeSave}
-                            style={{
-                                background: 'var(--firebase-yellow)',
-                                border: 'none',
-                                borderRadius: '4px',
-                                padding: '0.5rem 1rem',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                color: 'black'
-                            }}
+                            className={styles.saveBtn}
                         >
                             Save
                         </button>
@@ -56,24 +66,72 @@ const Summary: React.FC = () => {
                 ) : (
                     <div
                         onClick={() => setIsEditingIncome(true)}
-                        style={{ fontSize: '2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        className={styles.valueDisplay}
                     >
                         {formatCurrency(income)}
-                        <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>✎</span>
+                        {/* Fix: use proper SVG icon to avoid typography alignment anomalies with emoji */}
+                        <svg className={styles.editIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
                     </div>
                 )}
             </Box>
 
-            <Box title="Monthly Expenses" style={{ borderLeft: '4px solid var(--firebase-red)' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-                    {formatCurrency(totalExpenses)}
+            <Box title="Monthly Expenses" className={styles.expenseBox}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div className={styles.expenseDisplay}>
+                        {formatCurrency(totalExpenses)}
+                    </div>
+                    <div style={{
+                        width: '100%',
+                        height: '6px',
+                        background: heatMapBackground,
+                        borderRadius: '3px',
+                        marginTop: '0.5rem'
+                    }} title="Expenses Heatmap" />
                 </div>
             </Box>
 
-            <Box title="Monthly Savings" style={{ borderLeft: '4px solid #00E676' }}>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: savings < 0 ? 'var(--firebase-red)' : '#00E676' }}>
+            <Box title="Monthly Savings" className={styles.savingsBox}>
+                <div className={styles.savingsDisplay} style={{ color: savings < 0 ? 'var(--firebase-red)' : '#00E676' }}>
                     {formatCurrency(savings)}
                 </div>
+            </Box>
+
+            <Box title="Total Savings" className={styles.totalSavingsBox}>
+                {isEditingTotalSavings ? (
+                    <div className={styles.editContainer}>
+                        <input
+                            type="number"
+                            value={tempTotalSavings}
+                            onChange={(e) => setTempTotalSavings(e.target.value)}
+                            className={styles.editInput}
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleTotalSavingsSave}
+                            className={styles.saveBtn}
+                        >
+                            Save
+                        </button>
+                    </div>
+                ) : (
+                    <div
+                        onClick={() => {
+                            setTempTotalSavings(totalSavings.toString());
+                            setIsEditingTotalSavings(true);
+                        }}
+                        className={styles.valueDisplay}
+                        style={{ color: '#00E676' }}
+                    >
+                        {formatCurrency(totalSavings)}
+                        <svg className={styles.editIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                    </div>
+                )}
             </Box>
         </div>
     );

@@ -32,6 +32,7 @@ const ScrollToTop: React.FC = () => {
 
     return (
         <button
+            className="mobile-scroll-btn"
             onClick={scrollToTop}
             style={{
                 position: 'fixed',

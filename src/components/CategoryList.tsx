@@ -3,6 +3,7 @@ import { useBudget } from '../context/BudgetContext';
 import CategoryBox from './CategoryBox';
 import { PREDEFINED_COLORS } from '../constants';
 import { getUsedColors, getAvailableColors, getUnusedColor } from '../utils/colors';
+import { defaultCategories, defaultIncome } from '../utils/mockData';
 import {
     DndContext,
     closestCenter,
@@ -21,7 +22,8 @@ import {
 } from '@dnd-kit/sortable';
 
 const CategoryList: React.FC = () => {
-    const { categories, addCategory, copyPreviousMonthData, reorderCategories } = useBudget();
+    // Destructure required state and functions from the budget context provider
+    const { categories, addCategory, copyPreviousMonthData, loadMockData, reorderCategories } = useBudget();
     const [isAdding, setIsAdding] = useState(false);
     const [newName, setNewName] = useState('');
 
@@ -50,12 +52,14 @@ const CategoryList: React.FC = () => {
         );
     };
 
-    const expandAll = () => {
-        setExpandedCategories(categories.map(c => c.id));
-    };
+    const allExpanded = categories.length > 0 && expandedCategories.length === categories.length;
 
-    const collapseAll = () => {
-        setExpandedCategories([]);
+    const toggleExpandAll = () => {
+        if (allExpanded) {
+            setExpandedCategories([]);
+        } else {
+            setExpandedCategories(categories.map(c => c.id));
+        }
     };
 
     const sensors = useSensors(
@@ -81,9 +85,9 @@ const CategoryList: React.FC = () => {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ margin: 0 }}>Categories</h2>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <button
-                        onClick={expandAll}
+                        onClick={toggleExpandAll}
                         style={{
                             background: 'transparent',
                             border: '1px solid var(--border-color)',
@@ -94,23 +98,10 @@ const CategoryList: React.FC = () => {
                             fontSize: '0.9rem'
                         }}
                     >
-                        Expand All
+                        {allExpanded ? 'Collapse All' : 'Expand All'}
                     </button>
                     <button
-                        onClick={collapseAll}
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-secondary)',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem'
-                        }}
-                    >
-                        Collapse All
-                    </button>
-                    <button
+                        className="mobile-fab"
                         onClick={() => setIsAdding(!isAdding)}
                         style={{
                             background: 'var(--firebase-yellow)',
@@ -119,8 +110,11 @@ const CategoryList: React.FC = () => {
                             padding: '0.5rem 1rem',
                             borderRadius: '4px',
                             fontWeight: 'bold',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
                         }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
                         {isAdding ? 'Cancel' : '+ New Category'}
                     </button>
@@ -250,23 +244,83 @@ const CategoryList: React.FC = () => {
             </DndContext>
 
             {categories.length === 0 && (
-                <div style={{ textAlign: 'center', marginTop: '3rem', opacity: 0.7 }}>
-                    <p>No categories for this month.</p>
-                    <button
-                        onClick={copyPreviousMonthData}
-                        style={{
-                            background: 'transparent',
-                            border: '1px dashed var(--firebase-yellow)',
-                            color: 'var(--firebase-yellow)',
-                            padding: '1rem 2rem',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            marginTop: '1rem'
-                        }}
-                    >
-                        Copy Budget from Previous Month
-                    </button>
+                <div className="fade-in-delay-1" style={{ 
+                    textAlign: 'center', 
+                    marginTop: '4rem',
+                    padding: '3rem 2rem',
+                    background: 'var(--surface-dark)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+                }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        background: 'rgba(255, 196, 0, 0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 1.5rem',
+                        border: '1px solid rgba(255, 196, 0, 0.2)',
+                        boxShadow: '0 0 20px rgba(255, 196, 0, 0.1)'
+                    }}>
+                        <span style={{ fontSize: '2.5rem' }}>📂</span>
+                    </div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', color: 'white' }}>No Categories Yet</h3>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '300px', margin: '0 auto 2rem' }}>
+                        Start tracking your expenses by creating a new category or copying your budget from last month.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+                        <button
+                            onClick={copyPreviousMonthData}
+                            style={{
+                                background: 'transparent',
+                                border: '1px dashed var(--firebase-yellow)',
+                                color: 'var(--firebase-yellow)',
+                                padding: '1rem 2rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '1rem',
+                                fontWeight: '500',
+                                transition: 'all 0.2s',
+                                width: '100%',
+                                maxWidth: '300px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 196, 0, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                        >
+                            Copy Budget from Previous Month
+                        </button>
+                        
+                        <button
+                            onClick={() => loadMockData(defaultIncome, defaultCategories)}
+                            style={{
+                                background: 'var(--surface-dark)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-primary)',
+                                padding: '0.75rem 2rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.2s',
+                                width: '100%',
+                                maxWidth: '300px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'var(--surface-dark)';
+                            }}
+                        >
+                            Load Mock Data for Testing
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

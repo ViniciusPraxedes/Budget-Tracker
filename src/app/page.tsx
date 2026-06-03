@@ -9,80 +9,53 @@ import SavingsCalculator from "@/components/SavingsCalculator";
 import BitcoinTracker from "@/components/BitcoinTracker";
 import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/context/AuthContext";
+import styles from "./page.module.css";
 
 export default function Home() {
-    const { user, signInWithGoogle, logout } = useAuth();
+    const { user, signInWithGoogle, loginAsTestUser, logout } = useAuth();
 
     if (!user) {
         return (
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                gap: '2rem'
-            }}>
-                <h1 style={{ fontSize: '2.5rem', color: 'var(--firebase-yellow)' }}>Budget Tracker</h1>
+            <div className={styles.loginContainer}>
+                <h1 className={styles.loginTitle}>Budget Tracker</h1>
                 <button
                     onClick={signInWithGoogle}
-                    style={{
-                        background: 'white',
-                        color: '#333',
-                        border: 'none',
-                        padding: '1rem 2rem',
-                        borderRadius: '24px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }}
+                    className={styles.loginBtn}
                 >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '24px', height: '24px' }} />
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className={styles.googleIcon} />
                     Sign in with Google
                 </button>
+                {process.env.NODE_ENV === 'development' && (
+                    <button
+                        onClick={loginAsTestUser}
+                        className={styles.loginBtn}
+                        style={{ marginTop: '1rem', backgroundColor: '#333', color: '#fff' }}
+                    >
+                        Login as Test User (Mock DB)
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
-        <div className="mobile-padding" style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 className="mobile-title" style={{ margin: 0 }}>Budget Tracker</h1>
-                <div className="mobile-header-user" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className={`mobile-padding ${styles.container}`}>
+            <div className={styles.header}>
+                <h1 className={`mobile-title ${styles.title}`}>Budget Tracker</h1>
+                <div className={`mobile-header-user ${styles.userInfo}`}>
+                    <div className={styles.userProfile}>
                         {user.photoURL && (
                             <img
                                 src={user.photoURL}
                                 alt="Profile"
-                                style={{
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover',
-                                    border: '2px solid var(--border-color)'
-                                }}
+                                className={styles.userImage}
                             />
                         )}
-                        <span style={{ color: 'var(--text-secondary)' }}>{user.displayName}</span>
+                        <span className={styles.userName}>{user.displayName}</span>
                     </div>
                     <button
                         onClick={logout}
-                        className="mobile-logout-btn"
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-secondary)',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}
+                        className={`mobile-logout-btn ${styles.logoutBtn}`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

@@ -3,6 +3,7 @@ export interface Expense {
     name: string;
     amount: number;
     paymentDay: number;
+    isRecurring?: boolean;
 }
 
 export interface Category {
@@ -40,4 +41,7 @@ export interface BudgetContextType {
     reorderCategories: (newCategories: Category[]) => void;
     saveDefaultMonth: (month: number, year: number) => void;
     defaultMonthSettings: { month: number, year: number } | null;
+    loadMockData: (income: number, categories: Category[]) => void;
+    totalSavings: number;
+    updateTotalSavings: (amount: number) => void;
 }
