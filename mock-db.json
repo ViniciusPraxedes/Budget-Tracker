@@ -9,50 +9,7 @@
           "month": 5,
           "year": 2026,
           "income": 0,
-          "categories": [
-            {
-              "id": "1x03f89eh",
-              "name": "Housing",
-              "color": "#FF5722",
-              "expenses": [],
-              "order": 0
-            },
-            {
-              "id": "ervjbi8kp",
-              "name": "Food",
-              "color": "#4CAF50",
-              "expenses": [],
-              "order": 1
-            },
-            {
-              "id": "ahe21xzep",
-              "name": "Transportation",
-              "color": "#2196F3",
-              "expenses": [],
-              "order": 2
-            },
-            {
-              "id": "oehpvjv51",
-              "name": "Entertainment",
-              "color": "#9C27B0",
-              "expenses": [],
-              "order": 3
-            },
-            {
-              "id": "5idjxbqrb",
-              "name": "Fixed",
-              "color": "#DD2C00",
-              "expenses": [],
-              "order": 4
-            },
-            {
-              "id": "rowv5oret",
-              "name": "Beauty",
-              "color": "#FF5252",
-              "expenses": [],
-              "order": 5
-            }
-          ]
+          "categories": []
         },
         "2026-4": {
           "month": 4,
@@ -91,53 +48,8 @@
         }
       },
       "pdfConfig": {
-        "mappings": {
-          "nordicwell": "5zxsqa4cb",
-          "HEMKOP MOLNDAL C": "15pa0los9",
-          "DONER FACTORY": "15pa0los9",
-          "PAYPAL *G2A COM": "5zxsqa4cb",
-          "Swish Billetto": "mlfce9pze",
-          "Hono": "15pa0los9",
-          "CAPIO PRIM#RV$R": "graas3ixl",
-          "NORMAL M@LNDAL": "15pa0los9",
-          "COOP LUNDBY": "15pa0los9",
-          "APPLE.COM/BILL": "5zxsqa4cb",
-          "NETFLIX.COM": "5zxsqa4cb",
-          "MICROSOFT*XBOX": "5zxsqa4cb",
-          "SQSP* DOMAINÄ234": "graas3ixl",
-          "PAYPAL *DISNEYPL": "5zxsqa4cb",
-          "help.hbomax.com": "5zxsqa4cb",
-          "UDEMY: ONLINE CO": "5zxsqa4cb",
-          "M/S GOTAPETTER": "15pa0los9",
-          "ICA KVANTUM MOLN": "15pa0los9",
-          "CLAS OHLSON 258": "graas3ixl",
-          "Amazon Prime": "5zxsqa4cb",
-          "UNIONEN": "graas3ixl",
-          "Vimla": "graas3ixl",
-          "FRISKTANDV": "graas3ixl",
-          "Avier Unionen A-": "graas3ixl",
-          "CSN": "graas3ixl",
-          "Swish Västtrafik To Go": "mlfce9pze",
-          "GOOGLE *Google O": "5zxsqa4cb"
-        },
-        "ignored": [
-          "Överföring via internet",
-          "Lön",
-          "PAYPAL *MIC",
-          "YAM TAM TEAM",
-          "CAKTO PAY LT*com",
-          "NYX*Kuario",
-          "Pressbyran 40502",
-          "OLSTUGAN TULLEN",
-          "Swish skickad +46766014888",
-          "Swish Hemköp",
-          "SE01057 TZ-SHOP",
-          "AmazonRetail*NN2",
-          "Kronans Apotek A",
-          "Thai Express",
-          "KAGE BAREN",
-          "Swish Zalando Payments"
-        ]
+        "mappings": {},
+        "ignored": []
       }
     }
   }

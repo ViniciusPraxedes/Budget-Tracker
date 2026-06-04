@@ -479,34 +479,14 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const catExpensesToAdd = newExpensesList.filter((item) => item.categoryId === cat.id);
             // Loop through each expense details object to insert or update
             for (const item of catExpensesToAdd) {
-                // Find matching index of expense with same name (case-insensitive)
-                const existingIndex = updatedExpenses.findIndex(
-                    // Compare lowercased name values to identify matches
-                    (exp) => exp.name.toLowerCase() === item.expense.name.toLowerCase()
-                );
-                // Check if duplicate entry index was found
-                if (existingIndex > -1) {
-                    // Update existing expense item fields in list
-                    updatedExpenses[existingIndex] = {
-                        // Spread properties of matching record
-                        ...updatedExpenses[existingIndex],
-                        // Overwrite amount value
-                        amount: item.expense.amount,
-                        // Overwrite payment day value
-                        paymentDay: item.expense.paymentDay
-                    // End of updated expense object
-                    };
-                // If matching name doesn't exist
-                } else {
-                    // Add new expense details block
-                    updatedExpenses.push({
-                        // Spread payload details
-                        ...item.expense,
-                        // Generate random unique identifier string
-                        id: Math.random().toString(36).substr(2, 9)
-                    // End of new expense object
-                    });
-                }
+                // Add new expense details block unconditionally for batch import
+                updatedExpenses.push({
+                    // Spread payload details
+                    ...item.expense,
+                    // Generate random unique identifier string
+                    id: Math.random().toString(36).substr(2, 9)
+                // End of new expense object
+                });
             }
             // Return updated category containing modified expenses
             return {
@@ -695,19 +675,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Function to clear all expenses and reset income for the current month
     const clearMonthData = () => {
-        // Map categories to clear their expenses lists
-        const clearedCategories = categories.map(cat => ({
-            // Spread category properties
-            ...cat,
-            // Reset expenses list to empty array
-            expenses: []
-        }));
         // Update local income state to zero
         setIncomeState(0);
-        // Update local categories state with cleared expenses
-        setCategoriesState(clearedCategories);
+        // Update local categories state to empty
+        setCategoriesState([]);
         // Persist zero income and cleared categories to database storage
-        updateFirestoreWrapper(0, clearedCategories);
+        updateFirestoreWrapper(0, []);
     };
 
     const budgetContextValue = {

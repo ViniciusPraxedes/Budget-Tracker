@@ -69,6 +69,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   // Manage text search filter query string
   const [searchQuery, setSearchQuery] = useState('');
+  // Manage toggle for grouping by merchant in the UI
+  const [groupByMerchant, setGroupByMerchant] = useState(false);
   // State to track category creation trigger source type and identifier
   const [activeCreateCategoryTrigger, setActiveCreateCategoryTrigger] = useState<{ type: 'merchant' | 'new_map' | 'saved_map'; key: string } | null>(null);
   // Manage collapse state of the saved category mappings section in settings
@@ -97,81 +99,20 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
   // Reference hook to reference hidden settings input file picker
   const settingsFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Trigger hook to verify and create default categories on mount
+  // Erase all saved merchant configurations on mount to ensure a fresh new state for each import session
   React.useEffect(() => {
-    // Define standard categories to verify
-    const defaultCats = [
-      // Housing default details
-      { name: 'Housing', color: '#FF5722' },
-      // Food default details
-      { name: 'Food', color: '#4CAF50' },
-      // Transportation default details
-      { name: 'Transportation', color: '#2196F3' },
-      // Entertainment default details
-      { name: 'Entertainment', color: '#9C27B0' }
-    ];
-    // Filter down to categories that do not exist yet
-    const missing = defaultCats.filter((def) => 
-      // Compare lowercased category name strings
-      !categories.some((cat) => cat.name.toLowerCase() === def.name.toLowerCase())
-    );
-    // If any necessary categories are missing
-    if (missing.length > 0) {
-      // Trigger batch categories creation helper
-      addMissingCategories(missing);
+    // Only update if not already empty to prevent infinite re-renders
+    if (Object.keys(pdfConfig?.mappings || {}).length > 0 || (pdfConfig?.ignored || []).length > 0) {
+      updatePDFConfig({ mappings: {}, ignored: [] });
     }
-  // Register category collection and addition callbacks dependency keys
-  }, [categories, addMissingCategories]);
+  }, [pdfConfig, updatePDFConfig]);
 
-  // Trigger helper to match categories based on name matching
-  const findMatchingCategory = (desc: string): string => {
-    // Convert target description to lowercase
-    const search = desc.toLowerCase();
-    // Define keyword mappings for standard category names
-    const keywordMappings: { [key: string]: string[] } = {
-      // Food keywords
-      'Food': ['hemkop', 'coop', 'ica', 'hono', 'doner', 'normal', 'mcdonald', 'burger', 'kebab', 'restaurant', 'cafe', 'starbucks', 'gotapett', 'food', 'mat', 'bageri'],
-      // Transportation keywords
-      'Transportation': ['västtrafik', 'vasttrafik', 'sj', 'västtr', 'vasttr', 'taxi', 'uber', 'bolt', 'gas', 'diesel', 'q8', 'circle k', 'shell', 'transit', 'billetto'],
-      // Entertainment keywords
-      'Entertainment': ['g2a', 'netflix', 'spotify', 'apple.com', 'google', 'xbox', 'microsoft', 'disn', 'hbomax', 'udemy', 'nordicwell', 'wellness', 'gym', 'ticket', 'steam', 'playstation', 'nintendo', 'gaming', 'cinema', 'movie', 'amazon prime', 'disney'],
-      // Housing keywords
-      'Housing': ['unionen', 'vimla', 'frisktandv', 'csn', 'capio', 'tele2', 'telenor', 'tre', 'halebop', 'elavtal', 'hyra', 'rent', 'domain', 'squarespace', 'sqsp', 'clas ohlson', 'utilit', 'internet']
-    };
-    // Loop through keyword mappings
-    for (const [catName, keywords] of Object.entries(keywordMappings)) {
-      // Check if any keyword matches the search query, with special handling for internet utility transfers
-      if (keywords.some((kw) => {
-        // Skip matching if keyword is internet but description refers to a transfer
-        if (kw === 'internet' && (search.includes('överföring') || search.includes('overforing') || search.includes('transfer'))) {
-          // Do not match this keyword
-          return false;
-        // Close conditional block for internet transfer check
-        }
-        // Match if the search text contains the keyword
-        return search.includes(kw);
-      // Close keyword verification check
-      })) {
-        // Find existing category matching mapped name
-        const match = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
-        // Return category identifier if found
-        if (match) return match.id;
-      // Close condition check
-      }
+  // Trigger hook to verify and create Uncategorized category on mount
+  React.useEffect(() => {
+    if (!categories.some((cat) => cat.name === 'Uncategorized')) {
+      addMissingCategories([{ name: 'Uncategorized', color: '#9E9E9E' }]);
     }
-    // Loop through list of existing categories
-    for (const cat of categories) {
-      // Convert current category name to lowercase
-      const catName = cat.name.toLowerCase();
-      // Check if description includes category name or vice versa
-      if (search.includes(catName) || catName.includes(search)) {
-        // Return matching category identifier
-        return cat.id;
-      }
-    }
-    // Return empty string as fallback indicating unmapped
-    return '';
-  };
+  }, [categories, addMissingCategories]);
 
   // Helper to parse year, month (0-indexed), and day from date string
   const parseDateParts = (dateStr: string): { year: number; month: number; day: number } => {
@@ -451,10 +392,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           description: cleanDesc,
           // Set absolute amount value
           amount: Math.abs(amountVal),
-          // Set selected state — deselect received (income) transactions by default
-          selected: !isIgnored && txType === 'sent',
+          // Set selected state - deselect all by default as requested
+          selected: false,
           // Assign resolved category ID
-          categoryId: savedCategoryId || findMatchingCategory(cleanDesc),
+          categoryId: '',
           // Assign transaction type
           type: txType
         });
@@ -729,10 +670,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           description: cleanDesc,
           // Set absolute amount value
           amount: Math.abs(amountVal),
-          // Set selected state — deselect received (income) transactions by default
-          selected: !isIgnored && txType === 'sent',
+          // Set selected state - deselect all by default as requested
+          selected: false,
           // Assign resolved category ID
-          categoryId: savedCategoryId || findMatchingCategory(cleanDesc),
+          categoryId: '',
           // Assign transaction type
           type: txType
         });
@@ -1279,10 +1220,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           description: cleanDesc,
           // Save absolute amount values converted to SEK
           amount: Math.abs(amountVal) * conversionRate,
-          // Check true if transaction was debit negative and not ignored
-          selected: isIgnored ? false : amountVal < 0,
+          // Set selected state - deselect all by default as requested
+          selected: false,
           // Resolve matching category link using saved mappings or keyword matching
-          categoryId: savedCategoryId || findMatchingCategory(cleanDesc),
+          categoryId: '',
           // Assign transaction type
           type: txType
         });
@@ -1358,6 +1299,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     );
   };
 
+  // Toggle selection status of all transactions for a merchant
+  const toggleSelectMerchant = (merchantName: string) => {
+    const isCurrentlySelected = transactions.some((tx) => tx.description === merchantName && tx.selected);
+    const targetState = !isCurrentlySelected;
+    setTransactions(
+      transactions.map((tx) =>
+        tx.description === merchantName ? { ...tx, selected: targetState } : tx
+      )
+    );
+  };
+
   // Modify target Category ID mapping link on row
   const handleCategoryChange = (id: string, catId: string) => {
     // Update matching transaction categories key
@@ -1384,14 +1336,15 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Perform actual import operation saving config and inserting selected expenses
   const executeImport = () => {
-    // Filter active items checked selected and matching current month/year
-    const toImport = transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear);
-    // Filter out transactions whose category ID no longer exists in the categories list
-    const validToImport = toImport.filter((tx) => categories.some((c) => c.id === tx.categoryId));
-    // Map valid transactions into formatted batch expense items
-    const expensesPayload = validToImport.map((tx) => ({
+    // Filter active items checked selected
+    const toImport = transactions.filter((tx) => tx.selected);
+    // Find Uncategorized category ID
+    const uncategorizedCat = categories.find((c) => c.name === 'Uncategorized');
+    const targetCatId = uncategorizedCat?.id || categories[0]?.id || '';
+    // Map transactions into formatted batch expense items
+    const expensesPayload = toImport.map((tx) => ({
       // Target category ID
-      categoryId: tx.categoryId,
+      categoryId: targetCatId,
       // Target expense payload
       expense: {
         // Description label name
@@ -1409,57 +1362,22 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
       // Trigger batch expenses addition helper function
       addExpenses(expensesPayload);
     }
-    // Update PDF import preferences based on current selections
-    const newMappings = { ...(pdfConfig?.mappings || {}) };
-    // Create new copy of ignored lists
-    let newIgnored = [...(pdfConfig?.ignored || [])];
-    // Loop through parsed list
-    for (const tx of transactions) {
-      // If transaction was selected and had a valid category
-      if (tx.selected && tx.categoryId) {
-        // Add or update mapping
-        newMappings[tx.description] = tx.categoryId;
-        // Filter out from ignored list
-        newIgnored = newIgnored.filter((name) => name !== tx.description);
-      } else {
-        // Remove from mappings list if it existed
-        delete newMappings[tx.description];
-        // Push description to ignored list if not present
-        if (!newIgnored.includes(tx.description)) {
-          // Add to ignored list
-          newIgnored.push(tx.description);
-        }
-      }
-    }
-    // Persist new config to database
-    updatePDFConfig({ mappings: newMappings, ignored: newIgnored });
+    // Erase all saved merchant configurations to ensure they are fresh new for each import
+    updatePDFConfig({ mappings: {}, ignored: [] });
     // Dismiss confirmation modal
     setShowConfirmModal(false);
-    // Populate unique merchant names from selected transactions only for mapping in Step 3
-    const uniqueNames = Array.from(new Set(transactions.filter((tx) => tx.selected).map((tx) => tx.description)));
-    // Update the retrieved merchant names list state
-    setRetrievedNames(uniqueNames);
-    // Transition to settings mapping wizard step 3
-    setStep(3);
+    // Close the import modal completely
+    onClose();
   };
 
   // Import selected transaction entries into context database
   const handleImport = () => {
-    // Extract all selected transactions for current month/year
-    const selectedTxs = transactions.filter((tx) => tx.selected && tx.month === currentMonth && tx.year === currentYear);
-    // Block import if no transactions match current month/year
+    // Extract all selected transactions
+    const selectedTxs = transactions.filter((tx) => tx.selected);
+    // Block import if no transactions are selected
     if (selectedTxs.length === 0) {
       // Show error message
-      setStatusMessage("No transactions for the current month to import.");
-      // Stop execution
-      return;
-    }
-    // Identify selected transactions that have a valid category
-    const validToImport = selectedTxs.filter((tx) => tx.categoryId);
-    // Block import if any selected transaction is missing a category
-    if (validToImport.length !== selectedTxs.length) {
-      // Show error message
-      setStatusMessage("Please map categories for all selected transactions before importing.");
+      setStatusMessage("No transactions selected to import.");
       // Stop execution
       return;
     }
@@ -1736,8 +1654,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Filter transactions list dynamically matching search, selections, and active month/year
   const filteredTransactions = transactions.filter((tx) => {
-    // Verify transaction belongs to currently viewed month and year
-    const matchesMonthYear = tx.month === currentMonth && tx.year === currentYear;
+    // Allow all dates
+    const matchesMonthYear = true;
     // Check search query text match
     const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase());
     // Track selection status verification
@@ -1771,8 +1689,29 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     return matchesMonthYear && matchesSearch && matchesStatus;
   });
 
-  // Count how many loaded transactions belong to other months
-  const otherMonthsCount = transactions.filter((tx) => tx.month !== currentMonth || tx.year !== currentYear).length;
+  // Group filtered transactions by merchant description
+  const groupedTransactions = React.useMemo(() => {
+    const groups: { [key: string]: { description: string; count: number; amount: number; selected: boolean } } = {};
+    for (const tx of filteredTransactions) {
+      if (!groups[tx.description]) {
+        groups[tx.description] = {
+          description: tx.description,
+          count: 0,
+          amount: 0,
+          selected: false
+        };
+      }
+      groups[tx.description].count += 1;
+      groups[tx.description].amount += tx.amount;
+      if (tx.selected) {
+        groups[tx.description].selected = true;
+      }
+    }
+    return Object.values(groups);
+  }, [filteredTransactions]);
+
+  // Count how many loaded transactions belong to other months (disabled)
+  const otherMonthsCount = 0;
 
   // Check if status message represents an error
   const isErrorStatus = statusMessage.toLowerCase().includes('error') || 
@@ -2007,6 +1946,16 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   {/* Print summary text */}
                   Showing {filteredTransactions.length} of {transactions.length} rows
                 </span>
+                {/* Toggle Grouping Checkbox */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={groupByMerchant} 
+                    onChange={(e) => setGroupByMerchant(e.target.checked)} 
+                    style={{ cursor: 'pointer' }}
+                  />
+                  Group by Merchant
+                </label>
                 {/* Toggle Select All checkboxes button trigger */}
                 <button
                   // Click handler callback to toggle checkbox select all state
@@ -2034,93 +1983,59 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
               {/* Scrollable list containing filtered transaction entries */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Iterate transactions row cards */}
-                {filteredTransactions.map((tx) => {
-                  // Resolve category color
-                  const catColor = categories.find((c) => c.id === tx.categoryId)?.color;
-                  // Define category badge style object
-                  const badgeStyle = {
-                    // Set category background color with opacity
-                    backgroundColor: catColor ? `${catColor}20` : 'rgba(255, 255, 255, 0.08)',
-                    // Set text color matching category color
-                    color: catColor || '#ccc',
-                    // Set border color matching category color
-                    borderColor: catColor ? `${catColor}40` : 'transparent'
-                  };
-                  // Return transaction card element
-                  return (
-                    // Transaction item card panel
-                    <div key={tx.id} className={styles.transactionCard}>
-                      {/* Checkbox trigger target */}
-                      <div className={styles.checkboxContainer} onClick={() => toggleSelect(tx.id)}>
-                        {/* Native checkbox input */}
+                {groupByMerchant ? (
+                  groupedTransactions.map((group) => (
+                    <div key={group.description} className={styles.transactionCard}>
+                      <div className={styles.checkboxContainer} onClick={() => toggleSelectMerchant(group.description)}>
                         <input
-                          // Checked status variable
                           type="checkbox"
-                          // Bind state value
-                          checked={tx.selected}
-                          // Disable native change wrapper
+                          checked={group.selected}
                           onChange={() => {}}
-                          // Apply large touch size class
                           className={styles.checkbox}
                         />
                       </div>
-                      {/* Text card content block display as horizontal row container */}
                       <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
-                        {/* Center block to stack description, date, and category selector vertically */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
-                          {/* Display read-only transaction description text */}
                           <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {/* Print description */}
+                            {group.description}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            {group.count} transaction{group.count !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <span className={styles.amount} style={{ color: group.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
+                          {formatCurrency(group.amount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  filteredTransactions.map((tx) => (
+                    <div key={tx.id} className={styles.transactionCard}>
+                      <div className={styles.checkboxContainer} onClick={() => toggleSelect(tx.id)}>
+                        <input
+                          type="checkbox"
+                          checked={tx.selected}
+                          onChange={() => {}}
+                          className={styles.checkbox}
+                        />
+                      </div>
+                      <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
+                          <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {tx.description}
                           </span>
-                          {/* Date text label printed underneath the merchant description */}
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {/* Print raw date */}
                             {tx.date}
                           </span>
-                          {/* Category select dropdown */}
-                          <select
-                            // Selected bound value
-                            value={tx.categoryId}
-                            // Category changed update handler
-                            onChange={(e) => handleCategoryChange(tx.id, e.target.value)}
-                            // Dropdown styling
-                            style={{
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              borderRadius: '4px',
-                              color: '#fff',
-                              fontSize: '0.75rem',
-                              padding: '0.15rem 0.35rem',
-                              marginTop: '0.25rem',
-                              width: '100%',
-                              maxWidth: '180px',
-                              cursor: 'pointer',
-                              outline: 'none'
-                            }}
-                          >
-                            {/* Option label placeholder */}
-                            <option value="" style={{ backgroundColor: '#1e1e1e' }}>-- Map Category --</option>
-                            {/* Loop categories option items */}
-                            {categories.map((cat) => (
-                              // Option element
-                              <option key={cat.id} value={cat.id} style={{ backgroundColor: '#1e1e1e' }}>
-                                {/* Category name */}
-                                {cat.name}
-                              </option>
-                            ))}
-                          </select>
                         </div>
-                        {/* Right aligned transaction amount */}
                         <span className={styles.amount} style={{ color: tx.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
-                          {/* Formatting currency values */}
                           {formatCurrency(tx.amount)}
                         </span>
                       </div>
                     </div>
-                  );
-                })}
+                  ))
+                )}
               </div>
             </div>
           ) : (
@@ -2563,15 +2478,14 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               {/* Confirmation header Title */}
               <h3 className={styles.title}>Confirm Import</h3>
             </div>
-            {/* Confirmation modal body */}
             <div className={styles.body}>
-              {/* Count of transactions text — filtered to current month/year and existing categories matching executeImport logic */}
+              {/* Count of transactions text - filtered to current month/year and existing categories matching executeImport logic */}
               <p className={styles.pickerText} style={{ marginBottom: '0.75rem' }}>
-                You are about to import {transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear && categories.some((c) => c.id === tx.categoryId)).length} transactions.
+                You are about to import {transactions.filter((tx) => tx.selected).length} transactions.
               </p>
-              {/* Total sum text — filtered to current month/year and existing categories matching executeImport logic */}
+              {/* Total sum text - filtered to current month/year and existing categories matching executeImport logic */}
               <p className={styles.pickerText} style={{ fontWeight: 600 }}>
-                Total amount: {formatCurrency(transactions.filter((tx) => tx.selected && tx.categoryId && tx.month === currentMonth && tx.year === currentYear && categories.some((c) => c.id === tx.categoryId)).reduce((sum, tx) => sum + tx.amount, 0))}
+                Total amount: {formatCurrency(transactions.filter((tx) => tx.selected).reduce((sum, tx) => sum + tx.amount, 0))}
               </p>
             </div>
             {/* Confirmation modal footer */}
