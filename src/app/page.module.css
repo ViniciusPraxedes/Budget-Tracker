@@ -51,13 +51,23 @@
     gap: 0.5rem;
 }
 
+/* Select the login container class selector */
 .loginContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    gap: 2rem;
+  /* Set display mode property to flex layout standard */
+  display: flex;
+  /* Configure vertical flex flow orientation direction */
+  flex-direction: column;
+  /* Center children elements horizontally along alignment axis */
+  align-items: center;
+  /* Center children elements vertically along flow axis direction */
+  justify-content: center;
+  /* Set minimum layout height container size bounds */
+  min-height: 100vh;
+  /* Set dynamic height configuration rules to support mobile browsers layout safe areas */
+  min-height: 100dvh;
+  /* Specify spacing layout gap size offset between children elements */
+  gap: 2rem;
+/* Close login container styling layout block definitions */
 }
 
 .loginTitle {
