@@ -21,6 +21,12 @@ export default function RootLayout({
         <html lang="en">
             <head>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+                {/* Set theme color for browser navigation header status bar */}
+                <meta name="theme-color" content="#0A0A0A" />
+                {/* Set viewport scaling boundaries and enable notch coverage fit */}
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                {/* Set iOS status bar translucent style content overlay */}
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
             </head>
             <body suppressHydrationWarning>
                 <ErrorBoundary>
