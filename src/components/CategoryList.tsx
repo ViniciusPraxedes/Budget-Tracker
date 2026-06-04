@@ -101,22 +101,43 @@ const CategoryList: React.FC = () => {
                     >
                         {allExpanded ? 'Collapse All' : 'Expand All'}
                     </button>
+                    {/* Renders category button using mobile floating styles */}
                     <button
-                        className="mobile-fab"
+                        // Apply mobile FAB styling and conditional class modifier
+                        className={`mobile-fab ${isAdding ? 'is-adding' : ''}`}
+                        // Register tap click toggle trigger
                         onClick={() => setIsAdding(!isAdding)}
+                        // Apply button styling settings
                         style={{
+                            // Define standard yellow surface background color
                             background: 'var(--firebase-yellow)',
+                            // Define dark text color contrast
                             color: 'black',
+                            // Remove element border lines
                             border: 'none',
+                            // Add responsive padding spacing
                             padding: '0.5rem 1rem',
+                            // Add border radius curvature bounds
                             borderRadius: '4px',
+                            // Highlight text weight bold font
                             fontWeight: 'bold',
+                            // Define pointer style cursor indicator
                             cursor: 'pointer',
+                            // Define interactive scaling speed duration transition
                             transition: 'all 0.2s',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        // Trigger scaling up animation on hover enter
+                        onMouseEnter={(e) => {
+                            // Assign transform scaling target property
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        // Trigger scaling down animation on hover exit
+                        onMouseLeave={(e) => {
+                            // Reset transform scaling target property
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
                     >
+                        {/* Conditional category form state visual label content */}
                         {isAdding ? 'Cancel' : '+ New Category'}
                     </button>
                 </div>

@@ -1959,7 +1959,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   // Input changes callback handler
                   onChange={(e) => setSearchQuery(e.target.value)}
                   // Search query text input placeholder
-                  placeholder="Search description..."
+                  placeholder="Search merchant..."
                   // Custom filter input class styling
                   className={styles.filterInput}
                 />
@@ -2125,7 +2125,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   // Input changes callback handler
                   onChange={(e) => setSearchQuery(e.target.value)}
                   // Search query text input placeholder
-                  placeholder="Search description..."
+                  placeholder="Search merchant..."
                   // Custom filter input class styling
                   className={styles.filterInput}
                 />

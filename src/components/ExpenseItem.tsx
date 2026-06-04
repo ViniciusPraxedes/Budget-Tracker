@@ -135,17 +135,38 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
         );
     }
 
+    // Renders the transaction item container with negative margins and alignment style rules
     return (
-        <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0.75rem',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            transition: 'background 0.2s'
-        }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        <div
+            // Apply flex, margin overrides, border, and transition styling rules
+            style={{
+                // Flexbox display layout model
+                display: 'flex',
+                // Space items out to opposite horizontal edges
+                justifyContent: 'space-between',
+                // Align items vertically centered
+                alignItems: 'center',
+                // Responsive padding on top/bottom and left side to keep text visible, while right side remains zero to push icons right
+                padding: '0.75rem 0 0.75rem 0.75rem',
+                // Shift left edge closer to the card border
+                marginLeft: '-0.75rem',
+                // Shift right edge closer to the card border
+                marginRight: '-0.75rem',
+                // Bottom divider separation line
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                // Transition background highlight effects
+                transition: 'background 0.2s',
+            }}
+            // Highlight background on hover enter event
+            onMouseEnter={(e) => {
+                // Set semi-transparent white background color highlight
+                e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+            }}
+            // Clear background highlight on hover leave event
+            onMouseLeave={(e) => {
+                // Reset background color to transparent surface
+                e.currentTarget.style.background = 'transparent';
+            }}
         >
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, paddingRight: '1rem' }}>
                 <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -160,86 +181,199 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <span style={{ fontWeight: 'bold' }}>{formatCurrency(expense.amount)}</span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {/* Action buttons wrapper container */}
+                <div
+                    // Align button elements using row layout
+                    style={{
+                        // Set flexbox display model formatting
+                        display: 'flex',
+                        // Assign spacing gap between buttons
+                        gap: '0.5rem',
+                    }}
+                >
+                    {/* Edit expense trigger button */}
                     <button
-                        onClick={() => setIsEditing(true)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1rem' }}
+                        // Activate editing state true on click tap
+                        onClick={() => {
+                            // Set isEditing flag status active
+                            setIsEditing(true);
+                        }}
+                        // Define button style overrides
+                        style={{
+                            // Transparent surface background
+                            background: 'transparent',
+                            // Remove default boundaries
+                            border: 'none',
+                            // Enforce touch target accessibility minimum width
+                            minWidth: '44px',
+                            // Enforce touch target accessibility minimum height
+                            minHeight: '44px',
+                            // Set flexbox display to center icon content
+                            display: 'flex',
+                            // Center horizontal content layout
+                            justifyContent: 'center',
+                            // Center vertical content layout
+                            alignItems: 'center',
+                            // Define hand pointer style cursor indicator
+                            cursor: 'pointer',
+                            // Secondary gray text styling rule
+                            color: 'var(--text-secondary)',
+                            // Set large readable font size
+                            fontSize: '1rem',
+                        }}
+                        // Screenreader tooltip title text
                         title="Edit"
                     >
+                        {/* Pencil glyph edit icon character */}
                         ✎
+                    {/* Close edit button component */}
                     </button>
+                    {/* Delete warning confirmation trigger button */}
                     <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--firebase-red)', fontSize: '1rem' }}
+                        // Activate delete confirm overlay display on click tap
+                        onClick={() => {
+                            // Set delete confirm visibility flag active
+                            setShowDeleteConfirm(true);
+                        }}
+                        // Define button style overrides
+                        style={{
+                            // Transparent surface background
+                            background: 'transparent',
+                            // Remove default boundaries
+                            border: 'none',
+                            // Enforce touch target accessibility minimum width
+                            minWidth: '44px',
+                            // Enforce touch target accessibility minimum height
+                            minHeight: '44px',
+                            // Set flexbox display to center icon content
+                            display: 'flex',
+                            // Center horizontal content layout
+                            justifyContent: 'center',
+                            // Center vertical content layout
+                            alignItems: 'center',
+                            // Define hand pointer style cursor indicator
+                            cursor: 'pointer',
+                            // Warning red color styling rule
+                            color: 'var(--firebase-red)',
+                            // Set large readable font size
+                            fontSize: '1rem',
+                        }}
+                        // Screenreader tooltip title text
                         title="Delete"
                     >
+                        {/* Trash bin glyph delete icon character */}
                         🗑
+                    {/* Close delete button component */}
                     </button>
+                {/* Close actions button wrapper group */}
                 </div>
             </div>
 
+            {/* Conditional portal rendering for delete expense warning confirm overlay */}
             {showDeleteConfirm && typeof document !== 'undefined' && createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.7)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                    padding: '1rem'
-                }}>
-                    <div style={{
-                        background: '#121212',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        maxWidth: '400px',
-                        width: '100%',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                    }}>
-                        <h3 style={{ marginTop: 0, color: 'white' }}>Delete Expense?</h3>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                            Are you sure you want to delete <strong>{expense.name}</strong>?
+                // Overlay background container for backdrop screen blur
+                <div className="confirm-overlay">
+                    {/* Inner modal box container component */}
+                    <div
+                        // Apply confirmation modal styling class name
+                        className="confirm-modal"
+                        // Add padding spacing directly
+                        style={{ padding: '1.5rem' }}
+                    >
+                        {/* Modal heading dialog warning title */}
+                        <h3
+                            // Remove default title margins and enforce white color contrast
+                            style={{ marginTop: 0, color: 'white' }}
+                        >
+                            {/* Title text warning string */}
+                            Delete Expense?
+                        {/* Close title element */}
+                        </h3>
+                        {/* Paragraph description body text detail */}
+                        <p
+                            // Set secondary gray text color and custom margin spacing bottom
+                            style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}
+                        >
+                            {/* Confirmation warning text prefix details */}
+                            Are you sure you want to delete{" "}
+                            {/* Render bold name text parameter highlight */}
+                            <strong>{expense.name}</strong>
+                            {/* Confirmation warning text suffix details */}
+                            ?
+                        {/* Close paragraph description text element */}
                         </p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        {/* Button control actions wrapper footer row */}
+                        <div
+                            // Set layout flex and gap alignment styles
+                            style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}
+                        >
+                            {/* Confirm abort cancel operation action button */}
                             <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                style={{
-                                    background: 'transparent',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'white',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button
+                                // Reset visibility status true or false flag on tap click
                                 onClick={() => {
-                                    onDelete(expense.id);
+                                    // Deactivate deletion confirmation overlay visibility flag status
                                     setShowDeleteConfirm(false);
                                 }}
+                                // Button style configurations
                                 style={{
-                                    background: 'var(--firebase-red)',
-                                    border: 'none',
+                                    // Set transparent surface background
+                                    background: 'transparent',
+                                    // Set standard border color boundary line
+                                    border: '1px solid var(--border-color)',
+                                    // Set white color contrast
                                     color: 'white',
+                                    // Add responsive padding spacing
                                     padding: '0.5rem 1rem',
+                                    // Add rounded border corners
                                     borderRadius: '4px',
+                                    // Define hand cursor interactive selector
                                     cursor: 'pointer',
-                                    fontWeight: 'bold'
                                 }}
                             >
-                                Delete
+                                {/* Cancel button label text */}
+                                Cancel
+                            {/* Close cancel button component */}
                             </button>
+                            {/* Confirm finalize delete expense button action button */}
+                            <button
+                                // Finalize expense deletion on click tap
+                                onClick={() => {
+                                    // Execute deletion callback trigger
+                                    onDelete(expense.id);
+                                    // Deactivate deletion confirmation overlay visibility flag status
+                                    setShowDeleteConfirm(false);
+                                }}
+                                // Warning button style configurations
+                                style={{
+                                    // Set alert red brand color background
+                                    background: 'var(--firebase-red)',
+                                    // Remove default outlines
+                                    border: 'none',
+                                    // Set white color contrast
+                                    color: 'white',
+                                    // Add responsive padding spacing
+                                    padding: '0.5rem 1rem',
+                                    // Add rounded border corners
+                                    borderRadius: '4px',
+                                    // Define hand cursor interactive selector
+                                    cursor: 'pointer',
+                                    // Enforce bold font weight highlight styling
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {/* Finalize delete warning confirm label text */}
+                                Delete
+                            {/* Close delete button component */}
+                            </button>
+                        {/* Close button control actions footer row wrapper element */}
                         </div>
+                    {/* Close modal box container component */}
                     </div>
+                {/* Close overlay backdrop background container */}
                 </div>,
+                // Direct portal render target to document body
                 document.body
+            // Close portal method parameters
             )}
         </div>
     );

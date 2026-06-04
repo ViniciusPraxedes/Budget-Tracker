@@ -80,7 +80,24 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
     return (
         <div ref={setNodeRef} style={style}>
             <Box style={{ borderTop: `4px solid ${category.color}`, position: 'relative' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                {/* Header row flex container wrapper with negative horizontal margins for edge alignment */}
+                <div
+                    // Apply display flex, margins, spacing, and alignment style rules
+                    style={{
+                        // Flexbox layout display model
+                        display: 'flex',
+                        // Space items out to opposite edges
+                        justifyContent: 'space-between',
+                        // Center elements vertically
+                        alignItems: 'center',
+                        // Add margin bottom separator
+                        marginBottom: '1rem',
+                        // Shift left edge closer to the card border
+                        marginLeft: '-0.75rem',
+                        // Shift right edge closer to the card border
+                        marginRight: '-0.75rem',
+                    }}
+                >
                     {isEditing ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -158,36 +175,185 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                         </div>
                     ) : (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0, marginRight: '1rem' }}>
-                                <div
-                                    {...attributes}
-                                    {...listeners}
+                             {/* Category title details and drag handle container wrapper */}
+                             <div
+                                 // Apply flex display layout settings
+                                 style={{
+                                     // Flexbox display layout model
+                                     display: 'flex',
+                                     // Center elements vertically
+                                     alignItems: 'center',
+                                     // Add spacing gap between elements
+                                     gap: '0.5rem',
+                                     // Allow flex container to grow dynamically
+                                     flex: 1,
+                                     // Reset min width threshold bounds
+                                     minWidth: 0,
+                                     // Add spacing margin right to separate actions
+                                     marginRight: '0.5rem',
+                                 }}
+                             >
+                                 {/* Grab handle item container for re-ordering drag animations */}
+                                 <div
+                                     // Spread dnd-kit sortable attributes hook parameters
+                                     {...attributes}
+                                     // Spread dnd-kit sortable listeners hook parameters
+                                     {...listeners}
+                                     // Apply style attributes
+                                     style={{
+                                         // Set grab style cursor indicator on hover
+                                         cursor: 'grab',
+                                         // Secondary text color rule
+                                         color: 'var(--text-secondary)',
+                                         // Flex layout display mode
+                                         display: 'flex',
+                                         // Align elements vertically center
+                                         alignItems: 'center',
+                                         // Compact inner padding layout to shift icon left
+                                         padding: '0.5rem 0.25rem',
+                                         // Font size settings
+                                         fontSize: '1.2rem',
+                                         // Prevent text block highlights during dragging
+                                         userSelect: 'none',
+                                         // Turn off browser default gesture touches
+                                         touchAction: 'none',
+                                         // Prevent elements from shrinking
+                                         flexShrink: 0,
+                                     }}
+                                 >
+                                     {/* Unicode draggable grab handle triple line character icon */}
+                                     ≡
+                                 {/* Close grab handle container */}
+                                 </div>
+                                 {/* Category name header title text component */}
+                                 <h3
+                                     // Apply custom category color and style settings
+                                     style={{
+                                         // Remove default header margins
+                                         margin: 0,
+                                         // Mapped color code property
+                                         color: category.color,
+                                         // Title font sizing style rule
+                                         fontSize: '1.2rem',
+                                         // Enable word breaks for long texts
+                                         wordBreak: 'break-word',
+                                         // Avoid text clipping margins
+                                         overflow: 'hidden',
+                                     }}
+                                 >
+                                     {/* Print category label string value */}
+                                     {category.name}
+                                 {/* Close header component */}
+                                 </h3>
+                             {/* Close category title details wrapper */}
+                             </div>
+                            {/* Actions wrapper group container */}
+                            <div
+                                // Apply interactive row layout align rules
+                                style={{
+                                    // Set flexbox display model formatting
+                                    display: 'flex',
+                                    // Assign gap spacing between buttons
+                                    gap: '0.5rem',
+                                    // Align standard items vertically center
+                                    alignItems: 'center',
+                                }}
+                            >
+                                {/* Category accordion section expansion toggle button */}
+                                <button
+                                    // Register click toggle handler for accordion expansion
+                                    onClick={onToggle}
+                                    // Styling configuration settings
                                     style={{
-                                        cursor: 'grab',
+                                        // Transparent surface background
+                                        background: 'transparent',
+                                        // Remove element border lines
+                                        border: 'none',
+                                        // Hand pointer style cursor indicator
+                                        cursor: 'pointer',
+                                        // Secondary gray color style rule
                                         color: 'var(--text-secondary)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        padding: '0.75rem',
+                                        // Large readable font sizing
                                         fontSize: '1.2rem',
-                                        userSelect: 'none',
-                                        touchAction: 'none',
-                                        flexShrink: 0
+                                        // Enforce touch target accessibility minimum width
+                                        minWidth: '44px',
+                                        // Enforce touch target accessibility minimum height
+                                        minHeight: '44px',
+                                        // Set flexbox display to align inside arrow icon
+                                        display: 'flex',
+                                        // Center horizontal axis contents
+                                        justifyContent: 'center',
+                                        // Center vertical axis contents
+                                        alignItems: 'center',
                                     }}
                                 >
-                                    ≡
-                                </div>
-                                <h3 style={{ margin: 0, color: category.color, fontSize: '1.2rem', wordBreak: 'break-word', overflow: 'hidden' }}>{category.name}</h3>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-
-                                <button
-                                    onClick={onToggle}
-                                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1.2rem', padding: '0 0.5rem' }}
-                                >
+                                    {/* Select arrow pointer display indicator based on expanded state */}
                                     {isExpanded ? '▲' : '▼'}
                                 </button>
-                                <button onClick={() => setIsEditing(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>✎</button>
-                                <button onClick={() => setShowDeleteConfirm(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--firebase-red)' }}>✕</button>
+                                {/* Category edit toggle button */}
+                                <button
+                                    // Trigger editing panel activation on click tap
+                                    onClick={() => {
+                                        // Activate edit flag status
+                                        setIsEditing(true);
+                                    }}
+                                    // Styling configuration settings
+                                    style={{
+                                        // Transparent surface background
+                                        background: 'transparent',
+                                        // Remove element border lines
+                                        border: 'none',
+                                        // Hand pointer style cursor indicator
+                                        cursor: 'pointer',
+                                        // Secondary gray color style rule
+                                        color: 'var(--text-secondary)',
+                                        // Enforce touch target accessibility minimum width
+                                        minWidth: '44px',
+                                        // Enforce touch target accessibility minimum height
+                                        minHeight: '44px',
+                                        // Set flexbox display to align edit icon
+                                        display: 'flex',
+                                        // Center horizontal axis contents
+                                        justifyContent: 'center',
+                                        // Center vertical axis contents
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    {/* Pencil glyph edit icon character */}
+                                    ✎
+                                </button>
+                                {/* Category deletion warning confirmation trigger button */}
+                                <button
+                                    // Trigger deletion confirm overlay visibility true on click tap
+                                    onClick={() => {
+                                        // Set delete confirm visibility flag active
+                                        setShowDeleteConfirm(true);
+                                    }}
+                                    // Styling configuration settings
+                                    style={{
+                                        // Transparent surface background
+                                        background: 'transparent',
+                                        // Remove element border lines
+                                        border: 'none',
+                                        // Hand pointer style cursor indicator
+                                        cursor: 'pointer',
+                                        // Warning red color style rule
+                                        color: 'var(--firebase-red)',
+                                        // Enforce touch target accessibility minimum width
+                                        minWidth: '44px',
+                                        // Enforce touch target accessibility minimum height
+                                        minHeight: '44px',
+                                        // Set flexbox display to align cross icon
+                                        display: 'flex',
+                                        // Center horizontal axis contents
+                                        justifyContent: 'center',
+                                        // Center vertical axis contents
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    {/* Cross sign exit icon character */}
+                                    ✕
+                                </button>
                             </div>
                         </>
                     )}
@@ -297,68 +463,111 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                 </div>
             </Box>
 
+            {/* Conditional portal rendering for delete category warning confirm overlay */}
             {showDeleteConfirm && typeof document !== 'undefined' && createPortal(
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.7)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 1000,
-                    padding: '1rem'
-                }}>
-                    <div style={{
-                        background: '#121212',
-                        padding: '1.5rem',
-                        borderRadius: '8px',
-                        maxWidth: '400px',
-                        width: '100%',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                    }}>
-                        <h3 style={{ marginTop: 0, color: 'white' }}>Delete Category?</h3>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                            Are you sure you want to delete <strong>{category.name}</strong>? This will permanently delete all expenses in this category.
+                // Overlay background container for backdrop screen blur
+                <div className="confirm-overlay">
+                    {/* Inner modal box container component */}
+                    <div
+                        // Apply confirmation modal styling class name
+                        className="confirm-modal"
+                        // Add padding spacing directly
+                        style={{ padding: '1.5rem' }}
+                    >
+                        {/* Modal heading dialog warning title */}
+                        <h3
+                            // Remove default title margins and enforce white color contrast
+                            style={{ marginTop: 0, color: 'white' }}
+                        >
+                            {/* Title text warning string */}
+                            Delete Category?
+                        {/* Close title element */}
+                        </h3>
+                        {/* Paragraph description body text detail */}
+                        <p
+                            // Set secondary gray text color and custom margin spacing bottom
+                            style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}
+                        >
+                            {/* Confirmation warning text prefix details */}
+                            Are you sure you want to delete{" "}
+                            {/* Render bold name text parameter highlight */}
+                            <strong>{category.name}</strong>
+                            {/* Confirmation warning text suffix details */}
+                            ? This will permanently delete all expenses in this category.
+                        {/* Close paragraph description text element */}
                         </p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        {/* Button control actions wrapper footer row */}
+                        <div
+                            // Set layout flex and gap alignment styles
+                            style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}
+                        >
+                            {/* Confirm abort cancel operation action button */}
                             <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                style={{
-                                    background: 'transparent',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'white',
-                                    padding: '0.5rem 1rem',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button
+                                // Reset visibility status true or false flag on tap click
                                 onClick={() => {
-                                    deleteCategory(category.id);
+                                    // Deactivate deletion confirmation overlay visibility flag status
                                     setShowDeleteConfirm(false);
                                 }}
+                                // Button style configurations
                                 style={{
-                                    background: 'var(--firebase-red)',
-                                    border: 'none',
+                                    // Set transparent surface background
+                                    background: 'transparent',
+                                    // Set standard border color boundary line
+                                    border: '1px solid var(--border-color)',
+                                    // Set white color contrast
                                     color: 'white',
+                                    // Add responsive padding spacing
                                     padding: '0.5rem 1rem',
+                                    // Add rounded border corners
                                     borderRadius: '4px',
+                                    // Define hand cursor interactive selector
                                     cursor: 'pointer',
-                                    fontWeight: 'bold'
                                 }}
                             >
-                                Delete
+                                {/* Cancel button label text */}
+                                Cancel
+                            {/* Close cancel button component */}
                             </button>
+                            {/* Confirm finalize delete category button action button */}
+                            <button
+                                // Finalize category deletion on click tap
+                                onClick={() => {
+                                    // Execute deletion callback trigger
+                                    deleteCategory(category.id);
+                                    // Deactivate deletion confirmation overlay visibility flag status
+                                    setShowDeleteConfirm(false);
+                                }}
+                                // Warning button style configurations
+                                style={{
+                                    // Set alert red brand color background
+                                    background: 'var(--firebase-red)',
+                                    // Remove default outlines
+                                    border: 'none',
+                                    // Set white color contrast
+                                    color: 'white',
+                                    // Add responsive padding spacing
+                                    padding: '0.5rem 1rem',
+                                    // Add rounded border corners
+                                    borderRadius: '4px',
+                                    // Define hand cursor interactive selector
+                                    cursor: 'pointer',
+                                    // Enforce bold font weight highlight styling
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {/* Finalize delete warning confirm label text */}
+                                Delete
+                            {/* Close delete button component */}
+                            </button>
+                        {/* Close button control actions footer row wrapper element */}
                         </div>
+                    {/* Close modal box container component */}
                     </div>
+                {/* Close overlay backdrop background container */}
                 </div>,
+                // Direct portal render target to document body
                 document.body
+            // Close portal method parameters
             )}
         </div>
     );

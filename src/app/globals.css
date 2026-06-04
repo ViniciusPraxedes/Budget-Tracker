@@ -199,4 +199,63 @@ select {
     font-weight: normal;
     color: black;
   }
+  /* Check if floating action button has active is-adding class modifier */
+  .mobile-fab.is-adding::before {
+    /* Set icon character label symbol value to cross */
+    content: "✕" !important;
+  }
+}
+
+/* Styling for confirmation overlay background screen blur */
+.confirm-overlay {
+  /* Set overlay element fixed positioning */
+  position: fixed;
+  /* Align standard overlay window to the top edge */
+  top: 0;
+  /* Align standard overlay window to the left edge */
+  left: 0;
+  /* Span across full container viewport width */
+  width: 100%;
+  /* Span across full container viewport height */
+  height: 100%;
+  /* Define dark translucent background layer color */
+  background: rgba(0, 0, 0, 0.85);
+  /* Apply glass backdrop filter blur effect */
+  backdrop-filter: blur(10px);
+  /* Webkit standard vendor support backdrop filter */
+  -webkit-backdrop-filter: blur(10px);
+  /* Set flexbox display model formatting */
+  display: flex;
+  /* Align items to center horizontally */
+  justify-content: center;
+  /* Align items to center vertically */
+  align-items: center;
+  /* Elevate index hierarchy above other views */
+  z-index: 1200;
+  /* Assign standard ease-out fade animation */
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Styling for container box window of confirmation */
+.confirm-modal {
+  /* Restrict content layout width size */
+  width: 90%;
+  /* Define absolute horizontal width boundary */
+  max-width: 420px;
+  /* Layout flex column configuration */
+  display: flex;
+  /* Stack grid elements vertically */
+  flex-direction: column;
+  /* Apply card surface background color hex */
+  background: #181818;
+  /* Set rounded corner layout boundaries */
+  border-radius: 16px;
+  /* Set fine white translucent border glow */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Set shadow profile coordinates */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  /* Hide clipped child element margins */
+  overflow: hidden;
+  /* Apply slide animation values */
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
