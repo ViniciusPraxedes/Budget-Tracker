@@ -2016,9 +2016,9 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               {/* Selection summary statistics row toolbar */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0 0.75rem 0' }}>
                 {/* Filtered count matching description search query */}
-                <span className={styles.pickerText}>
+                <span className={styles.pickerText} style={{ marginLeft: '0.5rem' }}>
                   {/* Print summary text */}
-                  Showing {filteredTransactions.length} of {transactions.length} rows
+                  {filteredTransactions.length}/{transactions.length}
                 </span>
                 {/* Toggle Grouping Checkbox */}
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -2153,8 +2153,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               {/* Selection summary statistics row toolbar styled exactly like step 2 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0 0.75rem 0' }}>
                 {/* Count of merchants text */}
-                <span className={styles.pickerText}>
-                  Showing {filteredRetrievedNames.length} of {retrievedNames.length} merchants
+                <span className={styles.pickerText} style={{ marginLeft: '0.5rem' }}>
+                  {filteredRetrievedNames.length}/{retrievedNames.length}
                 </span>
                 {/* Container for toolbar actions */}
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

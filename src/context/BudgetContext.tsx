@@ -527,6 +527,25 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(income, newCategories);
     };
 
+    const moveExpense = (oldCategoryId: string, newCategoryId: string, expense: Expense) => {
+        const newCategories = categories.map(cat => {
+            if (cat.id === oldCategoryId) {
+                return {
+                    ...cat,
+                    expenses: cat.expenses.filter(exp => exp.id !== expense.id)
+                };
+            }
+            if (cat.id === newCategoryId) {
+                return {
+                    ...cat,
+                    expenses: [...cat.expenses, expense]
+                };
+            }
+            return cat;
+        });
+        updateFirestoreWrapper(income, newCategories);
+    };
+
     const changeMonth = (month: number, year: number) => {
         setCurrentMonth(month);
         setCurrentYear(year);
@@ -697,6 +716,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addExpense,
         updateExpense,
         deleteExpense,
+        moveExpense,
         changeMonth,
         copyPreviousMonthData,
         moveCategory,

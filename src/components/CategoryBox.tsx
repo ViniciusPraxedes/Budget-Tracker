@@ -18,7 +18,7 @@ interface CategoryBoxProps {
 }
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggle }) => {
-    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses } = useBudget();
+    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses, moveExpense } = useBudget();
     const [isEditing, setIsEditing] = useState(false);
     const [editedName, setEditedName] = useState(category.name);
     const [editedColor, setEditedColor] = useState(category.color);
@@ -214,9 +214,13 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                             {category.expenses.map(expense => (
                                 <ExpenseItem
                                     key={expense.id}
+                                    categoryId={category.id}
                                     expense={expense}
                                     onUpdate={(updated) => updateExpense(category.id, updated)}
                                     onDelete={(id) => deleteExpense(category.id, id)}
+                                    onMove={(exp, oldId, newId) => {
+                                        moveExpense(oldId, newId, exp);
+                                    }}
                                 />
                             ))}
                         </div>

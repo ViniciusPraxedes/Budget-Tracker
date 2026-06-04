@@ -23,15 +23,7 @@
           "month": 4,
           "year": 2026,
           "income": 0,
-          "categories": [
-            {
-              "id": "6492xmi3c",
-              "name": "Uncategorized",
-              "color": "#9E9E9E",
-              "expenses": [],
-              "order": 0
-            }
-          ]
+          "categories": []
         }
       },
       "pdfConfig": {
