@@ -82,6 +82,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Manage transaction selection filter status
   const [filterStatus, setFilterStatus] = useState<'all' | 'selected' | 'unselected' | 'unmapped' | 'received' | 'sent'>('all');
+  // Manage settings configurations step 3 sort order
+  const [step3SortOrder, setStep3SortOrder] = useState<'asc' | 'desc'>('asc');
   // State for new inline mapping name text input field
   const [newMapName, setNewMapName] = useState('');
   // State for new inline mapping category selection dropdown
@@ -99,11 +101,20 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
   // Reference hook to reference hidden settings input file picker
   const settingsFileInputRef = useRef<HTMLInputElement>(null);
 
+  // State to track which merchants should have their transactions grouped
+  const [groupedMerchants, setGroupedMerchants] = useState<Record<string, boolean>>({});
+
+  // Ref to track if we've already cleared configurations on mount
+  const hasClearedConfig = useRef(false);
+
   // Erase all saved merchant configurations on mount to ensure a fresh new state for each import session
   React.useEffect(() => {
     // Only update if not already empty to prevent infinite re-renders
-    if (Object.keys(pdfConfig?.mappings || {}).length > 0 || (pdfConfig?.ignored || []).length > 0) {
-      updatePDFConfig({ mappings: {}, ignored: [] });
+    if (!hasClearedConfig.current) {
+      if (Object.keys(pdfConfig?.mappings || {}).length > 0 || (pdfConfig?.ignored || []).length > 0) {
+        updatePDFConfig({ mappings: {}, ignored: [] });
+      }
+      hasClearedConfig.current = true;
     }
   }, [pdfConfig, updatePDFConfig]);
 
@@ -1334,38 +1345,78 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     );
   };
 
-  // Perform actual import operation saving config and inserting selected expenses
+  // Proceed to configuration step after confirming selections
   const executeImport = () => {
+    // Dismiss confirmation modal
+    setShowConfirmModal(false);
+    // Extract unique merchant names for step 3 configuration from selected transactions only
+    const toImport = transactions.filter((tx) => tx.selected);
+    const uniqueNames = new Set(toImport.map((tx) => tx.description));
+    setRetrievedNames(Array.from(uniqueNames));
+    // Proceed to configuration step 3
+    setStep(3);
+  };
+
+  // Perform actual import operation saving config and inserting selected expenses
+  const handleFinish = () => {
     // Filter active items checked selected
     const toImport = transactions.filter((tx) => tx.selected);
+
+    // Grouping logic based on groupedMerchants state
+    const processedTransactions: typeof toImport = [];
+    const groupData: Record<string, { tx: typeof toImport[0], count: number, total: number }> = {};
+
+    for (const tx of toImport) {
+      if (groupedMerchants[tx.description]) {
+        if (!groupData[tx.description]) {
+          groupData[tx.description] = { tx, count: 0, total: 0 };
+        }
+        groupData[tx.description].count += 1;
+        groupData[tx.description].total += tx.amount;
+      } else {
+        processedTransactions.push(tx);
+      }
+    }
+
+    Object.values(groupData).forEach((data) => {
+      processedTransactions.push({
+        ...data.tx,
+        amount: data.total,
+        description: `${data.tx.description} (${data.count} transactions)`,
+      });
+    });
+
     // Find Uncategorized category ID
     const uncategorizedCat = categories.find((c) => c.name === 'Uncategorized');
-    const targetCatId = uncategorizedCat?.id || categories[0]?.id || '';
+    const fallbackCatId = uncategorizedCat?.id || categories[0]?.id || '';
+    
     // Map transactions into formatted batch expense items
-    const expensesPayload = toImport.map((tx) => ({
-      // Target category ID
-      categoryId: targetCatId,
-      // Target expense payload
-      expense: {
-        // Description label name
-        name: tx.description,
-        // Parsed amount cost
-        amount: tx.amount,
-        // Calendar day parsed
-        paymentDay: tx.paymentDay,
-        // Mark recurring default off
-        isRecurring: false,
-      }
-    }));
+    const expensesPayload = processedTransactions.map((tx) => {
+      // Need to use the original description for mapping since we appended "(x transactions)"
+      const originalDesc = tx.description.replace(/\s\(\d+\stransactions\)$/, '');
+      // Map category ID based on configured mappings or fallback
+      const mappedCatId = pdfConfig?.mappings?.[originalDesc] || fallbackCatId;
+      return {
+        // Target category ID
+        categoryId: mappedCatId,
+        // Target expense payload
+        expense: {
+          // Description label name
+          name: tx.description,
+          // Parsed amount cost
+          amount: tx.amount,
+          // Calendar day parsed
+          paymentDay: tx.paymentDay,
+          // Mark recurring default off
+          isRecurring: false,
+        }
+      };
+    });
     // Check if there are any items to import
     if (expensesPayload.length > 0) {
       // Trigger batch expenses addition helper function
       addExpenses(expensesPayload);
     }
-    // Erase all saved merchant configurations to ensure they are fresh new for each import
-    updatePDFConfig({ mappings: {}, ignored: [] });
-    // Dismiss confirmation modal
-    setShowConfirmModal(false);
     // Close the import modal completely
     onClose();
   };
@@ -1755,6 +1806,29 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
   // Close helper method
   };
 
+  // Filter unique retrieved merchant names based on search query and sort alphabetically
+  const filteredRetrievedNames = retrievedNames
+    // Filter by search query matches
+    .filter((name) => {
+      // Convert search query to lower case and check inclusion
+      const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
+      // Return search match result
+      return matchesSearch;
+      // Close filter callback
+    })
+    // Sort array elements alphabetically based on sort order state
+    .sort((a, b) => {
+      // Check if sort order matches desc
+      if (step3SortOrder === 'desc') {
+        // Sort descending (Z to A)
+        return b.localeCompare(a);
+        // End condition
+      }
+      // Default sort ascending (A to Z)
+      return a.localeCompare(b);
+      // Close sort callback
+    });
+
   // Render modal layout template
   return (
     // Backdrop modal overlay wrapper
@@ -2042,93 +2116,248 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
             // Render settings manually configurations wizard step 3
             // Outer wrapper division for configuration options
             <div>
-              {/* Reset configuration action panel row wrapper */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                {/* Reset button executing configurations erase */}
-                <button
-                  // Click trigger opens configurations reset confirm modal
-                  onClick={() => setShowConfirmErase(true)}
-                  // Styling overrides matching secondary buttons with red borders
-                  style={{
-                    // Empty background fill
-                    background: 'transparent',
-                    // Red translucent border line
-                    border: '1px solid rgba(244, 67, 54, 0.4)',
-                    // Red text color
-                    color: '#ff5252',
-                    // Spacing paddings
-                    padding: '0.4rem 0.8rem',
-                    // Rounded borders layout
-                    borderRadius: '6px',
-                    // Touch pointer interaction
-                    cursor: 'pointer',
-                    // Sized typography font
-                    fontSize: '0.8rem',
-                    // Transition animation settings
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {/* Erase button text label */}
-                  Erase Import Config
-                </button>
+              {/* Filter controls row styled exactly like step 2 */}
+              <div className={styles.filterBar}>
+                {/* Text search filter input field */}
+                <input
+                  // Bind search text query state
+                  value={searchQuery}
+                  // Input changes callback handler
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  // Search query text input placeholder
+                  placeholder="Search description..."
+                  // Custom filter input class styling
+                  className={styles.filterInput}
+                />
+                {/* Container for select dropdown inputs to align them in a row */}
+                <div className={styles.filterSelectGroup}>
+                  {/* Filter dropdown selection for merchant selection state */}
+                  <select
+                    // Bind sort order key value
+                    value={step3SortOrder}
+                    // Selector changed callback handler
+                    onChange={(e) => setStep3SortOrder(e.target.value as any)}
+                    // Select element class styling
+                    className={styles.filterSelect}
+                    // Full width styling layout override
+                    style={{ width: '100%' }}
+                  >
+                    {/* Option for alphabetical sorting A to Z */}
+                    <option value="asc">Alphabetical: A to Z</option>
+                    {/* Option for alphabetical sorting Z to A */}
+                    <option value="desc">Alphabetical: Z to A</option>
+                  </select>
+                </div>
               </div>
-              {/* Configuration loader section block wrapper */}
-              <div className={styles.settingsSection}>
-                {/* Retrieving merchants label heading title */}
-                <h4 className={styles.sectionTitle}>Configure Statement Merchant Mappings</h4>
-                {/* Scrollable listing box */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '4px' }}>
-                  {/* Loop retrieved unique merchant labels */}
-                  {retrievedNames.map((name) => {
-                    // Check if current name exists in ignore array
-                    const isIgnored = pdfConfig?.ignored.includes(name);
-                    // Resolve mapped category ID if present
-                    const currentCatId = pdfConfig?.mappings[name] || '';
-                    // Determine if mapped category ID still exists in the categories list
-                    const isMappedCatDeleted = currentCatId !== '' && !categories.some((c) => c.id === currentCatId);
-                    // Return individual merchant row layout
-                    return (
-                      // Card container row
-                      <div key={name} className={styles.settingsRow} style={{ padding: '0.5rem 0.75rem' }}>
-                        {/* Merchant name label text */}
-                        <span className={styles.settingsLabel} style={{ fontSize: '0.85rem' }}>{name}</span>
-                        {/* Category map dropdown selector */}
-                        <select
-                          // Selected bound value
-                          value={isMappedCatDeleted ? '__DELETED__' : currentCatId}
-                          // Selection changed update callback
-                          onChange={(e) => {
-                            // Extract target value string
-                            const val = e.target.value;
-                            // Skip deleted sentinel value selections
-                            if (val === '__DELETED__') return;
-                            // Check if option is to create new category
-                            if (val === 'CREATE_NEW') {
-                              // Trigger create category modal for this merchant mapping
-                              setActiveCreateCategoryTrigger({ type: 'merchant', key: name });
-                              // Stop processing mapping update
-                              return;
-                            }
-                            // Clone mappings configuration structure
-                            const mappings = { ...(pdfConfig?.mappings || {}) };
-                            // Filter name out from ignored lists
-                            const ignored = (pdfConfig?.ignored || []).filter((n) => n !== name);
-                            // If val contains target option
-                            if (val) {
-                              // Set category link mapping
-                              mappings[name] = val;
-                            } else {
-                              // Clear mapping element key
-                              delete mappings[name];
-                            }
-                            // Dispatch changes update configuration context
-                            updatePDFConfig({ mappings, ignored });
-                          }}
-                          // Standard categories select input styling
-                          className={styles.categorySelect}
-                          // Sizing inline adjustments overrides
-                          style={{ width: 'auto', flex: 1, minWidth: '120px', minHeight: '32px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                        >
+
+              {/* Selection summary statistics row toolbar styled exactly like step 2 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0 0.75rem 0' }}>
+                {/* Count of merchants text */}
+                <span className={styles.pickerText}>
+                  Showing {filteredRetrievedNames.length} of {retrievedNames.length} merchants
+                </span>
+                {/* Container for toolbar actions */}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {/* Toggle Select All checkboxes button trigger for step 3 */}
+                  <button
+                    // Click handler callback to toggle active/ignored select all state
+                    onClick={() => {
+                      // Check if all filtered retrieved names are active (not ignored)
+                      const allSelected = filteredRetrievedNames.every((name) => !pdfConfig?.ignored.includes(name));
+                      // Clone current mappings configuration
+                      const mappings = { ...(pdfConfig?.mappings || {}) };
+                      // Declare updated ignored elements list
+                      let ignored: string[];
+                      // Check if currently all selected
+                      if (allSelected) {
+                        // Ignore all filtered merchants by combining ignored array
+                        ignored = Array.from(new Set([...(pdfConfig?.ignored || []), ...filteredRetrievedNames]));
+                        // Loop and delete mappings for all filtered merchants
+                        filteredRetrievedNames.forEach((name) => {
+                          // Clear mapping key
+                          delete mappings[name];
+                        // End loop
+                        });
+                      // Else branch when not all selected
+                      } else {
+                        // Un-ignore all filtered merchants by filtering them out of ignored list
+                        ignored = (pdfConfig?.ignored || []).filter((n) => !filteredRetrievedNames.includes(n));
+                      // End condition
+                      }
+                      // Dispatch changes to update configuration context
+                      updatePDFConfig({ mappings, ignored });
+                    // Close click handler
+                    }}
+                    // Secondary styling button class
+                    className={styles.btnSecondary}
+                    // Sizing adjustments inline styles overrides matching step 2 with fixed width
+                    style={{ minHeight: '32px', width: '110px', padding: '0.25rem 0', fontSize: '0.8rem', textAlign: 'center' }}
+                  >
+                    {/* Conditional labels based on whether all filtered merchants are active */}
+                    {filteredRetrievedNames.every((name) => !pdfConfig?.ignored.includes(name)) ? 'Deselect All' : 'Select All'}
+                  {/* End button */}
+                  </button>
+                  {/* Reset button executing configurations erase styled exactly like step 2's button */}
+                  <button
+                    // Click trigger opens configurations reset confirm modal
+                    onClick={() => setShowConfirmErase(true)}
+                    // Secondary styling button class
+                    className={styles.btnSecondary}
+                    // Sizing adjustments inline styles overrides matching step 2 but with red colors and fixed width
+                    style={{ minHeight: '32px', width: '110px', padding: '0.25rem 0', fontSize: '0.8rem', borderColor: 'rgba(244, 67, 54, 0.4)', color: '#ff5252', textAlign: 'center' }}
+                  >
+                    {/* Reset button text label */}
+                    Reset
+                  </button>
+                {/* End container */}
+                </div>
+              </div>
+
+              {/* Scrollable list containing merchant entries styled exactly like step 2 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* Loop retrieved unique merchant labels */}
+                {filteredRetrievedNames.map((name) => {
+                  // Check if current name exists in ignore array
+                  const isIgnored = pdfConfig?.ignored.includes(name);
+                  // Resolve mapped category ID if present
+                  const currentCatId = pdfConfig?.mappings[name] || '';
+                  // Determine if mapped category ID still exists in the categories list
+                  const isMappedCatDeleted = currentCatId !== '' && !categories.some((c) => c.id === currentCatId);
+                  // Return individual merchant row layout
+                  return (
+                    // Card container row styled exactly like step 2
+                    <div key={name} className={styles.transactionCard}>
+                      {/* Checkbox Container for Ignore/Active state */}
+                      <div
+                        // Click handler to toggle active/ignored config status
+                        onClick={() => {
+                          // Clone mappings configuration structure
+                          const mappings = { ...(pdfConfig?.mappings || {}) };
+                          // Strip category link key
+                          delete mappings[name];
+                          // Clone ignored elements names list
+                          let ignored = [...(pdfConfig?.ignored || [])];
+                          // Toggle active state check
+                          if (isIgnored) {
+                            // Filter name out
+                            ignored = ignored.filter((n) => n !== name);
+                          } else {
+                            // Append ignore name
+                            ignored.push(name);
+                          }
+                          // Update configuration context
+                          updatePDFConfig({ mappings, ignored });
+                        }}
+                        // Styled checkbox container matching step 2
+                        className={styles.checkboxContainer}
+                      >
+                        {/* Active status checkbox input indicator */}
+                        <input
+                          // Input type checkbox
+                          type="checkbox"
+                          // Checked status based on active mapping (not ignored)
+                          checked={!isIgnored}
+                          // Inline click is handled by outer container
+                          onChange={() => {}}
+                          // Styled checkbox matching step 2
+                          className={styles.checkbox}
+                          // Pointer touch cursor override style
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </div>
+                      {/* Card Content containing title, group checkbox and select dropdown */}
+                      <div
+                        // Styled responsive card content layout
+                        className={styles.cardContentRow}
+                      >
+                        {/* Inner vertical details flex column layout */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
+                          {/* Merchant description/name heading label */}
+                          <span
+                            // Styled picker text matching step 2
+                            className={styles.pickerText}
+                            // Style text opacity based on ignore state
+                            style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isIgnored ? 0.5 : 1 }}
+                          >
+                            {/* Merchant name text */}
+                            {name}
+                          {/* End merchant description span */}
+                          </span>
+                        {/* End vertical details div */}
+                        </div>
+                        {/* Action controls container for checkbox and dropdown */}
+                        <div className={styles.cardActions}>
+                          {/* Toggle group transactions checkbox label layout wrapper */}
+                          <label
+                            // Inline style layout and opacity based on ignore state
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', opacity: isIgnored ? 0.5 : 1, whiteSpace: 'nowrap' }}
+                          >
+                            {/* Group checkbox input element */}
+                            <input
+                              // Input type checkbox
+                              type="checkbox"
+                              // Checked status bound to local group status
+                              checked={!!groupedMerchants[name]}
+                              // Disable input interaction if ignored
+                              disabled={isIgnored}
+                              // State change updates groupedMerchants hook state
+                              onChange={(e) => setGroupedMerchants(prev => ({ ...prev, [name]: e.target.checked }))}
+                              // Touch pointer layout override
+                              style={{ cursor: 'pointer' }}
+                            />
+                            {/* Checkbox label text */}
+                            Group Transactions
+                          {/* End label */}
+                          </label>
+                          {/* Category map dropdown selector component */}
+                          <select
+                            // Selected bound category ID value
+                            value={isMappedCatDeleted ? '__DELETED__' : currentCatId}
+                            // Selection changed update callback
+                            onChange={(e) => {
+                              // Extract target value string
+                              const val = e.target.value;
+                              // Skip deleted sentinel value selections
+                              if (val === '__DELETED__') return;
+                              // Check if option is to create new category
+                              if (val === 'CREATE_NEW') {
+                                // Trigger create category modal for this merchant mapping
+                                setActiveCreateCategoryTrigger({ type: 'merchant', key: name });
+                                // Stop processing mapping update
+                                return;
+                              }
+                              // Clone mappings configuration structure
+                              const mappings = { ...(pdfConfig?.mappings || {}) };
+                              // Filter name out from ignored lists
+                              const ignored = (pdfConfig?.ignored || []).filter((n) => n !== name);
+                              // If val contains target option
+                              if (val) {
+                                // Set category link mapping
+                                mappings[name] = val;
+                              } else {
+                                // Clear mapping element key
+                                delete mappings[name];
+                              }
+                              // Dispatch changes update configuration context
+                              updatePDFConfig({ mappings, ignored });
+                            }}
+                            // Standard categories select input styling matching step 2
+                            className={styles.categorySelect}
+                            // Disable dropdown interaction if ignored
+                            disabled={isIgnored}
+                            // Dynamic inline style adjustments based on active settings
+                            style={{
+                              // Set red / secondary / yellow text color dynamically
+                              color: isMappedCatDeleted ? 'var(--firebase-red)' : (isIgnored ? 'var(--text-secondary)' : (currentCatId ? 'var(--firebase-yellow)' : 'var(--text-secondary)')),
+                              // Set red / secondary / yellow border color dynamically
+                              borderColor: isMappedCatDeleted ? 'rgba(244, 67, 54, 0.4)' : (isIgnored ? 'rgba(255, 255, 255, 0.05)' : (currentCatId ? 'rgba(255, 204, 0, 0.3)' : 'rgba(255, 255, 255, 0.15)')),
+                              // Set red / secondary / yellow background color dynamically
+                              backgroundColor: isMappedCatDeleted ? 'rgba(244, 67, 54, 0.05)' : (isIgnored ? 'transparent' : (currentCatId ? 'rgba(255, 204, 0, 0.04)' : 'rgba(255, 255, 255, 0.04)')),
+                              // Set element opacity based on ignore state
+                              opacity: isIgnored ? 0.5 : 1
+                              // Close style object
+                            }}
+                          >
                           {/* Option label placeholder */}
                           <option value="">-- Map Category --</option>
                           {/* Show deleted category sentinel option when mapped cat no longer exists */}
@@ -2146,274 +2375,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                               {cat.name}
                             </option>
                           ))}
-                        </select>
-                        {/* Toggle ignore settings status button action */}
-                        <button
-                          // Click action toggle
-                          onClick={() => {
-                            // Clone mappings structure
-                            const mappings = { ...(pdfConfig?.mappings || {}) };
-                            // Strip category link key
-                            delete mappings[name];
-                            // Clone ignored elements names list
-                            let ignored = [...(pdfConfig?.ignored || [])];
-                            // Toggle active state check
-                            if (isIgnored) {
-                              // Filter name out
-                              ignored = ignored.filter((n) => n !== name);
-                            } else {
-                              // Append ignore name
-                              ignored.push(name);
-                            }
-                            // Update configuration context
-                            updatePDFConfig({ mappings, ignored });
-                          }}
-                          // Active/inactive button styling assignments
-                          className={isIgnored ? styles.btnPrimary : styles.btnSecondary}
-                          // Custom styling for toggle button state
-                          style={{
-                            // Dimension height bounds
-                            minHeight: '32px',
-                            // Inner padding spacing
-                            padding: '0.25rem 0.75rem',
-                            // Text size font scale
-                            fontSize: '0.8rem',
-                            // Red coloring for ignores
-                            backgroundColor: isIgnored ? 'var(--firebase-red)' : 'transparent',
-                            // Contrast text color
-                            color: isIgnored ? '#fff' : '#ccc',
-                            // Custom borders alignment highlights
-                            borderColor: isIgnored ? 'var(--firebase-red)' : 'rgba(255, 255, 255, 0.15)'
-                          }}
-                        >
-                          {/* Render dynamic button text state */}
-                          {isIgnored ? 'Ignored' : 'Ignore'}
-                        </button>
+                          {/* End category select */}
+                          </select>
+                          {/* End action controls container */}
+                        </div>
+                        {/* End cardContent container */}
                       </div>
-                    );
-                  })}
-                </div>
+                      {/* End transactionCard container */}
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* Settings Category Mappings Area Block */}
-              <div className={styles.settingsSection}>
-                {/* Clickable section title header to collapse/expand content */}
-                <h4 
-                  // CSS class styling
-                  className={styles.sectionTitle}
-                  // Click handler to toggle collapsed state
-                  onClick={() => setMappingsCollapsed(!mappingsCollapsed)}
-                  // Pointer cursor inline styling to indicate clickability
-                  style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}
-                >
-                  {/* Title text label */}
-                  <span>All Saved Merchant-Category Mappings</span>
-                  {/* Expand/collapse status indicator arrow */}
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{mappingsCollapsed ? '▶' : '▼'}</span>
-                </h4>
-                {/* Render mappings form and list if the section is expanded */}
-                {!mappingsCollapsed && (
-                  // React Fragment wrapper
-                  <>
-                {/* Form to add custom manual mapping entry rule */}
-                <div className={styles.addForm}>
-                  {/* Text input for transaction name key */}
-                  <input 
-                    // Input type
-                    type="text"
-                    // Bind map name value
-                    value={newMapName}
-                    // Handle text inputs change
-                    onChange={(e) => setNewMapName(e.target.value)}
-                    // Input CSS class styling
-                    className={styles.inlineInput}
-                    // Input placeholder hint
-                    placeholder="Merchant name (e.g. Swish)"
-                  />
-                  {/* Dropdown to select category */}
-                  <select
-                    // Bind value category id
-                    value={newMapCat}
-                    // Handle select index changes
-                    onChange={(e) => {
-                      // Extract chosen category value
-                      const val = e.target.value;
-                      // Check if user chose to create new category
-                      if (val === 'CREATE_NEW') {
-                        // Open creation modal with source type new_map
-                        setActiveCreateCategoryTrigger({ type: 'new_map', key: '' });
-                        // Stop execution
-                        return;
-                      }
-                      // Update form input category selection state
-                      setNewMapCat(val);
-                    }}
-                    // Dropdown CSS styling class
-                    className={styles.inlineSelect}
-                  >
-                    {/* Initial default option */}
-                    <option value="">-- Target Category --</option>
-                    {/* Option to create a new category inline */}
-                    <option value="CREATE_NEW">+ Create New Category</option>
-                    {/* Map categories items options */}
-                    {categories.map((cat) => (
-                      // Dropdown select value option
-                      <option key={cat.id} value={cat.id}>
-                        {/* Print category label */}
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  {/* Button trigger add mapping details rule */}
-                  <button 
-                    // Click handler trigger mapping save
-                    onClick={handleAddManualMapping}
-                    // CSS styling classes
-                    className={styles.tinyBtn}
-                    // Disable button if parameters resolved empty
-                    disabled={!newMapName || !newMapCat}
-                  >
-                    {/* Button text icon label */}
-                    +
-                  </button>
-                </div>
-
-                {/* List Mapped Transaction items configs if mappings defined */}
-                {Object.entries(pdfConfig?.mappings || {}).map(([merchant, catId]) => (
-                  // Single settings layout row
-                  <div key={merchant} className={styles.settingsRow}>
-                    {/* Merchant description label text */}
-                    <span className={styles.settingsLabel}>{merchant}</span>
-                    {/* Selector element to update category mapping directly */}
-                    <select
-                      // Value binder category key
-                      value={catId}
-                      // Update manual category mappings callback
-                      onChange={(e) => {
-                        // Extract chosen category value
-                        const val = e.target.value;
-                        // Check if user chose to create new category
-                        if (val === 'CREATE_NEW') {
-                          // Open creation modal with source type saved_map
-                          setActiveCreateCategoryTrigger({ type: 'saved_map', key: merchant });
-                          // Stop execution
-                          return;
-                        }
-                        // Update manual category mapping context
-                        handleUpdateManualMapping(merchant, val);
-                      }}
-                      // Select category element styling classes
-                      className={styles.categorySelect}
-                      // Custom inline style constraints for settings rows
-                      style={{ flex: 1, minWidth: '150px' }}
-                    >
-                      {/* Option to create a new category inline */}
-                      <option value="CREATE_NEW">+ Create New Category</option>
-                      {/* Loop categories dropdown values list */}
-                      {categories.map((cat) => (
-                        // Individual category target option
-                        <option key={cat.id} value={cat.id}>
-                          {/* Category label */}
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                    {/* Delete action button */}
-                    <button 
-                      // Delete manual mapping mapping key trigger
-                      onClick={() => handleDeleteManualMapping(merchant)}
-                      // CSS action style classes
-                      className={styles.deleteActionBtn}
-                    >
-                      {/* Bin SVG icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        {/* Trash outline path */}
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        {/* Bin bucket coordinates */}
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </>
-              )}
-            </div>
-
-              {/* Settings Ignored Transaction Areas Block */}
-              <div className={styles.settingsSection}>
-                {/* Clickable section title header to collapse/expand content */}
-                <h4 
-                  // CSS class styling
-                  className={styles.sectionTitle}
-                  // Click handler to toggle collapsed state
-                  onClick={() => setIgnoredCollapsed(!ignoredCollapsed)}
-                  // Pointer cursor inline styling to indicate clickability
-                  style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}
-                >
-                  {/* Title text label */}
-                  <span>All Saved Ignored Merchants (Skip List)</span>
-                  {/* Expand/collapse status indicator arrow */}
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{ignoredCollapsed ? '▶' : '▼'}</span>
-                </h4>
-                {/* Render ignored list manual form and items list if the section is expanded */}
-                {!ignoredCollapsed && (
-                  // React Fragment wrapper
-                  <>
-                {/* Form to add manual ignore name rule */}
-                <div className={styles.addForm}>
-                  {/* Text input ignore merchant name */}
-                  <input 
-                    // Input type
-                    type="text"
-                    // Bind value index state
-                    value={newIgnoreName}
-                    // Handle input text changes
-                    onChange={(e) => setNewIgnoreName(e.target.value)}
-                    // Input CSS classes
-                    className={styles.inlineInput}
-                    // Input placeholder info
-                    placeholder="Merchant name (e.g. Lön)"
-                  />
-                  {/* Button trigger add ignore mapping rule */}
-                  <button 
-                    // Click handler trigger ignore save
-                    onClick={handleAddManualIgnore}
-                    // CSS styling classes
-                    className={styles.tinyBtn}
-                    // Disable button if input resolved empty
-                    disabled={!newIgnoreName}
-                  >
-                    {/* Button text icon label */}
-                    +
-                  </button>
-                </div>
-
-                {/* List Ignored transaction names if values present */}
-                {(pdfConfig?.ignored || []).map((merchant) => (
-                  // Ignored mapping row grid
-                  <div key={merchant} className={styles.settingsRow}>
-                    {/* Merchant description label text */}
-                    <span className={styles.settingsLabel}>{merchant}</span>
-                    {/* Delete action button */}
-                    <button 
-                      // Delete manual ignore name string trigger
-                      onClick={() => handleDeleteManualIgnore(merchant)}
-                      // CSS action style classes
-                      className={styles.deleteActionBtn}
-                    >
-                      {/* Bin SVG icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        {/* Trash outline path */}
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        {/* Bin bucket coordinates */}
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </>
-              )}
-            </div>
             </div>
           )}
         </div>
@@ -2444,7 +2416,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
             </button>
           ) : (
             // Render Finish button in step 3
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={onClose}>
+            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleFinish}>
               {/* Finish text label */}
               Finish
             </button>
@@ -2569,14 +2541,14 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           >
             {/* Modal header toolbar banner */}
             <div className={styles.header}>
-              {/* Heading title */}
-              <h3 className={styles.title}>Erase Import Configuration</h3>
+              {/* Reset heading title */}
+              <h3 className={styles.title}>Reset Import Configuration</h3>
             </div>
             {/* Modal description alert body */}
             <div className={styles.body}>
-              {/* Caution warning details text content */}
+              {/* Reset category mappings warning description text */}
               <p className={styles.pickerText}>
-                Are you sure you want to erase all saved merchant category mappings and ignored rules? This action cannot be undone.
+                Are you sure you want to reset all category mappings?
               </p>
             </div>
             {/* Action buttons footer toolbar */}
@@ -2599,14 +2571,16 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                 style={{ backgroundColor: 'var(--firebase-red)', borderColor: 'var(--firebase-red)', color: 'white' }}
                 // Click executes erase reset routine and dismisses modal
                 onClick={() => {
-                  // Reset configuration data in context
-                  updatePDFConfig({ mappings: {}, ignored: [] });
+                  // Reset configuration data in context by clearing mappings and ignoring all retrieved merchants
+                  updatePDFConfig({ mappings: {}, ignored: retrievedNames });
+                  // Reset the group transactions checkbox states for all merchants
+                  setGroupedMerchants({});
                   // Dismiss active modal status trigger state
                   setShowConfirmErase(false);
                 }}
               >
-                {/* Erase confirm button label */}
-                Erase
+                {/* Reset confirm button label */}
+                Reset
               </button>
             </div>
           </div>

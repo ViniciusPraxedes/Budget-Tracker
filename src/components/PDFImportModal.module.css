@@ -288,6 +288,41 @@
   gap: 0.5rem;
 }
 
+/* Card content row container for grouping horizontal alignment on desktop */
+.cardContentRow {
+  /* Flexbox layout */
+  display: flex;
+  /* Row direction by default */
+  flex-direction: row;
+  /* Align items vertically centered */
+  align-items: center;
+  /* Space between columns */
+  justify-content: space-between;
+  /* Take remaining space */
+  flex: 1;
+  /* Prevent clipping layout */
+  min-width: 0;
+  /* Spacing gap between elements */
+  gap: 0.75rem;
+}
+
+/* Card actions container holding checkbox and dropdown */
+.cardActions {
+  /* Flexbox display */
+  display: flex;
+  /* Centered vertical alignment */
+  align-items: center;
+  /* Gap spacing */
+  gap: 1rem;
+  /* Prevent scaling shrinkage */
+  flex-shrink: 0;
+  /* Allow wrap if needed */
+  flex-wrap: wrap;
+  /* Right align actions */
+  justify-content: flex-end;
+}
+
+
 /* Card details row layout */
 .cardHeaderRow {
   /* Display inline layout */
@@ -342,25 +377,58 @@
   width: 100%;
 }
 
-/* Dropdown select box for category classification */
+/* Dropdown select box for category classification styled to look like clickable button */
 .categorySelect {
-  /* Background selector element */
-  background: #202020;
-  /* Border highlight border */
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  /* Text color selector selection */
-  color: #fff;
-  /* Input selector padding */
-  padding: 0.5rem 0.6rem;
-  /* Rounded corners select */
+  /* Semi-transparent background for button/pill look */
+  background-color: rgba(255, 255, 255, 0.04);
+  /* Thin semi-transparent border */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* Rounded corners */
   border-radius: 6px;
-  /* Font size text select */
+  /* Font size slightly smaller for pill style */
   font-size: 0.85rem;
-  /* Full width target */
-  width: 100%;
-  /* Touch target height compliant with iOS */
-  min-height: 40px;
+  /* Medium weight text style */
+  font-weight: 500;
+  /* Left align selected value text */
+  text-align: left;
+  /* Left align dropdown options list */
+  text-align-last: left;
+  /* Hide default native browser arrow */
+  appearance: none;
+  /* Webkit support for hiding native arrow */
+  -webkit-appearance: none;
+  /* Mozilla support for hiding native arrow */
+  -moz-appearance: none;
+  /* Interactive cursor pointer styling */
+  cursor: pointer;
+  /* Remove select active highlight outline */
+  outline: none;
+  /* Flex shrink prevent sizing anomalies */
+  flex-shrink: 0;
+  /* Fixed width on desktop to prevent clipping and fit arrow */
+  width: 165px;
+  /* Padding on all sides with space on the right for arrow */
+  padding: 0.35rem 1.75rem 0.35rem 0.75rem;
+  /* Add custom chevron svg arrow as background-image */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  /* Do not repeat background arrow */
+  background-repeat: no-repeat;
+  /* Position background arrow on the right center */
+  background-position: right 8px center;
+  /* Scale background arrow size */
+  background-size: 12px;
+  /* Smooth hover transition */
+  transition: all 0.2s ease;
 }
+
+/* Hover style for category selection dropdown */
+.categorySelect:hover {
+  /* Slightly brighter background on hover */
+  background-color: rgba(255, 255, 255, 0.08);
+  /* Slightly brighter border on hover */
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 
 /* Sticky Action Bar layout */
 .footer {
@@ -551,27 +619,25 @@
   /* Spacing space details label */
   padding-bottom: 0.5rem;
 }
-
 /* Standard key value settings line row */
 .settingsRow {
-  /* Glass background panel style */
-  background: rgba(255, 255, 255, 0.02);
+  /* Brighter glass background panel style matching step 2 */
+  background: rgba(255, 255, 255, 0.03);
   /* Subtle border highlight line */
   border: 1px solid rgba(255, 255, 255, 0.05);
-  /* Row border radius */
-  border-radius: 8px;
-  /* Row padding space */
-  padding: 0.5rem 0.75rem;
+  /* Row border radius matching transactionCard */
+  border-radius: 12px;
+  /* Row padding space matching transactionCard */
+  padding: 1rem;
   /* Render horizontal flex layout */
   display: flex;
   /* Align items vertically to center line */
   align-items: center;
-  /* Spacing gap details */
-  gap: 0.5rem;
+  /* Spacing gap details matching transactionCard */
+  gap: 0.75rem;
   /* Do not wrap columns by default on desktop */
   flex-wrap: nowrap;
 }
-
 /* Section description name label text */
 .settingsLabel {
   /* Font weight medium style */
@@ -821,6 +887,41 @@
     /* Unset min width constraint settings */
     min-width: 0;
   }
+  /* Style category select on mobile viewports */
+  .categorySelect {
+    /* Fixed width to prevent squeezing on mobile */
+    width: 130px;
+    /* Compress font size on mobile */
+    font-size: 0.8rem;
+    /* Adjust padding to fit smaller screen sizes */
+    padding: 0.35rem 1.5rem 0.35rem 0.5rem;
+    /* Position background arrow slightly closer to edge */
+    background-position: right 6px center;
+    /* Make background arrow smaller */
+    background-size: 10px;
+    /* Prevent shrinking */
+    flex-shrink: 0;
+  }
+  /* Stack card contents vertically on compact screens */
+  .cardContentRow {
+    /* Stack elements vertically */
+    flex-direction: column;
+    /* Align items to start */
+    align-items: flex-start;
+    /* Reset vertical spacing gap */
+    gap: 0.5rem;
+  }
+
+  /* Expand actions container full width on mobile */
+  .cardActions {
+    /* Span full width of card */
+    width: 100%;
+    /* Align controls with space between on mobile */
+    justify-content: space-between;
+    /* Reduce gap */
+    gap: 0.5rem;
+  }
+
   /* Hide spacer blocks on narrow screen sizes */
   .settingsSpacer {
     /* Do not render element */

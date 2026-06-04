@@ -2,14 +2,22 @@
   "users": {
     "test-user": {
       "totalSavings": 15000,
-      "defaultMonth": 5,
+      "defaultMonth": 4,
       "defaultYear": 2026,
       "months": {
         "2026-5": {
           "month": 5,
           "year": 2026,
           "income": 0,
-          "categories": []
+          "categories": [
+            {
+              "id": "svzhzbdnc",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "expenses": [],
+              "order": 0
+            }
+          ]
         },
         "2026-4": {
           "month": 4,
@@ -17,32 +25,11 @@
           "income": 0,
           "categories": [
             {
-              "id": "graas3ixl",
-              "name": "Housing",
-              "color": "#FF5722",
+              "id": "6492xmi3c",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
               "expenses": [],
               "order": 0
-            },
-            {
-              "id": "15pa0los9",
-              "name": "Food",
-              "color": "#4CAF50",
-              "expenses": [],
-              "order": 1
-            },
-            {
-              "id": "mlfce9pze",
-              "name": "Transportation",
-              "color": "#2196F3",
-              "expenses": [],
-              "order": 2
-            },
-            {
-              "id": "5zxsqa4cb",
-              "name": "Entertainment",
-              "color": "#9C27B0",
-              "expenses": [],
-              "order": 3
             }
           ]
         }
