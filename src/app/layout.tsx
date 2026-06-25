@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+// Import Viewport metadata types from NextJS core
+import type { Viewport } from "next";
 import "./globals.css";
 import { BudgetProvider } from "@/context/BudgetContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -12,15 +14,17 @@ export const metadata: Metadata = {
     description: "Track your expenses and savings",
 };
 
-// Export viewport configuration for Next.js layout
-export const viewport = {
-    // Set the viewport width to device width
+// Export viewport configurations matching theme and device boundaries
+export const viewport: Viewport = {
+    // Match theme color background value
+    themeColor: "#0A0A0A",
+    // Match responsive view width scale settings
     width: "device-width",
-    // Set the initial scale to 1
+    // Configure default zoom scale parameter value
     initialScale: 1,
-    // Set viewport-fit to cover to enable safe-area insets
+    // Cover the full layout space around notch screen offsets
     viewportFit: "cover",
-// End of viewport configuration object
+// Terminate viewport object structure declaration definition
 };
 
 export default function RootLayout({
@@ -32,6 +36,8 @@ export default function RootLayout({
         <html lang="en">
             <head>
                 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+                {/* Set iOS status bar translucent style content overlay */}
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
             </head>
             <body suppressHydrationWarning>
                 <ErrorBoundary>

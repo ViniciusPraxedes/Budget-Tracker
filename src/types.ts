@@ -35,6 +35,7 @@ export interface BudgetContextType {
     addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => void;
     updateExpense: (categoryId: string, expense: Expense) => void;
     deleteExpense: (categoryId: string, expenseId: string) => void;
+    moveExpense: (oldCategoryId: string, newCategoryId: string, expense: Expense) => void;
     changeMonth: (month: number, year: number) => void;
     copyPreviousMonthData: () => void;
     moveCategory: (id: string, direction: 'up' | 'down') => void;

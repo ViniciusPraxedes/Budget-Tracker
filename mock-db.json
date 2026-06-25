@@ -2,7 +2,7 @@
   "users": {
     "test-user": {
       "totalSavings": 15000,
-      "defaultMonth": 5,
+      "defaultMonth": 4,
       "defaultYear": 2026,
       "months": {
         "2026-5": {
@@ -11,7 +11,7 @@
           "income": 0,
           "categories": [
             {
-              "id": "yzcofefd4",
+              "id": "svzhzbdnc",
               "name": "Uncategorized",
               "color": "#9E9E9E",
               "expenses": [],
@@ -22,35 +22,137 @@
         "2026-4": {
           "month": 4,
           "year": 2026,
-          "income": 0,
+          "income": 45000,
           "categories": [
             {
-              "id": "graas3ixl",
+              "id": "3xtm3z42g",
               "name": "Housing",
               "color": "#FF5722",
-              "expenses": [],
-              "order": 0
+              "order": 0,
+              "expenses": [
+                {
+                  "id": "ailnsn1sb",
+                  "name": "Rent",
+                  "amount": 12000,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "rz18sz58s",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "3673bcgow",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                },
+                {
+                  "id": "m2e91ihk3",
+                  "name": "Test Expense",
+                  "amount": 100,
+                  "paymentDay": 10,
+                  "isRecurring": false
+                }
+              ]
             },
             {
-              "id": "15pa0los9",
+              "id": "o3dxb9i12",
               "name": "Food",
               "color": "#4CAF50",
-              "expenses": [],
-              "order": 1
+              "order": 1,
+              "expenses": [
+                {
+                  "id": "q5rbxhmi4",
+                  "name": "Groceries",
+                  "amount": 4000,
+                  "paymentDay": 10,
+                  "isRecurring": false
+                },
+                {
+                  "id": "4b7thx8py",
+                  "name": "Dining Out",
+                  "amount": 1200,
+                  "paymentDay": 15,
+                  "isRecurring": false
+                },
+                {
+                  "id": "h24lo12s9",
+                  "name": "Coffee",
+                  "amount": 400,
+                  "paymentDay": 20,
+                  "isRecurring": false
+                }
+              ]
             },
             {
-              "id": "mlfce9pze",
+              "id": "9x0xaoci6",
               "name": "Transportation",
               "color": "#2196F3",
-              "expenses": [],
-              "order": 2
+              "order": 2,
+              "expenses": [
+                {
+                  "id": "vg5ysjcxi",
+                  "name": "Gas",
+                  "amount": 1000,
+                  "paymentDay": 12,
+                  "isRecurring": false
+                },
+                {
+                  "id": "h6fjgbjiv",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                },
+                {
+                  "id": "0pdzu1j54",
+                  "name": "Public Transit",
+                  "amount": 300,
+                  "paymentDay": 2,
+                  "isRecurring": false
+                }
+              ]
             },
             {
-              "id": "5zxsqa4cb",
+              "id": "61tnvh79c",
               "name": "Entertainment",
               "color": "#9C27B0",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "4b0elp298",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "j1s0c4k78",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                },
+                {
+                  "id": "tr2vqy9t1",
+                  "name": "Movies",
+                  "amount": 300,
+                  "paymentDay": 14,
+                  "isRecurring": false
+                }
+              ]
+            },
+            {
+              "id": "ks4grb56s",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
               "expenses": [],
-              "order": 3
+              "order": 4
             }
           ]
         }
