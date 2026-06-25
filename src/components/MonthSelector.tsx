@@ -98,7 +98,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                         style={{ accentColor: 'var(--firebase-yellow)' }}
                     />
                     {/* Label helper text */}
-                    Set as startup month
+                    Current Month
                 </label>
                 {/* Button to import transaction statement PDF */}
                 <button
@@ -144,7 +144,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                     {/* Close SVG tag */}
                     </svg>
                     {/* Button label text */}
-                    Import PDF
+                    Import Transactions
                 {/* Close import button element */}
                 </button>
                 {/* Button to clean data for active month */}
