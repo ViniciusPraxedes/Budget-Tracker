@@ -2198,6 +2198,38 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                     {filteredRetrievedNames.every((name) => !pdfConfig?.ignored.includes(name)) ? 'Deselect All' : 'Select All'}
                   {/* End button */}
                   </button>
+                  {/* Toggle Group All / Ungroup All button */}
+                  <button
+                    // Click handler callback to toggle Group/Ungroup All
+                    onClick={() => {
+                      // Extract the list of active (non-ignored) filtered merchants
+                      const activeFiltered = filteredRetrievedNames.filter((name) => !pdfConfig?.ignored.includes(name));
+                      // Check if all active filtered merchants are currently grouped
+                      const allGrouped = activeFiltered.length > 0 && activeFiltered.every((name) => !!groupedMerchants[name]);
+                      // Clone current grouped merchants state
+                      const updatedGrouped = { ...groupedMerchants };
+                      // Loop through the active filtered merchants list
+                      activeFiltered.forEach((name) => {
+                        // Toggle grouped state to the opposite of allGrouped
+                        updatedGrouped[name] = !allGrouped;
+                      // End of active filtered merchants loop
+                      });
+                      // Update state hook with new grouped merchants dictionary
+                      setGroupedMerchants(updatedGrouped);
+                    // End of click handler callback
+                    }}
+                    // Set button className to secondary button style
+                    className={styles.btnSecondary}
+                    // Set styling configuration overrides matching other buttons
+                    style={{ minHeight: '32px', width: '110px', padding: '0.25rem 0', fontSize: '0.8rem', textAlign: 'center' }}
+                  >
+                    {/* Check if all active filtered merchants are grouped to select correct label */}
+                    {filteredRetrievedNames.filter((name) => !pdfConfig?.ignored.includes(name)).length > 0 &&
+                    filteredRetrievedNames.filter((name) => !pdfConfig?.ignored.includes(name)).every((name) => !!groupedMerchants[name])
+                      ? 'Ungroup All'
+                      : 'Group All'}
+                  {/* End button */}
+                  </button>
                   {/* Reset button executing configurations erase styled exactly like step 2's button */}
                   <button
                     // Click trigger opens configurations reset confirm modal

@@ -14,8 +14,16 @@ interface ExpenseItemProps {
 
 const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate, onDelete, onMove }) => {
     const { categories } = useBudget();
+    // Manage the active editing state flag of the item
     const [isEditing, setIsEditing] = useState(false);
-    const [editedName, setEditedName] = useState(expense.name);
+    // Match the transaction count pattern at the end of the name string
+    const match = expense.name.match(/\s\((\d+)\stransactions?\)$/);
+    // Extract the name without the transaction count suffix
+    const cleanName = match ? expense.name.replace(match[0], '') : expense.name;
+    // Parse the transaction count integer value
+    const transactionCount = match ? parseInt(match[1], 10) : null;
+    // Initialize the edited name state with the clean name
+    const [editedName, setEditedName] = useState(cleanName);
     const [editedAmount, setEditedAmount] = useState(expense.amount.toString());
     const [editedDay, setEditedDay] = useState(expense.paymentDay.toString());
     const [editedRecurring, setEditedRecurring] = useState(!!expense.isRecurring);
@@ -170,14 +178,28 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
         >
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, paddingRight: '1rem' }}>
                 <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {/* Outer span container for clipping long expense name text */}
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {expense.name}
+                        {/* Render the cleaned expense name without the count suffix */}
+                        {cleanName}
+                    {/* Close name wrapper span */}
                     </span>
                     {expense.isRecurring && (
                         <span title="Recurring Expense" style={{ fontSize: '0.8rem', opacity: 0.8, flexShrink: 0 }}>🔁</span>
                     )}
                 </span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Day {expense.paymentDay}</span>
+                {/* Render the details span container for day and count */}
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {/* Render the payment day label */}
+                    Day {expense.paymentDay}
+                    {/* Check if transaction count metadata is present */}
+                    {transactionCount !== null && (
+                        // Render separator and transaction count detail string
+                        ` • ${transactionCount} ${transactionCount === 1 ? 'transaction' : 'transactions'}`
+                    // End of transaction count condition
+                    )}
+                {/* Close details span container */}
+                </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <span style={{ fontWeight: 'bold' }}>{formatCurrency(expense.amount)}</span>
@@ -297,7 +319,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                             {/* Confirmation warning text prefix details */}
                             Are you sure you want to delete{" "}
                             {/* Render bold name text parameter highlight */}
-                            <strong>{expense.name}</strong>
+                            <strong>{cleanName}</strong>
                             {/* Confirmation warning text suffix details */}
                             ?
                         {/* Close paragraph description text element */}
