@@ -146,7 +146,17 @@ select {
   }
 
   .mobile-padding {
+    /* Define the base padding for mobile views */
     padding: 1rem !important;
+    /* Add top padding matching the safe area inset for mobile devices */
+    padding-top: calc(1rem + env(safe-area-inset-top)) !important;
+    /* Add bottom padding matching the safe area inset for mobile devices */
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+    /* Add left padding matching the safe area inset for mobile devices */
+    padding-left: calc(1rem + env(safe-area-inset-left)) !important;
+    /* Add right padding matching the safe area inset for mobile devices */
+    padding-right: calc(1rem + env(safe-area-inset-right)) !important;
+  /* End of mobile-padding utility class */
   }
 
   .mobile-title {

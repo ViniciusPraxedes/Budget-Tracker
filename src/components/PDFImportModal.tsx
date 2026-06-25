@@ -1089,14 +1089,15 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
       let conversionRate = 1.0;
       // Convert text to lowercase to search for currencies
       const lowerFullText = fullText.toLowerCase();
-      // Check for Euro symbols or keywords
-      if (lowerFullText.includes('eur') || lowerFullText.includes('€')) {
+      // Check for Euro symbols or keywords with word boundaries
+      if (/\beur\b/i.test(fullText) || fullText.includes('€')) {
         // Set conversion rate from EUR to SEK
         conversionRate = 11.5;
-      // Check for US Dollar symbols or keywords
-      } else if (lowerFullText.includes('usd') || lowerFullText.includes('$')) {
+      // Check for US Dollar symbols or keywords with word boundaries
+      } else if (/\busd\b/i.test(fullText) || fullText.includes('$')) {
         // Set conversion rate from USD to SEK
         conversionRate = 10.5;
+      // End of currency conversion check block
       }
       // Split full text string block by line breaks
       const lines = fullText.split('\n');

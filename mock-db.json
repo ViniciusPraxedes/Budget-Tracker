@@ -9,7 +9,15 @@
           "month": 5,
           "year": 2026,
           "income": 0,
-          "categories": []
+          "categories": [
+            {
+              "id": "yzcofefd4",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "expenses": [],
+              "order": 0
+            }
+          ]
         },
         "2026-4": {
           "month": 4,
