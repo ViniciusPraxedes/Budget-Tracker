@@ -3,8 +3,15 @@ import React from 'react';
 // Import budget context consumer hook
 import { useBudget } from '../context/BudgetContext';
 
-// Declare functional component representing month navigator tool
-const MonthSelector: React.FC = () => {
+// Define props interface for the MonthSelector component
+interface MonthSelectorProps {
+    // Callback to trigger statement importing modal visibility
+    onImportClick: () => void;
+// Close interface definition
+}
+
+// Declare functional component representing month navigator tool with props
+const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
     // Extract current date states, monthly transitions, default settings, and clear operation from context
     const { currentMonth, currentYear, changeMonth, saveDefaultMonth, defaultMonthSettings, clearMonthData } = useBudget();
     // Manage state representing visibility status of clean data confirmation modal
@@ -93,6 +100,53 @@ const MonthSelector: React.FC = () => {
                     {/* Label helper text */}
                     Set as startup month
                 </label>
+                {/* Button to import transaction statement PDF */}
+                <button
+                    // Register click trigger to open statement importing modal
+                    onClick={onImportClick}
+                    // Custom inline styling for button layout matching Clean Data button but with yellow theme colors
+                    style={{
+                        // Transparent background
+                        background: 'transparent',
+                        // Yellow transparent border edge
+                        border: '1px solid rgba(255, 196, 0, 0.4)',
+                        // Yellow text color code
+                        color: '#FFC400',
+                        // Inner spacing paddings matching Clean Data button
+                        padding: '0.4rem 0.8rem',
+                        // Rounded borders layout matching Clean Data button
+                        borderRadius: '6px',
+                        // Touch pointer interaction
+                        cursor: 'pointer',
+                        // Sized typography font matching Clean Data button
+                        fontSize: '0.85rem',
+                        // Transition animation settings
+                        transition: 'all 0.2s',
+                        // Flexbox layout to align SVG icon and text side-by-side
+                        display: 'flex',
+                        // Align icon and text vertically center
+                        alignItems: 'center',
+                        // Add spacing gap between icon and text
+                        gap: '0.4rem'
+                    // End of style attributes object
+                    }}
+                >
+                    {/* Document SVG Icon shape */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Render file background outline path */}
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      {/* Render document fold coordinates lines */}
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      {/* Render arrow pointing down */}
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      {/* Render cap point down */}
+                      <polyline points="9 15 12 12 15 15"></polyline>
+                    {/* Close SVG tag */}
+                    </svg>
+                    {/* Button label text */}
+                    Import PDF
+                {/* Close import button element */}
+                </button>
                 {/* Button to clean data for active month */}
                 <button
                     // Register click trigger to open confirmation modal

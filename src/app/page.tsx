@@ -96,29 +96,7 @@ export default function Home() {
                         {/* Display profile display name string */}
                         <span className={styles.userName}>{user.displayName}</span>
                     </div>
-                    {/* Import Statement PDF trigger button */}
-                    <button
-                        // Open statement importing modal on tap click action
-                        onClick={() => setIsImportOpen(true)}
-                        // CSS styling button styles
-                        className={`mobile-logout-btn ${styles.logoutBtn}`}
-                        // Add margin spacer
-                        style={{ marginRight: '0.25rem' }}
-                    >
-                        {/* Document SVG Icon shape */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          {/* File background outline path */}
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          {/* Document fold coordinates lines */}
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          {/* Arrow pointing down */}
-                          <line x1="12" y1="18" x2="12" y2="12"></line>
-                          {/* Cap point down */}
-                          <polyline points="9 15 12 12 15 15"></polyline>
-                        </svg>
-                        {/* Screen text block hidden on narrow mobile devices */}
-                        <span className="mobile-hide-text">Import PDF</span>
-                    </button>
+
                     {/* Logout trigger button */}
                     <button
                         // Trigger logout action callback
@@ -141,8 +119,12 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Render month/year date navigator */}
-            <MonthSelector />
+            {/* Render month/year date navigator with import click handler */}
+            <MonthSelector
+                // Pass click handler callback
+                onImportClick={() => setIsImportOpen(true)}
+            // End of MonthSelector component rendering
+            />
             {/* Render dashboard totals metrics summary */}
             <Summary />
             {/* Render category analytics charts */}
