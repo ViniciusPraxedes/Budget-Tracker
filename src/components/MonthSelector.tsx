@@ -2,20 +2,63 @@
 import React from 'react';
 // Import budget context consumer hook
 import { useBudget } from '../context/BudgetContext';
+import { Category, PreviewCategory } from '../types';
 
 // Define props interface for the MonthSelector component
 interface MonthSelectorProps {
     // Callback to trigger statement importing modal visibility
     onImportClick: () => void;
-// Close interface definition
+    // Close interface definition
 }
 
 // Declare functional component representing month navigator tool with props
 const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
     // Extract current date states, monthly transitions, default settings, and clear operation from context
-    const { currentMonth, currentYear, changeMonth, saveDefaultMonth, defaultMonthSettings, clearMonthData } = useBudget();
+    const { currentMonth, currentYear, changeMonth, saveDefaultMonth, defaultMonthSettings, clearMonthData, getRecurringFromPreviousMonth, importRecurringExpenses } = useBudget();
     // Manage state representing visibility status of clean data confirmation modal
     const [showConfirmClean, setShowConfirmClean] = React.useState(false);
+    // State to hold the preview data of recurring expenses
+    const [recurringPreview, setRecurringPreview] = React.useState<PreviewCategory[] | null>(null);
+    // State to handle loading status during import fetch
+    const [isImporting, setIsImporting] = React.useState(false);
+
+    // Fetch recurring expenses preview and show modal
+    const handleImportRecurring = async () => {
+        setIsImporting(true);
+        const data = await getRecurringFromPreviousMonth();
+        if (data) {
+            setRecurringPreview(data);
+        } else {
+            alert("No recurring transactions found in the previous month.");
+        }
+        setIsImporting(false);
+    };
+
+    const toggleWillUpdate = (categoryId: string, expenseId: string) => {
+        if (!recurringPreview) return;
+        setRecurringPreview(recurringPreview.map(cat => {
+            if (cat.id === categoryId) {
+                return {
+                    ...cat,
+                    expenses: cat.expenses.map(exp => exp.id === expenseId ? { ...exp, willUpdate: !exp.willUpdate } : exp)
+                };
+            }
+            return cat;
+        }));
+    };
+
+    const setAllWillUpdate = (value: boolean) => {
+        if (!recurringPreview) return;
+        setRecurringPreview(recurringPreview.map(cat => ({
+            ...cat,
+            expenses: cat.expenses.map(exp => ({ ...exp, willUpdate: value }))
+        })));
+    };
+
+    // Calculate totals for the preview dialog
+    const previewTotalAmount = recurringPreview ? recurringPreview.reduce((sum, cat) => sum + cat.expenses.filter(e => e.willUpdate).reduce((expSum, exp) => expSum + exp.amount, 0), 0) : 0;
+    const previewTotalCount = recurringPreview ? recurringPreview.reduce((count, cat) => count + cat.expenses.filter(e => e.willUpdate).length, 0) : 0;
+    const allSelected = recurringPreview ? recurringPreview.every(cat => cat.expenses.every(exp => exp.willUpdate)) : false;
 
     // Transition date selection to the previous month
     const handlePrev = () => {
@@ -23,7 +66,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
         if (currentMonth === 0) {
             // Set date to December of previous year
             changeMonth(11, currentYear - 1);
-        // Otherwise decrement month index
+            // Otherwise decrement month index
         } else {
             // Set date to previous month of current year
             changeMonth(currentMonth - 1, currentYear);
@@ -36,7 +79,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
         if (currentMonth === 11) {
             // Set date to January of next year
             changeMonth(0, currentYear + 1);
-        // Otherwise increment month index
+            // Otherwise increment month index
         } else {
             // Set date to next month of current year
             changeMonth(currentMonth + 1, currentYear);
@@ -77,7 +120,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                 </button>
             </div>
             {/* Row container holding default startup preferences option and clean month operations */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
                 {/* Label wrapper for default startup selection checkbox */}
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem' }}>
                     {/* Startup setting checkbox toggle */}
@@ -100,79 +143,76 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                     {/* Label helper text */}
                     Current Month
                 </label>
-                {/* Button to import transaction statement PDF */}
+                {/* Button to import recurring transactions from the previous month */}
                 <button
-                    // Register click trigger to open statement importing modal
-                    onClick={onImportClick}
-                    // Custom inline styling for button layout matching Clean Data button but with yellow theme colors
+                    onClick={handleImportRecurring}
+                    disabled={isImporting}
+                    title="Import Recurring"
                     style={{
-                        // Transparent background
                         background: 'transparent',
-                        // Yellow transparent border edge
-                        border: '1px solid rgba(255, 196, 0, 0.4)',
-                        // Yellow text color code
-                        color: '#FFC400',
-                        // Inner spacing paddings matching Clean Data button
-                        padding: '0.4rem 0.8rem',
-                        // Rounded borders layout matching Clean Data button
+                        border: '1px solid rgba(33, 150, 243, 0.4)',
+                        color: '#2196F3',
+                        padding: '0.6rem',
                         borderRadius: '6px',
-                        // Touch pointer interaction
                         cursor: 'pointer',
-                        // Sized typography font matching Clean Data button
-                        fontSize: '0.85rem',
-                        // Transition animation settings
                         transition: 'all 0.2s',
-                        // Flexbox layout to align SVG icon and text side-by-side
                         display: 'flex',
-                        // Align icon and text vertically center
                         alignItems: 'center',
-                        // Add spacing gap between icon and text
-                        gap: '0.4rem'
-                    // End of style attributes object
+                        justifyContent: 'center'
                     }}
                 >
-                    {/* Document SVG Icon shape */}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {/* Render file background outline path */}
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      {/* Render document fold coordinates lines */}
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      {/* Render arrow pointing down */}
-                      <line x1="12" y1="18" x2="12" y2="12"></line>
-                      {/* Render cap point down */}
-                      <polyline points="9 15 12 12 15 15"></polyline>
-                    {/* Close SVG tag */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="17 1 21 5 17 9"></polyline>
+                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                        <polyline points="7 23 3 19 7 15"></polyline>
+                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
                     </svg>
-                    {/* Button label text */}
-                    Import Transactions
-                {/* Close import button element */}
+                </button>
+                {/* Button to import transaction statement PDF */}
+                <button
+                    onClick={onImportClick}
+                    title="Import Transactions"
+                    style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(255, 196, 0, 0.4)',
+                        color: '#FFC400',
+                        padding: '0.6rem',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <polyline points="9 15 12 12 15 15"></polyline>
+                    </svg>
                 </button>
                 {/* Button to clean data for active month */}
                 <button
-                    // Register click trigger to open confirmation modal
                     onClick={() => setShowConfirmClean(true)}
-                    // Custom inline styling for button layout and red colors
+                    title="Clean Data"
                     style={{
-                        // Transparent backdrop fill
                         background: 'transparent',
-                        // Red transparent border edge
                         border: '1px solid rgba(244, 67, 54, 0.4)',
-                        // Red text color code
                         color: '#ff5252',
-                        // Inner spacing paddings
-                        padding: '0.4rem 0.8rem',
-                        // Rounded borders layout
+                        padding: '0.6rem',
                         borderRadius: '6px',
-                        // Touch pointer interaction
                         cursor: 'pointer',
-                        // Sized typography font
-                        fontSize: '0.85rem',
-                        // Transition animation settings
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     }}
                 >
-                    {/* Clean Data button label text */}
-                    Clean Data
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
                 </button>
             </div>
             {/* Render monthly clean data confirmation modal overlay when state is active */}
@@ -308,6 +348,124 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                             >
                                 {/* Clean confirm button label */}
                                 Clean
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Render confirmation modal for importing recurring expenses */}
+            {recurringPreview && (
+                <div
+                    onClick={() => setRecurringPreview(null)}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(0,0,0,0.85)',
+                        backdropFilter: 'blur(10px)',
+                        zIndex: 1200,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            padding: '1.5rem',
+                            backgroundColor: '#151515',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.25rem',
+                            position: 'relative',
+                            width: '90%',
+                            maxWidth: '420px',
+                            maxHeight: '80vh',
+                            boxSizing: 'border-box'
+                        }}
+                    >
+                        <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>
+                            Import Recurring
+                        </h3>
+                        <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                            You are about to import <strong>{previewTotalCount}</strong> transactions totaling <strong>{previewTotalAmount} kr</strong>.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '-0.5rem' }}>
+                            <button
+                                onClick={() => setAllWillUpdate(!allSelected)}
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '4px', background: 'transparent', border: `1px solid ${allSelected ? 'rgba(255,255,255,0.2)' : 'rgba(76, 175, 80, 0.5)'}`, color: allSelected ? '#ccc' : '#4CAF50', cursor: 'pointer', transition: 'all 0.2s' }}
+                            >
+                                {allSelected ? 'Deselect All' : 'Select All'}
+                            </button>
+                        </div>
+
+                        {/* Scrollable list of transactions */}
+                        <div style={{ overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {recurringPreview.map((cat) => (
+                                <div key={cat.id}>
+                                    <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: cat.color || '#fff' }}>{cat.name}</h4>
+                                    <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem', color: '#ccc' }}>
+                                        {cat.expenses.map((exp) => (
+                                            <li key={exp.id} style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                                <span style={{ textDecoration: !exp.willUpdate ? 'line-through' : 'none', opacity: !exp.willUpdate ? 0.5 : 1 }}>
+                                                    {exp.name} - {exp.amount} kr
+                                                </span>
+                                                <label style={{ fontSize: '0.75rem', color: exp.alreadyExists ? '#ffb300' : '#4CAF50', display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={exp.willUpdate}
+                                                        onChange={() => toggleWillUpdate(cat.id, exp.id)}
+                                                        style={{ accentColor: exp.alreadyExists ? '#ffb300' : '#4CAF50' }}
+                                                    />
+                                                    {exp.alreadyExists ? 'Update existing' : 'Import'}
+                                                </label>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                            <button
+                                onClick={() => setRecurringPreview(null)}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    background: 'transparent',
+                                    color: '#ccc',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    await importRecurringExpenses(recurringPreview);
+                                    setRecurringPreview(null);
+                                }}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: '#2196F3',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                Import
                             </button>
                         </div>
                     </div>

@@ -30,29 +30,64 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
     const [editedCategoryId, setEditedCategoryId] = useState(categoryId);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+    // Define the save handler function for the expense item
     const handleSave = () => {
+        // Check if the transaction count is not null to format the final name string
+        const finalName = transactionCount !== null 
+            // Append the transaction count suffix to the edited name
+            ? `${editedName} (${transactionCount} transaction${transactionCount === 1 ? '' : 's'})` 
+            // Otherwise use the edited name as is
+            : editedName;
+
+        // Check if category was changed and move handler is provided
         if (editedCategoryId && editedCategoryId !== categoryId && onMove) {
+            // Trigger the move handler with the updated expense and category IDs
             onMove(
+                // Provide the updated expense object
                 {
+                    // Spread the existing expense properties
                     ...expense,
-                    name: editedName,
+                    // Assign the final constructed name string
+                    name: finalName,
+                    // Parse the edited amount string to a float or fallback to zero
                     amount: parseFloat(editedAmount) || 0,
+                    // Parse the edited payment day string to an integer or fallback to one
                     paymentDay: parseInt(editedDay) || 1,
+                    // Assign the edited recurring boolean flag
                     isRecurring: editedRecurring,
+                // Close the expense object
                 },
+                // Provide the original category ID
                 categoryId,
+                // Provide the new edited category ID
                 editedCategoryId
+            // Close the move handler arguments
             );
+        // Handle the case where the category was not changed
         } else {
-            onUpdate({
-                ...expense,
-                name: editedName,
-                amount: parseFloat(editedAmount) || 0,
-                paymentDay: parseInt(editedDay) || 1,
-                isRecurring: editedRecurring,
-            });
+            // Trigger the update handler with the updated expense
+            onUpdate(
+                // Provide the updated expense object
+                {
+                    // Spread the existing expense properties
+                    ...expense,
+                    // Assign the final constructed name string
+                    name: finalName,
+                    // Parse the edited amount string to a float or fallback to zero
+                    amount: parseFloat(editedAmount) || 0,
+                    // Parse the edited payment day string to an integer or fallback to one
+                    paymentDay: parseInt(editedDay) || 1,
+                    // Assign the edited recurring boolean flag
+                    isRecurring: editedRecurring,
+                // Close the expense object
+                }
+            // Close the update handler arguments
+            );
+        // Close the else block
         }
+        // Deactivate the editing state flag
         setIsEditing(false);
+    // Close the save handler function
     };
 
     const { formatCurrency } = useLocalization();
@@ -192,8 +227,8 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     {/* Render the payment day label */}
                     Day {expense.paymentDay}
-                    {/* Check if transaction count metadata is present */}
-                    {transactionCount !== null && (
+                    {/* Check if transaction count metadata is present and the expense is not recurring */}
+                    {transactionCount !== null && !expense.isRecurring && (
                         // Render separator and transaction count detail string
                         ` • ${transactionCount} ${transactionCount === 1 ? 'transaction' : 'transactions'}`
                     // End of transaction count condition

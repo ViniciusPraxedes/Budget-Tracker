@@ -14,6 +14,16 @@ export interface Category {
     order?: number;
 }
 
+export interface PreviewExpense extends Expense {
+    alreadyExists: boolean;
+    existingExpenseId?: string;
+    willUpdate: boolean;
+}
+
+export interface PreviewCategory extends Omit<Category, 'expenses'> {
+    expenses: PreviewExpense[];
+}
+
 export interface MonthData {
     month: number; // 0-11
     year: number;
@@ -38,6 +48,8 @@ export interface BudgetContextType {
     moveExpense: (oldCategoryId: string, newCategoryId: string, expense: Expense) => void;
     changeMonth: (month: number, year: number) => void;
     copyPreviousMonthData: () => void;
+    getRecurringFromPreviousMonth: () => Promise<PreviewCategory[] | null>;
+    importRecurringExpenses: (categoriesToMerge: PreviewCategory[]) => Promise<void>;
     moveCategory: (id: string, direction: 'up' | 'down') => void;
     reorderCategories: (newCategories: Category[]) => void;
     saveDefaultMonth: (month: number, year: number) => void;

@@ -36,6 +36,8 @@ html, body {
 html {
   /* Set document base background color matching dark theme variable */
   background-color: var(--background-dark);
+  /* Apply fluid typography for scalable text across screen sizes */
+  font-size: clamp(14px, 2vw, 18px);
 /* Close html styling rule declaration block */
 }
 
@@ -97,6 +99,33 @@ body {
 
 .slide-up {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Define animation for bottom-sheet slide up */
+@keyframes slideUpBottomSheet {
+  /* Start off-screen at bottom */
+  from { transform: translateY(100%); }
+  /* End at original position */
+  to { transform: translateY(0); }
+/* Close animation keyframes */
+}
+
+/* Apply bottom sheet slide animation */
+.bottom-sheet {
+  /* Bind slide up animation */
+  animation: slideUpBottomSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Close bottom-sheet class */
+}
+
+/* Active tap feedback for mobile touch targets */
+.active-tap:active {
+  /* Scale down slightly for press feedback */
+  transform: scale(0.98);
+  /* Dim opacity slightly */
+  opacity: 0.8;
+  /* Fast transition for immediate feedback */
+  transition: transform 0.1s, opacity 0.1s;
+/* Close active-tap class */
 }
 
 .fade-in {
@@ -243,6 +272,26 @@ select {
   .mobile-fab.is-adding::before {
     /* Set icon character label symbol value to cross */
     content: "✕" !important;
+  }
+
+  /* Override confirm overlay for bottom-sheet alignment */
+  .confirm-overlay {
+    /* Align contents to the bottom edge */
+    align-items: flex-end !important;
+    /* Add padding to lift above safe area */
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Override confirm modal for bottom-sheet layout */
+  .confirm-modal {
+    /* Expand width to fill screen edge-to-edge minus padding */
+    width: 100% !important;
+    /* Remove rounded corners at the bottom */
+    border-bottom-left-radius: 0 !important;
+    /* Remove rounded corners at the bottom */
+    border-bottom-right-radius: 0 !important;
+    /* Apply bottom-sheet slide animation */
+    animation: slideUpBottomSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
 }
 

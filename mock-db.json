@@ -23,14 +23,14 @@
                   "id": "89xy20tly"
                 },
                 {
-                  "name": "GALERIA CLEM (1 transactions)",
+                  "name": "GALERIA CLEM",
                   "amount": 98.04,
                   "paymentDay": 24,
                   "isRecurring": false,
                   "id": "x1ab802ms"
                 },
                 {
-                  "name": "TAQUIP (1 transactions)",
+                  "name": "TAQUIP (1 transaction)",
                   "amount": 110.46,
                   "paymentDay": 24,
                   "isRecurring": false,
@@ -486,11 +486,256 @@
                 }
               ],
               "order": 0
+            },
+            {
+              "id": "ks0k937bg",
+              "name": "Housing",
+              "color": "#FF5722",
+              "order": 1,
+              "expenses": [
+                {
+                  "id": "3dvpd5tlo",
+                  "name": "Rent",
+                  "amount": 12000,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "s73mu3i27",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "078qhy3vt",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                },
+                {
+                  "id": "f9n4sbvbl",
+                  "name": "Rent",
+                  "amount": 12000,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "8tf18tnup",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "8g8vn9j1j",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                },
+                {
+                  "id": "gszr8vesg",
+                  "name": "Rent",
+                  "amount": 12000,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "8njhssp2f",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "73zbw51s1",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "ixmn8xgte",
+              "name": "Transportation",
+              "color": "#2196F3",
+              "order": 2,
+              "expenses": [
+                {
+                  "id": "ay399a1dh",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                },
+                {
+                  "id": "k6rnpfnbk",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                },
+                {
+                  "id": "a3hd4nyza",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "7za1f9msj",
+              "name": "Entertainment",
+              "color": "#9C27B0",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "73w1ah74x",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "rcqseb0cp",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                },
+                {
+                  "id": "p6ysplwes",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "ix7l6zr7q",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                },
+                {
+                  "id": "b4hrisq81",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "rhwwzkt8l",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                }
+              ]
             }
           ]
         },
         "2026-4": {
           "month": 4,
+          "year": 2026,
+          "income": 0,
+          "categories": [
+            {
+              "id": "0o0ni44hl",
+              "name": "Housing",
+              "color": "#FF5722",
+              "order": 0,
+              "expenses": [
+                {
+                  "id": "e9xm93bfs",
+                  "name": "Utilities",
+                  "amount": 1500,
+                  "paymentDay": 5,
+                  "isRecurring": true
+                },
+                {
+                  "id": "m5vzqih7x",
+                  "name": "Internet",
+                  "amount": 500,
+                  "paymentDay": 28,
+                  "isRecurring": true
+                },
+                {
+                  "id": "fr24uca3p",
+                  "name": "abc",
+                  "amount": 123,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "kzq753a3k",
+              "name": "Transportation",
+              "color": "#2196F3",
+              "order": 1,
+              "expenses": [
+                {
+                  "id": "m01uvsnmm",
+                  "name": "Car Insurance",
+                  "amount": 600,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "9x69c9t69",
+              "name": "Entertainment",
+              "color": "#9C27B0",
+              "order": 2,
+              "expenses": [
+                {
+                  "id": "qjoxfn1h4",
+                  "name": "Netflix",
+                  "amount": 159,
+                  "paymentDay": 18,
+                  "isRecurring": true
+                },
+                {
+                  "id": "fwrwfzaa0",
+                  "name": "Spotify",
+                  "amount": 119,
+                  "paymentDay": 22,
+                  "isRecurring": true
+                }
+              ]
+            }
+          ]
+        },
+        "2026-6": {
+          "month": 6,
+          "year": 2026,
+          "income": 0,
+          "categories": [
+            {
+              "id": "0vb2gumhh",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 0,
+              "expenses": [
+                {
+                  "id": "iji1gskc3",
+                  "name": "Lön",
+                  "amount": 26323,
+                  "paymentDay": 24,
+                  "isRecurring": true
+                }
+              ]
+            }
+          ]
+        },
+        "2026-3": {
+          "month": 3,
           "year": 2026,
           "income": 45000,
           "categories": [
@@ -500,13 +745,6 @@
               "color": "#FF5722",
               "order": 0,
               "expenses": [
-                {
-                  "id": "ailnsn1sb",
-                  "name": "Rent",
-                  "amount": 12000,
-                  "paymentDay": 1,
-                  "isRecurring": true
-                },
                 {
                   "id": "rz18sz58s",
                   "name": "Utilities",
@@ -527,6 +765,13 @@
                   "amount": 100,
                   "paymentDay": 10,
                   "isRecurring": false
+                },
+                {
+                  "name": "abc",
+                  "amount": 123,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "id": "7hg4ay2md"
                 }
               ]
             },
@@ -623,28 +868,6 @@
               "color": "#9E9E9E",
               "expenses": [],
               "order": 4
-            }
-          ]
-        },
-        "2026-6": {
-          "month": 6,
-          "year": 2026,
-          "income": 0,
-          "categories": [
-            {
-              "id": "0vb2gumhh",
-              "name": "Uncategorized",
-              "color": "#9E9E9E",
-              "order": 0,
-              "expenses": [
-                {
-                  "id": "iji1gskc3",
-                  "name": "Lön",
-                  "amount": 26323,
-                  "paymentDay": 24,
-                  "isRecurring": true
-                }
-              ]
             }
           ]
         }

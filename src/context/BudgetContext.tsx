@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { BudgetContextType, Category, Expense, MonthData } from '../types';
+import { BudgetContextType, Category, Expense, MonthData, PreviewCategory, PreviewExpense } from '../types';
 // Import Firestore database connection from local config
 import { db } from '../firebase';
 // Import required document, collection, and query methods from Firebase Firestore SDK
@@ -413,16 +413,33 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Function to add a new custom category
     const addCategory = (name: string, color: string): Category => {
+        // Create new category object definition
         const newCategory: Category = {
+            // Generate unique string ID
             id: Math.random().toString(36).substr(2, 9),
+            // Set category name
             name,
+            // Set category color
             color,
+            // Initialize empty expenses array
             expenses: [],
-            order: categories.length, // Append to end
+            // Place at the top position
+            order: 0,
+        // Close category object
         };
-        // Update database with new categories array
-        updateFirestoreWrapper(income, [...categories, newCategory]);
+        // Increment order for all existing categories
+        const updatedExisting = categories.map(c => ({
+            // Spread existing properties
+            ...c,
+            // Offset existing order by 1
+            order: (c.order ?? 0) + 1
+        // Close mapping object
+        }));
+        // Update database with new categories array prepended
+        updateFirestoreWrapper(income, [newCategory, ...updatedExisting]);
+        // Return created category instance
         return newCategory;
+    // Close function
     };
     // Function to add multiple categories at once if they are missing
     const addMissingCategories = (missing: { name: string, color: string }[]) => {
@@ -436,11 +453,21 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             color: c.color,
             // Initialize empty expenses collection
             expenses: [],
-            // Set ordering position index
-            order: categories.length + idx,
+            // Set ordering position index at the top
+            order: idx,
+        // Close category mapping object
         }));
-        // Update database with concatenated categories collection
-        updateFirestoreWrapper(income, [...categories, ...newCats]);
+        // Increment order for all existing categories by the number of new categories
+        const updatedExisting = categories.map(c => ({
+            // Spread category properties
+            ...c,
+            // Offset order by the length of new categories added
+            order: (c.order ?? 0) + missing.length
+        // Close mapping object
+        }));
+        // Update database with concatenated categories collection prepended
+        updateFirestoreWrapper(income, [...newCats, ...updatedExisting]);
+    // Close function
     };
 
     const updateCategory = (id: string, name: string, color: string) => {
@@ -649,6 +676,118 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // End of copyPreviousMonthData definition
     };
 
+    // Function to fetch recurring expenses from the previous active month for preview
+    const getRecurringFromPreviousMonth = async (): Promise<PreviewCategory[] | null> => {
+        if (!user) return null;
+        
+        const prevDate = new Date(currentYear, currentMonth - 1, 1);
+        const prevKey = getMonthKey(prevDate.getMonth(), prevDate.getFullYear());
+        
+        let prevData: MonthData | null = null;
+        
+        if (user.uid === 'test-user') {
+            try {
+                const res = await fetch(`/api/mock-db?userId=test-user&monthKey=${prevKey}`, { cache: 'no-store' });
+                prevData = await res.json();
+            } catch (error) {
+                console.error("Error fetching mock previous month data:", error);
+                return null;
+            }
+        } else {
+            const prevDocRef = doc(db, 'users', user.uid, 'months', prevKey);
+            const prevSnap = await getDoc(prevDocRef);
+            if (prevSnap.exists()) {
+                prevData = prevSnap.data() as MonthData;
+            }
+        }
+
+        if (prevData && prevData.categories && prevData.categories.length > 0) {
+            const filteredCategories: PreviewCategory[] = [];
+            prevData.categories.forEach((prevCat: any) => {
+                const recurringExpenses = prevCat.expenses.filter((exp: any) => exp.isRecurring);
+                if (recurringExpenses.length > 0) {
+                    const previewExpenses: PreviewExpense[] = recurringExpenses.map((exp: any) => {
+                        let existingId: string | undefined = undefined;
+                        for (const cat of categories) {
+                            const match = cat.expenses.find(e => e.name === exp.name);
+                            if (match) {
+                                existingId = match.id;
+                                break;
+                            }
+                        }
+                        return {
+                            ...exp,
+                            alreadyExists: !!existingId,
+                            existingExpenseId: existingId,
+                            willUpdate: true // Default to true so user can opt-out
+                        };
+                    });
+                    
+                    filteredCategories.push({
+                        ...prevCat,
+                        expenses: previewExpenses
+                    });
+                }
+            });
+            return filteredCategories.length > 0 ? filteredCategories : null;
+        }
+        return null;
+    };
+
+    // Function to merge the confirmed recurring expenses into the current month
+    const importRecurringExpenses = async (categoriesToMerge: PreviewCategory[]) => {
+        if (!user || categoriesToMerge.length === 0) return;
+        
+        let currentCategories = [...categories];
+
+        categoriesToMerge.forEach((prevCat) => {
+            prevCat.expenses.forEach(exp => {
+                // Skip if the user deselected this transaction
+                if (!exp.willUpdate) return;
+
+                if (exp.alreadyExists && exp.existingExpenseId) {
+                    currentCategories = currentCategories.map(cat => ({
+                        ...cat,
+                        expenses: cat.expenses.map(e => e.id === exp.existingExpenseId ? { ...e, amount: exp.amount, paymentDay: exp.paymentDay } : e)
+                    }));
+                } else {
+                    const existingCategoryIndex = currentCategories.findIndex(c => c.name === prevCat.name);
+                    if (existingCategoryIndex !== -1) {
+                        currentCategories[existingCategoryIndex] = {
+                            ...currentCategories[existingCategoryIndex],
+                            expenses: [
+                                ...currentCategories[existingCategoryIndex].expenses,
+                                {
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    name: exp.name,
+                                    amount: exp.amount,
+                                    paymentDay: exp.paymentDay,
+                                    isRecurring: exp.isRecurring
+                                }
+                            ]
+                        };
+                    } else {
+                        currentCategories.push({
+                            id: Math.random().toString(36).substr(2, 9),
+                            name: prevCat.name,
+                            color: prevCat.color,
+                            order: currentCategories.length,
+                            expenses: [{
+                                id: Math.random().toString(36).substr(2, 9),
+                                name: exp.name,
+                                amount: exp.amount,
+                                paymentDay: exp.paymentDay,
+                                isRecurring: exp.isRecurring
+                            }]
+                        });
+                    }
+                }
+            });
+        });
+
+        await updateFirestoreWrapper(income, currentCategories);
+    };
+
     const moveCategory = (id: string, direction: 'up' | 'down') => {
         const sortedCategories = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
         const index = sortedCategories.findIndex(c => c.id === id);
@@ -719,6 +858,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         moveExpense,
         changeMonth,
         copyPreviousMonthData,
+        getRecurringFromPreviousMonth,
+        importRecurringExpenses,
         moveCategory,
         reorderCategories,
         saveDefaultMonth,
