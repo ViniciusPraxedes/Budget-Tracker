@@ -94,3 +94,101 @@
     width: 24px;
     height: 24px;
 }
+
+/* User profile dropdown container */
+.userDropdownContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Trigger button for user profile dropdown */
+.userDropdownTrigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* User avatar circle wrapper */
+.userAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 0.875rem;
+    overflow: hidden;
+}
+
+/* Downward chevron icon inside dropdown trigger */
+.chevronIcon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+/* Dropdown menu modal */
+.userDropdownMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 50;
+    width: 14rem;
+    background-color: var(--background-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* Details container inside dropdown */
+.userDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+}
+
+/* User name text in dropdown */
+.userNameDropdown {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* User email text in dropdown */
+.userEmailDropdown {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Logout button in dropdown */
+.logoutBtnDropdown {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--firebase-red);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.25rem 0;
+}

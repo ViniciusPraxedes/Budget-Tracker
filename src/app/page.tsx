@@ -29,6 +29,8 @@ export default function Home() {
     const { user, signInWithGoogle, loginAsTestUser, logout } = useAuth();
     // Declare state variable to toggle PDF statement import modal dialog visibility
     const [isImportOpen, setIsImportOpen] = useState(false);
+    // Declare state variable to toggle user profile dropdown modal visibility
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     // Check if session authentication state is currently unresolved
     if (!user) {
@@ -77,45 +79,79 @@ export default function Home() {
             <div className={styles.header}>
                 {/* Dashboard page heading text title */}
                 <h1 className={`mobile-title ${styles.title}`}>Budget Tracker</h1>
-                {/* User tools wrapper */}
-                <div className={`mobile-header-user ${styles.userInfo}`}>
-                    {/* User profile picture wrapper container */}
-                    <div className={styles.userProfile}>
-                        {/* Verify photo URL exist inside profile record */}
-                        {user.photoURL && (
-                            // Render profile picture image element
-                            <img
-                                // Profile photo URL string source
-                                src={user.photoURL}
-                                // Screenreader accessible text caption
-                                alt="Profile"
-                                // Styled thumbnail circular profile thumbnail CSS class
-                                className={styles.userImage}
-                            />
-                        )}
-                        {/* Display profile display name string */}
-                        <span className={styles.userName}>{user.displayName}</span>
-                    </div>
-
-                    {/* Logout trigger button */}
+                {/* User tools dropdown wrapper */}
+                <div className={styles.userDropdownContainer}>
+                    {/* Trigger button for dropdown */}
                     <button
-                        // Trigger logout action callback
-                        onClick={logout}
-                        // Styled action buttons classes
-                        className={`mobile-logout-btn ${styles.logoutBtn}`}
+                        // Toggle profile modal visibility
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        // Trigger styles
+                        className={styles.userDropdownTrigger}
                     >
-                        {/* Logout standard power indicator shape vector SVG */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            {/* SVG bracket border path */}
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            {/* Exit direction arrowhead points lines */}
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            {/* Exit horizontal pointer line */}
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        {/* User avatar circle */}
+                        <div className={styles.userAvatar}>
+                            {/* Conditionally render image or text */}
+                            {user.photoURL ? (
+                                // Render profile image
+                                <img
+                                    // Image source URL
+                                    src={user.photoURL}
+                                    // Accessible label
+                                    alt="Profile"
+                                />
+                            ) : (
+                                // Render fallback text
+                                user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'
+                            )}
+                        </div>
+                        {/* Dropdown chevron SVG */}
+                        <svg className={styles.chevronIcon} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Arrowhead lines */}
+                            <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
-                        {/* Text labels hidden on compact viewports */}
-                        <span className="mobile-hide-text">Log out</span>
                     </button>
+
+                    {/* Conditionally render dropdown */}
+                    {isProfileOpen && (
+                        // Dropdown menu modal box
+                        <div className={styles.userDropdownMenu}>
+                            {/* User details section */}
+                            <div className={styles.userDetails}>
+                                {/* Display name label */}
+                                <span className={styles.userNameDropdown}>
+                                    {user.displayName}
+                                </span>
+                                {/* Email address label */}
+                                <span className={styles.userEmailDropdown}>
+                                    {user.email}
+                                </span>
+                            </div>
+                            {/* Sign out action button */}
+                            <button
+                                // Trigger logout and close
+                                onClick={() => {
+                                    // Execute logout action
+                                    logout();
+                                    // Close the dropdown state
+                                    setIsProfileOpen(false);
+                                }}
+                                // Styled dropdown button class
+                                className={styles.logoutBtnDropdown}
+                            >
+                                {/* Logout SVG icon */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Outer door bracket path */}
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    {/* Inner exit arrowhead polyline */}
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    {/* Inner exit horizontal line segment */}
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                {/* Button text */}
+                                Sign Out
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
