@@ -99,8 +99,21 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                 <button
                     // Register prev month click trigger
                     onClick={handlePrev}
-                    // Inline styling overrides for transparent layout
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+                    // Apply inline style configurations
+                    style={{
+                        // Remove default button background
+                        background: 'transparent',
+                        // Remove default button border outline
+                        border: 'none',
+                        // Set text color to secondary variable
+                        color: 'var(--text-secondary)',
+                        // Set font size to 2.25rem for larger arrows
+                        fontSize: '2.25rem',
+                        // Use pointer cursor type on hover
+                        cursor: 'pointer',
+                        // Ensure layout aligns with title text
+                        lineHeight: 1
+                    }}
                 >
                     ‹
                 </button>
@@ -113,8 +126,21 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                 <button
                     // Register next month click trigger
                     onClick={handleNext}
-                    // Inline styling overrides for transparent layout
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+                    // Apply inline style configurations
+                    style={{
+                        // Remove default button background
+                        background: 'transparent',
+                        // Remove default button border outline
+                        border: 'none',
+                        // Set text color to secondary variable
+                        color: 'var(--text-secondary)',
+                        // Set font size to 2.25rem for larger arrows
+                        fontSize: '2.25rem',
+                        // Use pointer cursor type on hover
+                        cursor: 'pointer',
+                        // Ensure layout aligns with title text
+                        lineHeight: 1
+                    }}
                 >
                     ›
                 </button>

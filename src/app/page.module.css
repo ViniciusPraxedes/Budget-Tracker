@@ -115,17 +115,38 @@
 
 /* User avatar circle wrapper */
 .userAvatar {
+    /* Set fixed width */
     width: 32px;
+    /* Set fixed height */
     height: 32px;
+    /* Make the container circular */
     border-radius: 50%;
+    /* Set fallback background color */
     background-color: var(--border-color);
+    /* Enable flexbox */
     display: flex;
+    /* Center align items vertically */
     align-items: center;
+    /* Center justify content horizontally */
     justify-content: center;
+    /* Set text color */
     color: var(--text-primary);
+    /* Set text weight */
     font-weight: bold;
+    /* Set text size */
     font-size: 0.875rem;
+    /* Hide overflow to clip image into circle */
     overflow: hidden;
+}
+
+/* Image inside user avatar */
+.userAvatar img {
+    /* Make image fill container width */
+    width: 100%;
+    /* Make image fill container height */
+    height: 100%;
+    /* Preserve aspect ratio while filling container */
+    object-fit: cover;
 }
 
 /* Downward chevron icon inside dropdown trigger */

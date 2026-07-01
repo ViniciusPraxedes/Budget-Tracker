@@ -307,6 +307,8 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                         cursor: 'pointer',
                                         // Secondary gray color style rule
                                         color: 'var(--text-secondary)',
+                                        // Set larger font size for edit glyph visibility
+                                        fontSize: '1.4rem',
                                         // Enforce touch target accessibility minimum width
                                         minWidth: '44px',
                                         // Enforce touch target accessibility minimum height
@@ -339,6 +341,8 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                         cursor: 'pointer',
                                         // Warning red color style rule
                                         color: 'var(--firebase-red)',
+                                        // Set larger font size for delete glyph visibility
+                                        fontSize: '1.4rem',
                                         // Enforce touch target accessibility minimum width
                                         minWidth: '44px',
                                         // Enforce touch target accessibility minimum height

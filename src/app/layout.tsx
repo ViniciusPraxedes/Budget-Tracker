@@ -22,6 +22,8 @@ export const viewport: Viewport = {
     width: "device-width",
     // Configure default zoom scale parameter value
     initialScale: 1,
+    // Prevent iOS Safari from zooming into input fields by restricting max scale
+    maximumScale: 1,
     // Cover the full layout space around notch screen offsets
     viewportFit: "cover",
 // Terminate viewport object structure declaration definition
