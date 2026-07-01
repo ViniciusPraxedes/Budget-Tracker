@@ -237,7 +237,7 @@ select {
     /* Set the bottom position to sit above the FAB */
     bottom: 6rem !important;
     /* Align the center of the scroll button with the center of the FAB */
-    right: calc(1.5rem + 6px) !important;
+    right: 30px !important;
     /* Close the mobile-scroll-btn class */
   }
 
