@@ -41,6 +41,8 @@ interface ParsedTx {
   categoryId: string;
   // Transaction type: 'sent' or 'received'
   type: 'sent' | 'received';
+  // Flag indicating if this transaction is a duplicate of an existing expense
+  isDuplicate?: boolean;
 }
 
 // Define the property signature for the Modal component
@@ -124,6 +126,174 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
       addMissingCategories([{ name: 'Uncategorized', color: '#9E9E9E' }]);
     }
   }, [categories, addMissingCategories]);
+
+  // Helper function to parse base merchant name and expected transaction count from a grouped expense description
+  const parseGroupedExpenseName = (name: string) => {
+    // Match name against regular expression checking for the count suffix pattern
+    const match = name.match(/^(.+)\s+\((\d+)\s+transactions?\)$/i);
+    // If pattern matches successfully
+    if (match) {
+      // Return parsed result object containing base name and integer count
+      return {
+        // Store normalized trimmed base merchant name
+        baseName: match[1].trim().toLowerCase(),
+        // Store parsed integer count value
+        count: parseInt(match[2], 10)
+      };
+    }
+    // Return null if pattern does not match
+    return null;
+  };
+
+  // Helper to detect duplicate transactions against existing expenses in the current month
+  const detectDuplicates = (rows: ParsedTx[]): ParsedTx[] => {
+    // Clone the existing expenses list to use as a consumption pool
+    const pool = categories.flatMap((cat) => {
+      // Map over each expense in the category
+      return cat.expenses.map((exp) => {
+        // Return matching fields structure
+        return {
+          // Store ID field
+          id: exp.id,
+          // Store name field
+          name: exp.name,
+          // Store amount value
+          amount: exp.amount,
+          // Store paymentDay value
+          paymentDay: exp.paymentDay
+        };
+      });
+    });
+    // Helper function to escape special regex characters
+    const escapeRegExp = (str: string) => {
+      // Return escaped regex matching patterns
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+    // Helper function to check if names match exactly or as grouped versions
+    const isNameMatch = (existingName: string, importDesc: string) => {
+      // Normalize existing name to lowercase trimmed text
+      const normExisting = existingName.trim().toLowerCase();
+      // Normalize imported description to lowercase trimmed text
+      const normImport = importDesc.trim().toLowerCase();
+      // Check for exact matching values
+      if (normExisting === normImport) {
+        // Return true if identical
+        return true;
+      }
+      // Construct regex expression checking grouped transactions suffix mapping
+      const groupedRegex = new RegExp(`^${escapeRegExp(normImport)}\\s+\\(\\d+\\s+transactions?\\)$`);
+      // Return regex matching boolean status evaluation
+      return groupedRegex.test(normExisting);
+    };
+    // Initialize all rows with default duplicate status set to false
+    const processedRows = rows.map((tx) => {
+      // Return transaction with duplicate status fields
+      return {
+        // Spread transaction details
+        ...tx,
+        // Initialize duplicate flag status
+        isDuplicate: false
+      };
+    });
+    // First pass: Match individual transactions against individual or single-transaction grouped expenses
+    processedRows.forEach((tx) => {
+      // Find index of matching expense in the pool
+      const matchIdx = pool.findIndex((exp) => {
+        // Match payment day value
+        const dayMatch = exp.paymentDay === tx.paymentDay;
+        // Match amount value within small float range
+        const amountMatch = Math.abs(exp.amount - tx.amount) < 0.01;
+        // Match name values using helper function
+        const nameMatch = isNameMatch(exp.name, tx.description);
+        // Return matched evaluation status
+        return dayMatch && amountMatch && nameMatch;
+      });
+      // Verify if a valid match is found in the pool
+      if (matchIdx !== -1) {
+        // Remove matched item from pool to avoid double-matching duplicates
+        pool.splice(matchIdx, 1);
+        // Mark transaction duplicate flag as true
+        tx.isDuplicate = true;
+        // Unselect duplicate items by default
+        tx.selected = false;
+      }
+    });
+    // Map containing arrays of unmatched transactions grouped by normalized description
+    const unmatchedByMerchant: Record<string, typeof processedRows> = {};
+    // Populate the unmatched transactions map
+    processedRows.forEach((tx) => {
+      // Check if transaction was not marked as duplicate
+      if (!tx.isDuplicate) {
+        // Normalize description text to lowercase trimmed string
+        const normDesc = tx.description.trim().toLowerCase();
+        // Check if map doesn't have list for description
+        if (!unmatchedByMerchant[normDesc]) {
+          // Initialize empty array for description
+          unmatchedByMerchant[normDesc] = [];
+        }
+        // Push transaction to description list
+        unmatchedByMerchant[normDesc].push(tx);
+      }
+    });
+    // Second pass: Match remaining unmatched transactions against multi-transaction grouped expenses in pool
+    for (let i = pool.length - 1; i >= 0; i--) {
+      // Retrieve current expense from pool
+      const exp = pool[i];
+      // Attempt to parse grouped expense metadata details
+      const parsedGroup = parseGroupedExpenseName(exp.name);
+      // Check if expense was parsed as a grouped expense
+      if (parsedGroup) {
+        // Extract base name and expected transaction count
+        const { baseName, count: expectedCount } = parsedGroup;
+        // Get unmatched candidate transactions list for base merchant name
+        const candidateTxs = unmatchedByMerchant[baseName];
+        // Check if candidate list exists and has at least the expected count of transactions
+        if (candidateTxs && candidateTxs.length >= expectedCount) {
+          // Initialize variable to store matched subset array
+          let matchedSubset = null;
+          // Loop to search through sliding windows of candidate transactions
+          for (let start = 0; start <= candidateTxs.length - expectedCount; start++) {
+            // Slice candidate subset of expected count size
+            const subset = candidateTxs.slice(start, start + expectedCount);
+            // Calculate total amount sum of current subset
+            const totalAmount = subset.reduce((sum, t) => sum + t.amount, 0);
+            // Retrieve payment day of first transaction in subset
+            const firstDay = subset[0].paymentDay;
+            // Check if total amount matches grouped expense amount
+            const amountMatch = Math.abs(totalAmount - exp.amount) < 0.01;
+            // Check if first payment day matches grouped expense payment day
+            const dayMatch = firstDay === exp.paymentDay;
+            // If both amount and day match successfully
+            if (amountMatch && dayMatch) {
+              // Assign matched subset
+              matchedSubset = subset;
+              // Break loop as match is found
+              break;
+            }
+          }
+          // Check if a matching subset was found
+          if (matchedSubset) {
+            // Mark every transaction in subset as duplicate
+            matchedSubset.forEach((tx) => {
+              // Set duplicate status to true
+              tx.isDuplicate = true;
+              // Unselect duplicate items by default
+              tx.selected = false;
+            });
+            // Filter out matched transactions from the candidates list
+            unmatchedByMerchant[baseName] = candidateTxs.filter((t) => {
+              // Return true if candidate is not in matched subset
+              return !matchedSubset.includes(t);
+            });
+            // Remove matched grouped expense from pool
+            pool.splice(i, 1);
+          }
+        }
+      }
+    }
+    // Return processed transactions array
+    return processedRows;
+  };
 
   // Helper to parse year, month (0-indexed), and day from date string
   const parseDateParts = (dateStr: string): { year: number; month: number; day: number } => {
@@ -411,8 +581,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           type: txType
         });
       }
-      // Update transactions state list
-      setTransactions(parsedRows);
+      // Update transactions state list with duplicate-checked elements
+      setTransactions(detectDuplicates(parsedRows));
       // Set status message text helper
       setStatusMessage(`Found ${parsedRows.length} transaction entries.`);
       // If transactions were found, move to Step 2
@@ -689,8 +859,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           type: txType
         });
       }
-      // Update transactions state list
-      setTransactions(parsedRows);
+      // Update transactions state list with duplicate-checked elements
+      setTransactions(detectDuplicates(parsedRows));
       // Set status message text helper
       setStatusMessage(`Found ${parsedRows.length} transaction entries.`);
       // If transactions were found, move to Step 2
@@ -1240,8 +1410,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           type: txType
         });
       }
-      // Update transaction list state structure
-      setTransactions(parsedTxs);
+      // Update transaction list state structure with duplicate-checked elements
+      setTransactions(detectDuplicates(parsedTxs));
       // Set status message text helper
       setStatusMessage(`Found ${parsedTxs.length} transaction entries.`);
       // If transactions were found, move to Step 2
@@ -1706,7 +1876,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Filter transactions list dynamically matching search, selections, and active month/year
   const filteredTransactions = transactions.filter((tx) => {
-    // Allow all dates
+    // Allow all transaction dates
     const matchesMonthYear = true;
     // Check search query text match
     const matchesSearch = tx.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1743,22 +1913,49 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Group filtered transactions by merchant description
   const groupedTransactions = React.useMemo(() => {
-    const groups: { [key: string]: { description: string; count: number; amount: number; selected: boolean } } = {};
+    // Record groups keyed by merchant description
+    const groups: { [key: string]: { description: string; count: number; amount: number; selected: boolean; duplicateCount: number; isDuplicate: boolean } } = {};
+    // Loop over filtered transactions list
     for (const tx of filteredTransactions) {
+      // Check if group structure doesn't exist
       if (!groups[tx.description]) {
+        // Initialize group structure
         groups[tx.description] = {
+          // Store description
           description: tx.description,
+          // Initialize count
           count: 0,
+          // Initialize amount
           amount: 0,
-          selected: false
+          // Initialize selected
+          selected: false,
+          // Initialize duplicateCount
+          duplicateCount: 0,
+          // Initialize isDuplicate
+          isDuplicate: false
         };
       }
+      // Increment group count
       groups[tx.description].count += 1;
+      // Accumulate group amount
       groups[tx.description].amount += tx.amount;
+      // Check if current transaction is duplicate
+      if (tx.isDuplicate) {
+        // Increment duplicate count in group
+        groups[tx.description].duplicateCount += 1;
+      }
+      // Check if transaction is selected
       if (tx.selected) {
+        // Toggle group selection true
         groups[tx.description].selected = true;
       }
     }
+    // Loop over grouped entries to determine group duplicate status
+    Object.values(groups).forEach((g) => {
+      // Group is duplicate if all transactions are duplicates
+      g.isDuplicate = g.duplicateCount === g.count;
+    });
+    // Return array of group objects
     return Object.values(groups);
   }, [filteredTransactions]);
 
@@ -2035,15 +2232,29 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                 <button
                   // Click handler callback to toggle checkbox select all state
                   onClick={() => {
-                    // Check if any filtered transaction is selected
-                    const allSelected = filteredTransactions.every((tx) => tx.selected);
+                    // Extract non-duplicate filtered transactions
+                    const nonDuplicates = filteredTransactions.filter((tx) => !tx.isDuplicate);
+                    // Verify if all non-duplicate transactions are currently selected
+                    const allSelected = nonDuplicates.length > 0 && nonDuplicates.every((tx) => tx.selected);
                     // Map transactions to toggle checked state on filtered matches
                     setTransactions(
-                      transactions.map((tx) =>
-                        filteredTransactions.some((ft) => ft.id === tx.id)
-                          ? { ...tx, selected: !allSelected }
-                          : tx
-                      )
+                      // Map over each transaction to toggle selected state
+                      transactions.map((tx) => {
+                        // Determine if current transaction is filtered
+                        const isFiltered = filteredTransactions.some((ft) => ft.id === tx.id);
+                        // Check if transaction is filtered
+                        if (isFiltered) {
+                          // Check if transaction is duplicate
+                          if (tx.isDuplicate) {
+                            // Force duplicate transaction to remain deselected
+                            return { ...tx, selected: false };
+                          }
+                          // Return transaction with toggled selection state
+                          return { ...tx, selected: !allSelected };
+                        }
+                        // Return unmodified transaction
+                        return tx;
+                      })
                     );
                   }}
                   // Secondary styling button class
@@ -2052,7 +2263,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   style={{ minHeight: '32px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
                 >
                   {/* Conditional labels */}
-                  {filteredTransactions.every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
+                  {filteredTransactions.filter((tx) => !tx.isDuplicate).length > 0 && filteredTransactions.filter((tx) => !tx.isDuplicate).every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
                 </button>
               </div>
 
@@ -2060,8 +2271,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {groupByMerchant ? (
                   groupedTransactions.map((group) => (
-                    <div key={group.description} className={styles.transactionCard}>
+                    // Transaction card container with dynamic duplicate style class
+                    <div key={group.description} className={`${styles.transactionCard} ${group.isDuplicate ? styles.duplicateCard : ''}`}>
+                      {/* Checkbox wrapper division */}
                       <div className={styles.checkboxContainer} onClick={() => toggleSelectMerchant(group.description)}>
+                        {/* Checkbox input element */}
                         <input
                           type="checkbox"
                           checked={group.selected}
@@ -2069,15 +2283,37 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                           className={styles.checkbox}
                         />
                       </div>
+                      {/* Card contents flex container */}
                       <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+                        {/* Text descriptions column layout */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
-                          <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {group.description}
-                          </span>
+                          {/* Heading line container with optional badge tags */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {/* Merchant description label */}
+                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {group.description}
+                            </span>
+                            {/* Render duplicate badge if group is fully duplicate */}
+                            {group.isDuplicate && (
+                              // Already Imported warning badge
+                              <span className={styles.duplicateBadge}>
+                                Already Imported
+                              </span>
+                            )}
+                            {/* Render warning badge if group contains some duplicates */}
+                            {!group.isDuplicate && group.duplicateCount > 0 && (
+                              // Partial duplicate badge indicator
+                              <span className={styles.duplicateBadge} style={{ backgroundColor: 'rgba(255, 152, 0, 0.1)', color: '#ffb74d', borderColor: 'rgba(255, 152, 0, 0.2)' }}>
+                                Contains duplicates
+                              </span>
+                            )}
+                          </div>
+                          {/* Suffix transaction count description */}
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             {group.count} transaction{group.count !== 1 ? 's' : ''}
                           </span>
                         </div>
+                        {/* Formatted amount value display */}
                         <span className={styles.amount} style={{ color: group.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
                           {formatCurrency(group.amount)}
                         </span>
@@ -2086,8 +2322,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   ))
                 ) : (
                   filteredTransactions.map((tx) => (
-                    <div key={tx.id} className={styles.transactionCard}>
+                    // Transaction card container with dynamic duplicate style class
+                    <div key={tx.id} className={`${styles.transactionCard} ${tx.isDuplicate ? styles.duplicateCard : ''}`}>
+                      {/* Checkbox wrapper division */}
                       <div className={styles.checkboxContainer} onClick={() => toggleSelect(tx.id)}>
+                        {/* Checkbox input element */}
                         <input
                           type="checkbox"
                           checked={tx.selected}
@@ -2095,15 +2334,30 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                           className={styles.checkbox}
                         />
                       </div>
+                      {/* Card contents flex container */}
                       <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+                        {/* Text descriptions column layout */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
-                          <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {tx.description}
-                          </span>
+                          {/* Heading line container with optional badge tag */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {/* Merchant description label */}
+                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {tx.description}
+                            </span>
+                            {/* Render duplicate badge if transaction is already imported */}
+                            {tx.isDuplicate && (
+                              // Already Imported warning badge
+                              <span className={styles.duplicateBadge}>
+                                Already Imported
+                              </span>
+                            )}
+                          </div>
+                          {/* Date details label description */}
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             {tx.date}
                           </span>
                         </div>
+                        {/* Formatted amount value display */}
                         <span className={styles.amount} style={{ color: tx.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
                           {formatCurrency(tx.amount)}
                         </span>

@@ -2,7 +2,7 @@
   "users": {
     "test-user": {
       "totalSavings": 15000,
-      "defaultMonth": 4,
+      "defaultMonth": 6,
       "defaultYear": 2026,
       "months": {
         "2026-5": {
@@ -645,10 +645,17 @@
           "income": 0,
           "categories": [
             {
+              "id": "i3ticjnpz",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "expenses": [],
+              "order": 0
+            },
+            {
               "id": "0o0ni44hl",
               "name": "Housing",
               "color": "#FF5722",
-              "order": 0,
+              "order": 1,
               "expenses": [
                 {
                   "id": "e9xm93bfs",
@@ -677,7 +684,7 @@
               "id": "kzq753a3k",
               "name": "Transportation",
               "color": "#2196F3",
-              "order": 1,
+              "order": 2,
               "expenses": [
                 {
                   "id": "m01uvsnmm",
@@ -692,7 +699,7 @@
               "id": "9x69c9t69",
               "name": "Entertainment",
               "color": "#9C27B0",
-              "order": 2,
+              "order": 3,
               "expenses": [
                 {
                   "id": "qjoxfn1h4",
@@ -718,19 +725,320 @@
           "income": 0,
           "categories": [
             {
-              "id": "0vb2gumhh",
+              "id": "5ep44lx7f",
               "name": "Uncategorized",
               "color": "#9E9E9E",
-              "order": 0,
               "expenses": [
                 {
-                  "id": "iji1gskc3",
-                  "name": "Lön",
-                  "amount": 26323,
-                  "paymentDay": 24,
-                  "isRecurring": true
+                  "name": "HEMKOP MOLND (13 transactions)",
+                  "amount": 2078.2300000000005,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "aolty5h0e"
+                },
+                {
+                  "name": "CLAS OHLSON (4 transactions)",
+                  "amount": 2033.4,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "twvlf2f2i"
+                },
+                {
+                  "name": "Kronans Apot (2 transactions)",
+                  "amount": 453,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "pd7mpltds"
+                },
+                {
+                  "name": "UDEMY: ONLIN (1 transactions)",
+                  "amount": 202.75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "77stcwfoc"
+                },
+                {
+                  "name": "PAYPAL *DISN (1 transactions)",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "pnxth6lmf"
+                },
+                {
+                  "name": "+ Swish mottag (2 transactions)",
+                  "amount": 2015,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "hre1yb83c"
+                },
+                {
+                  "name": "Överföring v (14 transactions)",
+                  "amount": 38200,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "id": "49ke2an3e"
+                },
+                {
+                  "name": "PAYPAL *HOST (1 transactions)",
+                  "amount": 104.35,
+                  "paymentDay": 10,
+                  "isRecurring": false,
+                  "id": "6uis35py5"
+                },
+                {
+                  "name": "NORMAL M@LND (3 transactions)",
+                  "amount": 369,
+                  "paymentDay": 10,
+                  "isRecurring": false,
+                  "id": "qwncyiz0u"
+                },
+                {
+                  "name": "MY SERVICE D (1 transactions)",
+                  "amount": 60,
+                  "paymentDay": 10,
+                  "isRecurring": false,
+                  "id": "vreecqboi"
+                },
+                {
+                  "name": "PAYPAL *UDEM (1 transactions)",
+                  "amount": 116.12,
+                  "paymentDay": 8,
+                  "isRecurring": false,
+                  "id": "v3ckc3or4"
+                },
+                {
+                  "name": "KJELL & CO (3 transactions)",
+                  "amount": 1747,
+                  "paymentDay": 8,
+                  "isRecurring": false,
+                  "id": "1olf1q9k9"
+                },
+                {
+                  "name": "help.hbomax. (1 transactions)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": false,
+                  "id": "gcyglk7xb"
+                },
+                {
+                  "name": "PAYPAL *MULL (1 transactions)",
+                  "amount": 58.06,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "id": "s4e3s9358"
+                },
+                {
+                  "name": "APPLE.COM/BI (1 transactions)",
+                  "amount": 199,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "id": "ve6ofks9x"
+                },
+                {
+                  "name": "ICA KVANTUM (1 transactions)",
+                  "amount": 99.43,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "id": "dt9ohsx7h"
+                },
+                {
+                  "name": "Life M¦lndal (1 transactions)",
+                  "amount": 103,
+                  "paymentDay": 3,
+                  "isRecurring": false,
+                  "id": "gbl8je4c1"
+                },
+                {
+                  "name": "+ Swish skicka (1 transactions)",
+                  "amount": 6500,
+                  "paymentDay": 3,
+                  "isRecurring": false,
+                  "id": "1ub03vhc6"
+                },
+                {
+                  "name": "MICROSOFT*XB (1 transactions)",
+                  "amount": 19.9,
+                  "paymentDay": 2,
+                  "isRecurring": false,
+                  "id": "a240fcbrp"
+                },
+                {
+                  "name": "PAYPAL *NORD (1 transactions)",
+                  "amount": 148.75,
+                  "paymentDay": 2,
+                  "isRecurring": false,
+                  "id": "ag1d3mfkc"
+                },
+                {
+                  "name": "PAY*BMAPRODU (1 transactions)",
+                  "amount": 57.44,
+                  "paymentDay": 2,
+                  "isRecurring": false,
+                  "id": "gwwds32yb"
+                },
+                {
+                  "name": "UNIONEN (1 transactions)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": false,
+                  "id": "2fp5tyftv"
+                },
+                {
+                  "name": "PRIS NYCKELK (1 transactions)",
+                  "amount": 45,
+                  "paymentDay": 2,
+                  "isRecurring": false,
+                  "id": "9pms7g2uk"
+                },
+                {
+                  "name": "Amazon Prime (1 transactions)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "id": "02rodygrm"
+                },
+                {
+                  "name": "Hono (1 transactions)",
+                  "amount": 148,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "id": "1a9yt545v"
+                },
+                {
+                  "name": "DONER FACTOR (1 transactions)",
+                  "amount": 140,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "id": "rmq0we5to"
+                },
+                {
+                  "name": "AREAS ROISSY (3 transactions)",
+                  "amount": 250.93,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "id": "dgoo47385"
+                },
+                {
+                  "name": "CAPIO PRIM#R (1 transactions)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "id": "xime1ngon"
+                },
+                {
+                  "name": "Vimla (1 transactions)",
+                  "amount": 200,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "i8ma6ae86"
+                },
+                {
+                  "name": "FRISKTANDV (1 transactions)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "45gwqkg22"
+                },
+                {
+                  "name": "Thai Express (1 transactions)",
+                  "amount": 140,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "hm8qr8yxw"
+                },
+                {
+                  "name": "RELAY AIR PA (1 transactions)",
+                  "amount": 161.26,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "2wwcsec00"
+                },
+                {
+                  "name": "BOBS AERO SA (1 transactions)",
+                  "amount": 57.79,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "ssv5j2c2h"
+                },
+                {
+                  "name": "Uber UBER *T (7 transactions)",
+                  "amount": 512.53,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "g4a3tbbsf"
+                },
+                {
+                  "name": "Deltaexpress (1 transactions)",
+                  "amount": 46.23,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "xqcc6tgye"
+                },
+                {
+                  "name": "MCDONALDS (1 transactions)",
+                  "amount": 94.38,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "id": "hceluu8p3"
+                },
+                {
+                  "name": "CARNE NA BRA (1 transactions)",
+                  "amount": 264.54,
+                  "paymentDay": 26,
+                  "isRecurring": false,
+                  "id": "shwzgv1ff"
+                },
+                {
+                  "name": "POINT DA SON (1 transactions)",
+                  "amount": 96.17,
+                  "paymentDay": 26,
+                  "isRecurring": false,
+                  "id": "31knymnad"
+                },
+                {
+                  "name": "IFD*IZABELLE (1 transactions)",
+                  "amount": 319.63,
+                  "paymentDay": 26,
+                  "isRecurring": false,
+                  "id": "2worbw9bb"
+                },
+                {
+                  "name": "CSN (1 transactions)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": false,
+                  "id": "0h85h41oe"
+                },
+                {
+                  "name": "Avier Unione (1 transactions)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": false,
+                  "id": "ekjl7sp3w"
+                },
+                {
+                  "name": "nordicwell (1 transactions)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "id": "wvebchdyl"
+                },
+                {
+                  "name": "PADARIA DO V (1 transactions)",
+                  "amount": 165.24,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "id": "vn0c3cxs3"
+                },
+                {
+                  "name": "Västtrafik T Swish Västtr (1 transactions)",
+                  "amount": 890,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "id": "rf6jfv49g"
                 }
-              ]
+              ],
+              "order": 0
             }
           ]
         },
@@ -868,6 +1176,28 @@
               "color": "#9E9E9E",
               "expenses": [],
               "order": 4
+            }
+          ]
+        },
+        "2026-7": {
+          "month": 7,
+          "year": 2026,
+          "income": 0,
+          "categories": [
+            {
+              "id": "hux5uypk3",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 0,
+              "expenses": [
+                {
+                  "id": "dylp2t0aj",
+                  "name": "Lön",
+                  "amount": 26323,
+                  "paymentDay": 24,
+                  "isRecurring": true
+                }
+              ]
             }
           ]
         }

@@ -1171,3 +1171,36 @@
   min-height: 42px;
 }
 
+/* Styling for a card that has been identified as a duplicate */
+.duplicateCard {
+  /* Dim the background slightly */
+  background: rgba(244, 67, 54, 0.02);
+  /* Light red warning border */
+  border: 1px dashed rgba(244, 67, 54, 0.25);
+  /* Reduce opacity slightly */
+  opacity: 0.85;
+}
+
+/* Styling for duplicate warning badge */
+.duplicateBadge {
+  /* Set display mode */
+  display: inline-flex;
+  /* Align items center */
+  align-items: center;
+  /* Set vertical and horizontal padding */
+  padding: 0.2rem 0.5rem;
+  /* Set border radius to make corners rounded */
+  border-radius: 4px;
+  /* Set font size to be smaller */
+  font-size: 0.75rem;
+  /* Set font weight to be semi-bold */
+  font-weight: 600;
+  /* Set semi-transparent yellow background */
+  background: rgba(255, 152, 0, 0.15);
+  /* Set orange text color */
+  color: #ffb74d;
+  /* Set thin semi-transparent orange border */
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+
