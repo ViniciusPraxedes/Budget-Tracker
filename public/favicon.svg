@@ -1,6 +1,56 @@
+<!-- SVG root tag defining width, height, viewbox and namespaces -->
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="16" fill="#1E1E1E"/>
-  <path d="M32 12L52 22V42L32 52L12 42V22L32 12Z" fill="#FFC400"/>
-  <path d="M32 20L44 26V38L32 44L20 38V26L32 20Z" fill="#FF9100"/>
-  <circle cx="32" cy="32" r="6" fill="#DD2C00"/>
+  <!-- Definitions container for gradients and filters -->
+  <defs>
+    <!-- Background linear gradient -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <!-- Gradient start at 0 percent with dark navy blue -->
+      <stop offset="0%" stop-color="#121829"/>
+      <!-- Gradient end at 100 percent with deep dark indigo -->
+      <stop offset="100%" stop-color="#0A0D14"/>
+    <!-- Closing tag for linearGradient bgGrad -->
+    </linearGradient>
+    <!-- Trend line linear gradient -->
+    <linearGradient id="trendGrad" x1="16" y1="48" x2="48" y2="16" gradientUnits="userSpaceOnUse">
+      <!-- Gradient start at 0 percent with bright teal -->
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <!-- Gradient end at 100 percent with vibrant blue -->
+      <stop offset="100%" stop-color="#4FACFE"/>
+    <!-- Closing tag for linearGradient trendGrad -->
+    </linearGradient>
+    <!-- Glow filter for the trend line -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <!-- Gaussian blur effect with standard deviation of 2 -->
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <!-- Merge filter nodes -->
+      <feMerge>
+        <!-- Merge node for the blurred image -->
+        <feMergeNode in="blur" />
+        <!-- Merge node for the source graphic -->
+        <feMergeNode in="SourceGraphic" />
+      <!-- Closing tag for feMerge -->
+      </feMerge>
+    <!-- Closing tag for filter glow -->
+    </filter>
+  <!-- Closing tag for defs -->
+  </defs>
+  <!-- Main background rectangle with rounded corners -->
+  <rect width="64" height="64" rx="18" fill="url(#bgGrad)"/>
+  <!-- Horizontal grid line 1 -->
+  <line x1="12" y1="24" x2="52" y2="24" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- Horizontal grid line 2 -->
+  <line x1="12" y1="36" x2="52" y2="36" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- Horizontal grid line 3 -->
+  <line x1="12" y1="48" x2="52" y2="48" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- Background column bar 1 -->
+  <rect x="20" y="32" width="6" height="16" rx="3" fill="#ffffff" fill-opacity="0.1"/>
+  <!-- Background column bar 2 -->
+  <rect x="30" y="24" width="6" height="24" rx="3" fill="#ffffff" fill-opacity="0.15"/>
+  <!-- Highlighted column bar 3 -->
+  <rect x="40" y="16" width="6" height="32" rx="3" fill="url(#trendGrad)" fill-opacity="0.8"/>
+  <!-- Dynamic glowing trend line path -->
+  <path d="M16 44 L28 32 L38 38 L48 20" stroke="url(#trendGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- Outer circle indicator at trend line end -->
+  <circle cx="48" cy="20" r="4.5" fill="#FFFFFF"/>
+<!-- Closing tag for root SVG element -->
 </svg>
