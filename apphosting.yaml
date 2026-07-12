@@ -4,3 +4,6 @@ runConfig:
   minInstances: 0
   maxInstances: 10
   concurrency: 80
+env:
+  - variable: NEXT_PUBLIC_GEMINI_API_KEY
+    secret: NEXT_PUBLIC_GEMINI_API_KEY
