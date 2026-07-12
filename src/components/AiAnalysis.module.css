@@ -1,0 +1,469 @@
+/* Style class for the outer card container */
+.cardContainer {
+  /* Use translucent dark surface color */
+  background: var(--surface-dark);
+  /* Apply backdrop blur filter for glassmorphic effect */
+  backdrop-filter: blur(16px);
+  /* Webkit standard vendor support for backdrop filter */
+  -webkit-backdrop-filter: blur(16px);
+  /* Set border using translucent boundary color */
+  border: 1px solid var(--surface-border);
+  /* Configure rounded corner boundaries */
+  border-radius: 16px;
+  /* Add internal padding spacing */
+  padding: 1.5rem;
+  /* Margin spacing below the card container */
+  margin-bottom: 1.5rem;
+  /* Apply card shadow profile */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  /* Define transition properties for hover animations */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* Close cardContainer styles */
+}
+
+/* Card hover animation state */
+.cardContainer:hover {
+  /* Translate card slightly upwards on hover */
+  transform: translateY(-2px);
+  /* Apply deeper shadow profile on hover */
+  box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.4);
+/* Close hover styles */
+}
+
+/* Header container inside the card */
+.cardHeader {
+  /* Use flexbox display model formatting */
+  display: flex;
+  /* Center children elements vertically */
+  align-items: center;
+  /* Gap spacing between header items */
+  gap: 0.75rem;
+  /* Margin spacing below the header */
+  margin-bottom: 0.75rem;
+/* Close cardHeader styles */
+}
+
+/* Sparkle vector icon style */
+.sparkleIcon {
+  /* Set width boundary */
+  width: 24px;
+  /* Set height boundary */
+  height: 24px;
+  /* Set vector fill color to light purple */
+  fill: #a855f7;
+  /* Add subtle glowing shadow filter */
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+/* Close sparkleIcon styles */
+}
+
+/* Card title typography rules */
+.cardTitle {
+  /* Font size scale */
+  font-size: 1.25rem;
+  /* Font weight bold */
+  font-weight: 700;
+  /* Set linear gradient text color fill */
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  /* Clip background to text outline */
+  -webkit-background-clip: text;
+  /* Standard webkit transparent text fill */
+  -webkit-text-fill-color: transparent;
+  /* Reset outer margin offsets */
+  margin: 0;
+/* Close cardTitle styles */
+}
+
+/* Card description text rules */
+.cardDesc {
+  /* Text secondary color code */
+  color: var(--text-secondary);
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Line height spacing parameter */
+  line-height: 1.5;
+  /* Reset margins and set bottom offset */
+  margin: 0 0 1.25rem 0;
+/* Close cardDesc styles */
+}
+
+/* Trigger analysis action button */
+.analyzeBtn {
+  /* Set violet to indigo background gradient */
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  /* Remove default border style */
+  border: none;
+  /* White text color foreground */
+  color: white;
+  /* Font weight semi bold */
+  font-weight: 600;
+  /* Set vertical and horizontal padding */
+  padding: 0.75rem 1.5rem;
+  /* Rounded corners */
+  border-radius: 8px;
+  /* Mouse cursor display */
+  cursor: pointer;
+  /* Use flexbox display layout */
+  display: inline-flex;
+  /* Center items vertically */
+  align-items: center;
+  /* Space gap between icon and label */
+  gap: 0.5rem;
+  /* Set transition animations for interactivity */
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+/* Close analyzeBtn styles */
+}
+
+/* Button active press state */
+.analyzeBtn:active {
+  /* Scale button down on click tap */
+  transform: scale(0.97);
+/* Close active styles */
+}
+
+/* Button hover feedback state */
+.analyzeBtn:hover {
+  /* Dim background opacity slightly */
+  opacity: 0.95;
+  /* Apply hover glow shadow profile */
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+/* Close hover styles */
+}
+
+/* Modal screen overlay wrapper */
+.modalOverlay {
+  /* Set fixed overlay positioning */
+  position: fixed;
+  /* Align to top border */
+  top: 0;
+  /* Align to left border */
+  left: 0;
+  /* Width spans full viewport */
+  width: 100%;
+  /* Height spans full viewport */
+  height: 100%;
+  /* Dark translucent backdrop color */
+  background: rgba(0, 0, 0, 0.85);
+  /* Glass backdrop blur filter */
+  backdrop-filter: blur(12px);
+  /* Webkit standard support for backdrop filter */
+  -webkit-backdrop-filter: blur(12px);
+  /* Use flexbox formatting */
+  display: flex;
+  /* Align contents to center horizontally */
+  justify-content: center;
+  /* Align contents to center vertically */
+  align-items: center;
+  /* Elevate layering position index */
+  z-index: 11000;
+  /* Bind standard fade-in animation */
+  animation: fadeIn 0.2s ease-out;
+/* Close modalOverlay styles */
+}
+
+/* Modal dialog content window box */
+.modalContent {
+  /* Flat dark surface background color */
+  background: #121212;
+  /* Width size ratio */
+  width: 90%;
+  /* Maximum width boundary */
+  max-width: 650px;
+  /* Maximum height boundary */
+  max-height: 85vh;
+  /* Rounded corners */
+  border-radius: 16px;
+  /* Fine white translucent border line */
+  border: 1px solid var(--surface-border);
+  /* Inner layout padding */
+  padding: 2rem;
+  /* Hide overflow to prevent container scroll */
+  overflow: hidden;
+  /* Configure card drop shadow */
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  /* Bind slide-up entry animation */
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Use flexbox layout model */
+  display: flex;
+  /* Stack children vertically */
+  flex-direction: column;
+  /* Gap spacing between elements */
+  gap: 1.5rem;
+/* Close modalContent styles */
+}
+
+/* Header section within the modal */
+.modalHeader {
+  /* Use flexbox display rules */
+  display: flex;
+  /* Align items to outer edges */
+  justify-content: space-between;
+  /* Center children vertically */
+  align-items: center;
+  /* Bottom border divider line */
+  border-bottom: 1px solid var(--border-color);
+  /* Bottom padding offset spacing */
+  padding-bottom: 1rem;
+/* Close modalHeader styles */
+}
+
+/* Close action circular button */
+.closeBtn {
+  /* Clear background color */
+  background: transparent;
+  /* Remove border styling */
+  border: none;
+  /* Text secondary color code */
+  color: var(--text-secondary);
+  /* Pointer mouse cursor */
+  cursor: pointer;
+  /* Size scale */
+  font-size: 1.5rem;
+  /* Remove layout padding */
+  padding: 0;
+  /* Flexbox display rule */
+  display: flex;
+  /* Center icon vertically */
+  align-items: center;
+  /* Set width size */
+  width: 32px;
+  /* Set height size */
+  height: 32px;
+  /* Center icon horizontally */
+  justify-content: center;
+  /* Rounded circle borders */
+  border-radius: 50%;
+  /* Transition state speed details */
+  transition: background 0.2s ease, color 0.2s ease;
+/* Close closeBtn styles */
+}
+
+/* Close button hover state styles */
+.closeBtn:hover {
+  /* Translucent white hover background circle */
+  background: rgba(255, 255, 255, 0.05);
+  /* Highlight close text label to white */
+  color: white;
+/* Close hover styles */
+}
+
+/* Analysis details section container */
+.analysisBody {
+  /* Let it expand to fill remaining space */
+  flex: 1;
+  /* Allow it to shrink below content height in flexbox */
+  min-height: 0;
+  /* Scroll y overflow setting */
+  overflow-y: auto;
+  /* Custom margin padding */
+  padding-right: 0.5rem;
+/* Close analysisBody styles */
+}
+
+/* Custom header for markdown render */
+.mdH2 {
+  /* Gradient text style */
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  /* Webkit clip background */
+  -webkit-background-clip: text;
+  /* Webkit text fill transparent */
+  -webkit-text-fill-color: transparent;
+  /* Font size scale */
+  font-size: 1.4rem;
+  /* Font weight bold */
+  font-weight: 700;
+  /* Top margin offset */
+  margin-top: 1.5rem;
+  /* Bottom margin offset */
+  margin-bottom: 0.75rem;
+/* Close mdH2 styles */
+}
+
+/* Custom header h3 */
+.mdH3 {
+  /* Text color primary white */
+  color: white;
+  /* Font size scale */
+  font-size: 1.2rem;
+  /* Font weight bold */
+  font-weight: 600;
+  /* Top margin offset */
+  margin-top: 1.25rem;
+  /* Bottom margin offset */
+  margin-bottom: 0.5rem;
+/* Close mdH3 styles */
+}
+
+/* Custom header h4 */
+.mdH4 {
+  /* Text color primary white */
+  color: white;
+  /* Font size scale */
+  font-size: 1.1rem;
+  /* Font weight bold */
+  font-weight: 600;
+  /* Top margin offset */
+  margin-top: 1rem;
+  /* Bottom margin offset */
+  margin-bottom: 0.5rem;
+/* Close mdH4 styles */
+}
+
+/* Paragraph styling wrapper */
+.mdP {
+  /* Text secondary gray */
+  color: var(--text-secondary);
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Line height spacing */
+  line-height: 1.6;
+  /* Paragraph margins */
+  margin: 0 0 1rem 0;
+/* Close mdP styles */
+}
+
+/* List item style rules */
+.mdLi {
+  /* Text color secondary */
+  color: var(--text-secondary);
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Line height spacing */
+  line-height: 1.6;
+  /* Bottom margin spacing */
+  margin-bottom: 0.5rem;
+  /* Left indent margin */
+  margin-left: 1.25rem;
+  /* Standard bullet format */
+  list-style-type: disc;
+/* Close mdLi styles */
+}
+
+/* Spacing block for lines */
+.mdSpace {
+  /* Vertical margin spacer height */
+  height: 0.75rem;
+/* Close mdSpace styles */
+}
+
+/* Loading center spinner container */
+.loadingContainer {
+  /* Flex layout formatting */
+  display: flex;
+  /* Column flow direction */
+  flex-direction: column;
+  /* Align items center */
+  align-items: center;
+  /* Center children horizontally */
+  justify-content: center;
+  /* Top bottom margin padding */
+  padding: 3rem 0;
+  /* Gap spacing */
+  gap: 1rem;
+/* Close loadingContainer styles */
+}
+
+/* Double circle spinner loader animation */
+.spinner {
+  /* Spinner ring size width */
+  width: 48px;
+  /* Spinner ring size height */
+  height: 48px;
+  /* Fine translucent border circle */
+  border: 4px solid rgba(168, 85, 247, 0.1);
+  /* Purple rotating loading border piece */
+  border-top: 4px solid #a855f7;
+  /* Rounded border circle */
+  border-radius: 50%;
+  /* Bind rotate animation loop */
+  animation: spin 1s linear infinite;
+/* Close spinner styles */
+}
+
+/* Spin animation keyframes container */
+@keyframes spin {
+  /* Start angle stage */
+  0% {
+    /* Set start rotation angle */
+    transform: rotate(0deg);
+  /* Close start stage */
+  }
+  /* End angle stage */
+  100% {
+    /* Set end rotation angle */
+    transform: rotate(360deg);
+  /* Close end stage */
+  }
+/* Close spin keyframes */
+}
+
+/* Loading text display description */
+.loadingText {
+  /* Text secondary color */
+  color: var(--text-secondary);
+  /* Font size */
+  font-size: 0.95rem;
+  /* Font weight medium */
+  font-weight: 500;
+  /* Pulsating visibility style rules */
+  animation: pulse 1.5s ease-in-out infinite;
+/* Close loadingText styles */
+}
+
+/* Pulsing text visibility loop container */
+@keyframes pulse {
+  /* Half visible starting stage */
+  0% {
+    /* Set opacity value */
+    opacity: 0.5;
+  /* Close start stage */
+  }
+  /* Full opacity middle stage */
+  50% {
+    /* Set opacity value */
+    opacity: 1;
+  /* Close middle stage */
+  }
+  /* Half visible ending stage */
+  100% {
+    /* Set opacity value */
+    opacity: 0.5;
+  /* Close end stage */
+  }
+/* Close pulse keyframes */
+}
+
+/* Error message box styling */
+.errorBox {
+  /* Red translucent background Alert */
+  background: rgba(221, 44, 0, 0.1);
+  /* Red warning border */
+  border: 1px solid rgba(221, 44, 0, 0.3);
+  /* Rounded border corners */
+  border-radius: 8px;
+  /* Inward padding spacing */
+  padding: 1rem;
+  /* Deep Red primary alert color */
+  color: #ff5252;
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Flexbox display */
+  display: flex;
+  /* Align items to center */
+  align-items: center;
+  /* Gap spacing */
+  gap: 0.5rem;
+  /* Top bottom margin padding */
+  margin: 1rem 0;
+/* Close errorBox styles */
+}
+
+/* Error warning icon style */
+.errorIcon {
+  /* Set error icon size */
+  width: 20px;
+  /* Set error icon size */
+  height: 20px;
+  /* Set fill color properties */
+  fill: #ff5252;
+/* Close errorIcon styles */
+}

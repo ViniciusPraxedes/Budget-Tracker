@@ -20,6 +20,8 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/context/AuthContext";
 // Import PDF import modal component
 import PDFImportModal from "@/components/PDFImportModal";
+// Import AI spending analysis insight tool
+import AiAnalysis from "@/components/AiAnalysis";
 // Import CSS module styles for page layout structure
 import styles from "./page.module.css";
 
@@ -161,6 +163,8 @@ export default function Home() {
                 onImportClick={() => setIsImportOpen(true)}
             // End of MonthSelector component rendering
             />
+            {/* Render AI spending analysis component */}
+            <AiAnalysis />
             {/* Render dashboard totals metrics summary */}
             <Summary />
             {/* Render category analytics charts */}
