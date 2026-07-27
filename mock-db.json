@@ -868,6 +868,7 @@
           "year": 2026,
           "income": 45000,
           "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 25500,
           "categories": [
             {
               "id": "anjc55m0p",

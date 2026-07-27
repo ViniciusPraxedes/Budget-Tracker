@@ -38,6 +38,7 @@ export interface MonthData {
     income: number;
     categories: Category[];
     monthlySavingsDeposit?: number;
+    monthlyBudget?: number;
 }
 
 export interface BudgetContextType {
@@ -48,6 +49,8 @@ export interface BudgetContextType {
     totalExpenses: number;
     savings: number;
     monthlySavingsDeposit: number;
+    monthlyBudget: number;
+    setMonthlyBudget: (amount: number) => void;
     setMonthlySavingsDeposit: (amount: number) => void;
     setIncome: (amount: number) => void;
     addCategory: (name: string, color: string, budget?: number) => Category;
@@ -63,6 +66,7 @@ export interface BudgetContextType {
     importRecurringExpenses: (categoriesToMerge: PreviewCategory[]) => Promise<void>;
     moveCategory: (id: string, direction: 'up' | 'down') => void;
     reorderCategories: (newCategories: Category[]) => void;
+    reorderExpenses: (categoryId: string, newExpenses: Expense[]) => void;
     saveDefaultMonth: (month: number, year: number) => void;
     defaultMonthSettings: { month: number, year: number } | null;
     loadMockData: (income: number, categories: Category[]) => void;

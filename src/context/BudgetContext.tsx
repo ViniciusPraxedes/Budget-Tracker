@@ -20,7 +20,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
     const currentKey = getMonthKey(currentMonth, currentYear);
-    const { incomeState: income, categoriesState: categories, monthlySavingsDepositState: monthlySavingsDeposit, setIncomeState, setCategoriesState, setMonthlySavingsDepositState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
+    const { incomeState: income, categoriesState: categories, monthlySavingsDepositState: monthlySavingsDeposit, monthlyBudgetState: monthlyBudget, setIncomeState, setCategoriesState, setMonthlySavingsDepositState, setMonthlyBudgetState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
     const [isInitialized, setIsInitialized] = useState(false);
     const [totalSavings, setTotalSavings] = useState(0);
 
@@ -409,6 +409,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const setIncome = (amount: number) => {
         updateFirestoreWrapper(amount, categories);
+    };
+
+    const setMonthlyBudget = (amount: number) => {
+        updateFirestore(income, categories, currentMonth, currentYear, monthlySavingsDeposit, amount);
     };
 
     // Function to add a new custom category
@@ -824,6 +828,20 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(income, orderedCategories);
     };
 
+    const reorderExpenses = (categoryId: string, newExpenses: Expense[]) => {
+        const updatedCategories = categories.map(cat => {
+            if (cat.id === categoryId) {
+                return {
+                    ...cat,
+                    expenses: newExpenses
+                };
+            }
+            return cat;
+        });
+        setCategoriesState(updatedCategories);
+        updateFirestoreWrapper(income, updatedCategories);
+    };
+
     const loadMockData = (mockIncome: number, mockCategories: Category[]) => {
         // Ensure order field is set
         const orderedCategories = mockCategories.map((cat, index) => ({
@@ -856,7 +874,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // Dynamically adjust total savings balance with the deposit delta
         updateTotalSavings(totalSavings + diff);
         // Persist update to database
-        updateFirestore(income, categories, currentMonth, currentYear, amount);
+        updateFirestore(income, categories, currentMonth, currentYear, amount, monthlyBudget);
     };
 
     const budgetContextValue = {
@@ -868,6 +886,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         savings,
         monthlySavingsDeposit,
         setMonthlySavingsDeposit,
+        monthlyBudget,
+        setMonthlyBudget,
         setIncome,
         addCategory,
         updateCategory,
@@ -882,6 +902,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         importRecurringExpenses,
         moveCategory,
         reorderCategories,
+        reorderExpenses,
         saveDefaultMonth,
         defaultMonthSettings,
         loadMockData,

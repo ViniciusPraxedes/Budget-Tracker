@@ -8,7 +8,23 @@ import ExpenseItem from './ExpenseItem';
 import { PREDEFINED_COLORS } from '../constants';
 
 import { getUsedColors, getAvailableColors, getUnusedColor } from '../utils/colors';
-import { useSortable } from '@dnd-kit/sortable';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    TouchSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface CategoryBoxProps {
@@ -18,7 +34,7 @@ interface CategoryBoxProps {
 }
 
 const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggle }) => {
-    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses, moveExpense } = useBudget();
+    const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses, moveExpense, reorderExpenses } = useBudget();
     const [isEditing, setIsEditing] = useState(false);
     // Declare state for category name editing
     const [editedName, setEditedName] = useState(category.name);
@@ -28,6 +44,15 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
     const [editedBudget, setEditedBudget] = useState(category.budget !== undefined ? category.budget.toString() : '');
     // Declare state for delete confirmation dialog toggle
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Synchronize edit input states when category properties change and not editing
+    React.useEffect(() => {
+        if (!isEditing) {
+            setEditedName(category.name);
+            setEditedColor(category.color);
+            setEditedBudget(category.budget !== undefined ? category.budget.toString() : '');
+        }
+    }, [category.name, category.color, category.budget, isEditing]);
 
     const {
         attributes,
@@ -55,6 +80,26 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
     const [newExpenseAmount, setNewExpenseAmount] = useState('');
     const [newExpenseDay, setNewExpenseDay] = useState('');
     const [newExpenseRecurring, setNewExpenseRecurring] = useState(false);
+
+    const expenseSensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(TouchSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleExpenseDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            const oldIndex = category.expenses.findIndex(exp => exp.id === active.id);
+            const newIndex = category.expenses.findIndex(exp => exp.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const reordered = arrayMove(category.expenses, oldIndex, newIndex);
+                reorderExpenses(category.id, reordered);
+            }
+        }
+    };
 
     const subtotal = category.expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const percentage = totalExpenses > 0 ? (subtotal / totalExpenses) * 100 : 0;
@@ -312,7 +357,9 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                 <button
                                     // Trigger editing panel activation on click tap
                                     onClick={() => {
-                                        // Activate edit flag status
+                                        setEditedName(category.name);
+                                        setEditedColor(category.color);
+                                        setEditedBudget(category.budget !== undefined ? category.budget.toString() : '');
                                         setIsEditing(true);
                                     }}
                                     // Styling configuration settings
@@ -429,20 +476,24 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                 )}
                             </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {category.expenses.map(expense => (
-                                <ExpenseItem
-                                    key={expense.id}
-                                    categoryId={category.id}
-                                    expense={expense}
-                                    onUpdate={(updated) => updateExpense(category.id, updated)}
-                                    onDelete={(id) => deleteExpense(category.id, id)}
-                                    onMove={(exp, oldId, newId) => {
-                                        moveExpense(oldId, newId, exp);
-                                    }}
-                                />
-                            ))}
-                        </div>
+                        <DndContext sensors={expenseSensors} collisionDetection={closestCenter} onDragEnd={handleExpenseDragEnd}>
+                            <SortableContext items={category.expenses.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {category.expenses.map(expense => (
+                                        <ExpenseItem
+                                            key={expense.id}
+                                            categoryId={category.id}
+                                            expense={expense}
+                                            onUpdate={(updated) => updateExpense(category.id, updated)}
+                                            onDelete={(id) => deleteExpense(category.id, id)}
+                                            onMove={(exp, oldId, newId) => {
+                                                moveExpense(oldId, newId, exp);
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
 
                         {isAddingExpense ? (
                             <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}>

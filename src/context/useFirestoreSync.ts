@@ -12,6 +12,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     const [categoriesState, setCategoriesState] = useState<Category[]>([]);
     // Declare state for monthly savings deposit
     const [monthlySavingsDepositState, setMonthlySavingsDepositState] = useState<number>(0);
+    // Declare state for total monthly spending budget
+    const [monthlyBudgetState, setMonthlyBudgetState] = useState<number>(0);
     // Declare state for loading indicator
     const [loading, setLoading] = useState(true);
     // Retrieve toast notification handler
@@ -28,6 +30,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
             setCategoriesState([]);
             // Set monthly savings deposit to zero
             setMonthlySavingsDepositState(0);
+            // Set monthly budget state to zero
+            setMonthlyBudgetState(0);
             // Disable loading spinner
             setLoading(false);
             // Return early
@@ -51,6 +55,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setIncomeState(data.income || 0);
                     // Update monthly savings deposit state
                     setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
+                    // Update monthly budget state
+                    setMonthlyBudgetState(data.monthlyBudget || 0);
                     // Retrieve categories array or use empty array default
                     const fetchedCategories = data.categories || [];
                     // Sort categories by their order property
@@ -101,6 +107,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setIncomeState(data.income || 0);
                     // Update local monthly savings deposit state
                     setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
+                    // Update local monthly budget state
+                    setMonthlyBudgetState(data.monthlyBudget || 0);
                     // Retrieve categories list
                     const fetchedCategories = data.categories || [];
                     // Sort categories by order index
@@ -154,6 +162,7 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                                         year: yearNum,
                                         income: prevData.income || 0,
                                         monthlySavingsDeposit: prevData.monthlySavingsDeposit || 0,
+                                        monthlyBudget: prevData.monthlyBudget || 0,
                                         categories: newCategories
                                     });
                                 // Handle case where no recurring categories exist
@@ -166,6 +175,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                                     setCategoriesState([]);
                                     // Reset monthly savings deposit to zero
                                     setMonthlySavingsDepositState(0);
+                                    // Reset monthly budget state to zero
+                                    setMonthlyBudgetState(0);
                                 }
                             // Handle case where previous month document does not exist
                             } else {
@@ -177,6 +188,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                                 setCategoriesState([]);
                                 // Reset monthly savings deposit to zero
                                 setMonthlySavingsDepositState(0);
+                                // Reset monthly budget state to zero
+                                setMonthlyBudgetState(0);
                             }
                             // Disable loading spinner
                             setLoading(false);
@@ -190,6 +203,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                             setCategoriesState([]);
                             // Reset monthly savings deposit to zero
                             setMonthlySavingsDepositState(0);
+                            // Reset monthly budget state to zero
+                            setMonthlyBudgetState(0);
                             // Disable loading spinner
                             setLoading(false);
                         });
@@ -212,11 +227,13 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     }, [currentKey, user, addToast]);
 
     // Function to push budget updates to the remote or local database
-    const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number, newSavingsDeposit?: number) => {
+    const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number, newSavingsDeposit?: number, newMonthlyBudget?: number) => {
         // Determine savings deposit value using state fallback
         const savingsDepositValue = newSavingsDeposit !== undefined ? newSavingsDeposit : monthlySavingsDepositState;
+        // Determine monthly budget value using state fallback
+        const monthlyBudgetValue = newMonthlyBudget !== undefined ? newMonthlyBudget : monthlyBudgetState;
         // Log update parameters to console for debugging
-        console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, savingsDepositValue });
+        console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, savingsDepositValue, monthlyBudgetValue });
         // Return early if no user session exists
         if (!user) {
             // Log abort message to console
@@ -235,6 +252,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                 setCategoriesState(newCategories);
                 // Update local monthly savings deposit state immediately
                 setMonthlySavingsDepositState(savingsDepositValue);
+                // Update local monthly budget state immediately
+                setMonthlyBudgetState(monthlyBudgetValue);
                 // Call local API to update month data
                 await fetch('/api/mock-db', {
                     // Use POST HTTP method
@@ -263,6 +282,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                             income: newIncome,
                             // New monthly savings deposit amount
                             monthlySavingsDeposit: savingsDepositValue,
+                            // New monthly budget amount
+                            monthlyBudget: monthlyBudgetValue,
                             // Categories list
                             categories: newCategories
                         // End of monthData object
@@ -293,6 +314,7 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                 year,
                 income: newIncome,
                 monthlySavingsDeposit: savingsDepositValue,
+                monthlyBudget: monthlyBudgetValue,
                 categories: newCategories
             });
         // Catch error on saving document to Firestore
@@ -312,12 +334,16 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
         categoriesState,
         // Return current monthly savings deposit state
         monthlySavingsDepositState,
+        // Return current monthly budget state
+        monthlyBudgetState,
         // Return income state modifier
         setIncomeState,
         // Return categories state modifier
         setCategoriesState,
         // Return monthly savings deposit modifier
         setMonthlySavingsDepositState,
+        // Return monthly budget modifier
+        setMonthlyBudgetState,
         // Return loading state status
         loading,
         // Return database update function

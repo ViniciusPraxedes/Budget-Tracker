@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Expense } from '../types';
 import { useLocalization } from '../context/LocalizationContext';
 import { useBudget } from '../context/BudgetContext';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ExpenseItemProps {
     categoryId: string;
@@ -14,6 +16,8 @@ interface ExpenseItemProps {
 
 const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate, onDelete, onMove }) => {
     const { categories } = useBudget();
+    // Configure sortable hook for item drag and drop reordering
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: expense.id });
     // Manage the active editing state flag of the item
     const [isEditing, setIsEditing] = useState(false);
     // Match the transaction count pattern at the end of the name string
@@ -29,6 +33,17 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
     const [editedRecurring, setEditedRecurring] = useState(!!expense.isRecurring);
     const [editedCategoryId, setEditedCategoryId] = useState(categoryId);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Keep expense edit states synchronized with props when not editing
+    React.useEffect(() => {
+        if (!isEditing) {
+            setEditedName(cleanName);
+            setEditedAmount(expense.amount.toString());
+            setEditedDay(expense.paymentDay.toString());
+            setEditedRecurring(!!expense.isRecurring);
+            setEditedCategoryId(categoryId);
+        }
+    }, [cleanName, expense.amount, expense.paymentDay, expense.isRecurring, categoryId, isEditing]);
 
     // Define the save handler function for the expense item
     const handleSave = () => {
@@ -49,23 +64,23 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                     ...expense,
                     // Assign the final constructed name string
                     name: finalName,
-                    // Parse the edited amount string to a float or fallback to zero
+                    // Assign the edited amount float value
                     amount: parseFloat(editedAmount) || 0,
-                    // Parse the edited payment day string to an integer or fallback to one
-                    paymentDay: parseInt(editedDay) || 1,
+                    // Assign the edited payment day integer value
+                    paymentDay: parseInt(editedDay, 10) || 1,
                     // Assign the edited recurring boolean flag
                     isRecurring: editedRecurring,
                 // Close the expense object
                 },
-                // Provide the original category ID
+                // Pass current category ID
                 categoryId,
-                // Provide the new edited category ID
+                // Pass new target category ID
                 editedCategoryId
             // Close the move handler arguments
             );
         // Handle the case where the category was not changed
         } else {
-            // Trigger the update handler with the updated expense
+            // Otherwise update expense in place
             onUpdate(
                 // Provide the updated expense object
                 {
@@ -73,10 +88,10 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                     ...expense,
                     // Assign the final constructed name string
                     name: finalName,
-                    // Parse the edited amount string to a float or fallback to zero
+                    // Assign the edited amount float value
                     amount: parseFloat(editedAmount) || 0,
-                    // Parse the edited payment day string to an integer or fallback to one
-                    paymentDay: parseInt(editedDay) || 1,
+                    // Assign the edited payment day integer value
+                    paymentDay: parseInt(editedDay, 10) || 1,
                     // Assign the edited recurring boolean flag
                     isRecurring: editedRecurring,
                 // Close the expense object
@@ -181,6 +196,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
     // Renders the transaction item container with negative margins and alignment style rules
     return (
         <div
+            ref={setNodeRef}
             // Apply flex, margin overrides, border, and transition styling rules
             style={{
                 // Flexbox display layout model
@@ -190,7 +206,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                 // Align items vertically centered
                 alignItems: 'center',
                 // Responsive padding on top/bottom and left side to keep text visible, while right side remains zero to push icons right
-                padding: '0.75rem 0 0.75rem 0.75rem',
+                padding: '0.75rem 0 0.75rem 0.5rem',
                 // Shift left edge closer to the card border
                 marginLeft: '-0.75rem',
                 // Shift right edge closer to the card border
@@ -198,7 +214,13 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                 // Bottom divider separation line
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
                 // Transition background highlight effects
-                transition: 'background 0.2s',
+                transition,
+                // Apply drag transform
+                transform: CSS.Transform.toString(transform),
+                // Dim opacity while dragging item
+                opacity: isDragging ? 0.5 : 1,
+                // Relative positioning
+                position: 'relative'
             }}
             // Highlight background on hover enter event
             onMouseEnter={(e) => {
@@ -211,6 +233,22 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                 e.currentTarget.style.background = 'transparent';
             }}
         >
+            {/* Expense drag handle grip element */}
+            <div
+                {...attributes}
+                {...listeners}
+                style={{
+                    cursor: 'grab',
+                    color: 'var(--text-secondary)',
+                    padding: '0.5rem 0.4rem',
+                    fontSize: '1rem',
+                    userSelect: 'none',
+                    touchAction: 'none',
+                    flexShrink: 0
+                }}
+            >
+                ≡
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, paddingRight: '1rem' }}>
                 <span style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {/* Outer span container for clipping long expense name text */}
@@ -252,7 +290,11 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                     <button
                         // Activate editing state true on click tap
                         onClick={() => {
-                            // Set isEditing flag status active
+                            setEditedName(cleanName);
+                            setEditedAmount(expense.amount.toString());
+                            setEditedDay(expense.paymentDay.toString());
+                            setEditedRecurring(!!expense.isRecurring);
+                            setEditedCategoryId(categoryId);
                             setIsEditing(true);
                         }}
                         // Define button style overrides
