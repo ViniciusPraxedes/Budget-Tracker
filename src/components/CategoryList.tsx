@@ -81,28 +81,34 @@ const CategoryList: React.FC = () => {
         }
     };
 
+    // Check if app is running in local development environment
+    const isLocal = process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
+
     return (
         // Add bottom padding to allow scrolling past mobile floating action buttons
         <div style={{ paddingBottom: '7.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ margin: 0 }}>Categories</h2>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {/* Button to load sample test data */}
-                    <button
-                        onClick={() => loadMockData(defaultIncome, defaultCategories)}
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--firebase-yellow)',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            fontWeight: '500'
-                        }}
-                    >
-                        ⚡ Load Sample Data
-                    </button>
+                    {/* Check if running in local environment */}
+                    {isLocal && (
+                        // Button to load sample test data
+                        <button
+                            onClick={() => loadMockData(defaultIncome, defaultCategories)}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--firebase-yellow)',
+                                padding: '0.5rem 1rem',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                fontWeight: '500'
+                            }}
+                        >
+                            ⚡ Load Sample Data
+                        </button>
+                    )}
                     {/* Expand or collapse all category cards button */}
                     <button
                         onClick={toggleExpandAll}
@@ -336,29 +342,33 @@ const CategoryList: React.FC = () => {
                             Copy Budget from Previous Month
                         </button>
                         
-                        <button
-                            onClick={() => loadMockData(defaultIncome, defaultCategories)}
-                            style={{
-                                background: 'var(--surface-dark)',
-                                border: '1px solid var(--border-color)',
-                                color: 'var(--text-primary)',
-                                padding: '0.75rem 2rem',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                transition: 'all 0.2s',
-                                width: '100%',
-                                maxWidth: '300px'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'var(--surface-dark)';
-                            }}
-                        >
-                            Load Mock Data for Testing
-                        </button>
+                        {/* Check if app environment is local development */}
+                        {isLocal && (
+                            // Button to load mock data for testing in empty state
+                            <button
+                                onClick={() => loadMockData(defaultIncome, defaultCategories)}
+                                style={{
+                                    background: 'var(--surface-dark)',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-primary)',
+                                    padding: '0.75rem 2rem',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    transition: 'all 0.2s',
+                                    width: '100%',
+                                    maxWidth: '300px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'var(--surface-dark)';
+                                }}
+                            >
+                                Load Mock Data for Testing
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
