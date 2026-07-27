@@ -27,6 +27,48 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [defaultMonthSettings, setDefaultMonthSettings] = useState<{ month: number, year: number } | null>(null);
     // Declare state for importing PDF mappings and ignored lists
     const [pdfConfig, setPdfConfig] = useState<{ mappings: Record<string, string>; ignored: string[] } | null>(null);
+    // Declare state for configurable payday start and end days (default 25 to 24)
+    const [paydayStartDay, setPaydayStartDayState] = useState<number>(25);
+    const [paydayEndDay, setPaydayEndDayState] = useState<number>(24);
+
+    // Handler to update and persist payday start and end day preferences
+    const setPaydayCycleDays = async (startDay: number, endDay: number) => {
+        // Clamp payday days between 1 and 31
+        const validStart = Math.min(Math.max(startDay, 1), 31);
+        const validEnd = Math.min(Math.max(endDay, 1), 31);
+        // Update local payday states
+        setPaydayStartDayState(validStart);
+        setPaydayEndDayState(validEnd);
+        // Return early if no active user session
+        if (!user) return;
+        // Check if test user session
+        if (user.uid === 'test-user') {
+            try {
+                // Post updated payday cycle to mock API
+                await fetch('/api/mock-db', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: 'test-user', action: 'update_settings', paydayStartDay: validStart, paydayEndDay: validEnd })
+                });
+            } catch (err) {
+                console.error("Error saving mock payday cycle:", err);
+            }
+            return;
+        }
+        // Save payday cycle preference to user document in Firestore
+        try {
+            const { setDoc: lazySetDoc } = await import('firebase/firestore');
+            await lazySetDoc(doc(db, 'users', user.uid), { paydayStartDay: validStart, paydayEndDay: validEnd }, { merge: true });
+        } catch (err) {
+            console.error("Error saving payday cycle to Firestore:", err);
+        }
+    };
+
+    // Legacy helper to set payday start day with default previous-day end
+    const setPaydayStartDay = (day: number) => {
+        const end = day === 1 ? 31 : day - 1;
+        setPaydayCycleDays(day, end);
+    };
 
     // Initialize user landing month and total savings preference from remote or local storage
     useEffect(() => {
@@ -888,6 +930,10 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMonthlySavingsDeposit,
         monthlyBudget,
         setMonthlyBudget,
+        paydayStartDay,
+        paydayEndDay,
+        setPaydayStartDay,
+        setPaydayCycleDays,
         setIncome,
         addCategory,
         updateCategory,

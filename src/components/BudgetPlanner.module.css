@@ -1,0 +1,363 @@
+/* Main collapsible container box styling rules */
+.container {
+    /* Set dark surface background with opacity */
+    background: var(--surface-dark);
+    /* Apply subtle border outline boundary */
+    border: 1px solid var(--border-color);
+    /* Rounded corners radius */
+    border-radius: 12px;
+    /* Inner padding layout */
+    padding: 1.5rem;
+    /* Bottom margin separation spacing */
+    margin-bottom: 1.5rem;
+    /* Transition backdrop smooth effects */
+    transition: all 0.3s ease;
+}
+
+/* Header interactive section button styling */
+.header {
+    /* Set flexbox display layout mode */
+    display: flex;
+    /* Space out elements to opposite edges */
+    justify-content: space-between;
+    /* Center items along vertical axis */
+    align-items: center;
+    /* Pointer cursor indicator on hover */
+    cursor: pointer;
+    /* Prevent text selection highlight on tap */
+    user-select: none;
+}
+
+/* Header title layout styling */
+.titleGroup {
+    /* Set flexbox layout for title and badge */
+    display: flex;
+    /* Align items vertically centered */
+    align-items: center;
+    /* Spacing gap between elements */
+    gap: 0.75rem;
+}
+
+/* Main title typography styling */
+.title {
+    /* Set font size for header text */
+    font-size: 1.25rem;
+    /* Medium bold text weight */
+    font-weight: 600;
+    /* White text color style rule */
+    color: var(--text-primary);
+    /* Remove default heading margin */
+    margin: 0;
+}
+
+/* Badge highlight chip layout styling */
+.badge {
+    /* Small font size for chip text */
+    font-size: 0.75rem;
+    /* Padding around chip label */
+    padding: 0.2rem 0.6rem;
+    /* Fully rounded pill radius */
+    border-radius: 12px;
+    /* Bright accent background color */
+    background: rgba(0, 230, 118, 0.15);
+    /* Green accent text color rule */
+    color: #00E676;
+    /* Medium font weight */
+    font-weight: 600;
+    /* Border outline boundary */
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+
+/* Toggle arrow indicator glyph styling */
+.toggleIcon {
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Font size for chevron arrow */
+    font-size: 0.9rem;
+    /* Transition transform rotation effect */
+    transition: transform 0.3s ease;
+}
+
+/* Rotated state for expanded toggle arrow */
+.toggleIconExpanded {
+    /* Rotate chevron arrow upside down */
+    transform: rotate(180deg);
+}
+
+/* Grid layout for top metrics overview */
+.metricsGrid {
+    /* CSS Grid display layout model */
+    display: grid;
+    /* Responsive multi-column layout grid */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* Spacing gap between metric cards */
+    gap: 1rem;
+    /* Top margin separator */
+    margin-top: 1.25rem;
+    /* Bottom margin separator */
+    margin-bottom: 1.5rem;
+}
+
+/* Metric card container styling */
+.metricCard {
+    /* Dark semi-transparent background */
+    background: rgba(255, 255, 255, 0.03);
+    /* Subtle border outline boundary */
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    /* Rounded corners for metric cards */
+    border-radius: 10px;
+    /* Inner padding layout */
+    padding: 1rem;
+    /* Flex column layout */
+    display: flex;
+    /* Stack elements vertically */
+    flex-direction: column;
+    /* Gap spacing between elements */
+    gap: 0.35rem;
+}
+
+/* Metric card label text styling */
+.metricLabel {
+    /* Small font size for labels */
+    font-size: 0.8rem;
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Uppercase text transform styling */
+    text-transform: uppercase;
+    /* Letter spacing separation */
+    letter-spacing: 0.5px;
+}
+
+/* Metric value typography styling */
+.metricValue {
+    /* Large bold font size for value */
+    font-size: 1.4rem;
+    /* Bold text weight */
+    font-weight: 700;
+    /* Primary white text color */
+    color: var(--text-primary);
+}
+
+/* Metric subtext info styling */
+.metricSubtext {
+    /* Extra small font size for subtext */
+    font-size: 0.75rem;
+    /* Muted text color rule */
+    color: var(--text-secondary);
+}
+
+/* Section tab selector container */
+.tabContainer {
+    /* Flexbox display layout model */
+    display: flex;
+    /* Spacing gap between tabs */
+    gap: 0.5rem;
+    /* Bottom margin separator */
+    margin-bottom: 1.25rem;
+    /* Bottom border separator */
+    border-bottom: 1px solid var(--border-color);
+    /* Padding bottom spacing */
+    padding-bottom: 0.5rem;
+}
+
+/* Tab button element styling */
+.tabButton {
+    /* Transparent background */
+    background: transparent;
+    /* Remove default button border */
+    border: none;
+    /* Padding for touch target */
+    padding: 0.5rem 1rem;
+    /* Rounded corner tab pill */
+    border-radius: 6px;
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Hand pointer cursor indicator */
+    cursor: pointer;
+    /* Font weight setting */
+    font-weight: 500;
+    /* Font size for tab text */
+    font-size: 0.9rem;
+    /* Transition color background */
+    transition: all 0.2s ease;
+}
+
+/* Active state for selected tab button */
+.activeTab {
+    /* Dark active tab background */
+    background: rgba(255, 255, 255, 0.1);
+    /* White primary text color */
+    color: var(--text-primary);
+    /* Bold font weight */
+    font-weight: 600;
+}
+
+/* Interactive calculator box grid layout */
+.calcGrid {
+    /* CSS Grid display layout model */
+    display: grid;
+    /* Multi-column grid for calculator and projections */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* Gap spacing between calculation blocks */
+    gap: 1.25rem;
+}
+
+/* Calculator input panel box styling */
+.panelBox {
+    /* Glassmorphism dark background */
+    background: rgba(0, 0, 0, 0.2);
+    /* Border outline boundary */
+    border: 1px solid var(--border-color);
+    /* Rounded corners radius */
+    border-radius: 10px;
+    /* Inner padding layout */
+    padding: 1.25rem;
+    /* Flex column layout */
+    display: flex;
+    /* Stack elements vertically */
+    flex-direction: column;
+    /* Gap spacing between form rows */
+    gap: 1rem;
+}
+
+/* Form group container styling */
+.formGroup {
+    /* Flex column layout */
+    display: flex;
+    /* Stack label and input vertically */
+    flex-direction: column;
+    /* Gap spacing between label and input */
+    gap: 0.4rem;
+}
+
+/* Form input label typography styling */
+.label {
+    /* Font size for form labels */
+    font-size: 0.85rem;
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Medium font weight */
+    font-weight: 500;
+}
+
+/* Text input field control styling */
+.input {
+    /* Dark background input surface */
+    background: var(--background-dark);
+    /* Border outline boundary */
+    border: 1px solid var(--border-color);
+    /* Rounded input corners */
+    border-radius: 6px;
+    /* Primary white text color */
+    color: var(--text-primary);
+    /* Inner padding space */
+    padding: 0.6rem 0.75rem;
+    /* Font size for input values */
+    font-size: 0.95rem;
+    /* Width 100% component fill */
+    width: 100%;
+}
+
+/* Focus state for input fields */
+.input:focus {
+    /* Highlight border on focus */
+    border-color: var(--firebase-yellow);
+    /* Remove default focus outline ring */
+    outline: none;
+}
+
+/* Quick add contribution button row */
+.presetRow {
+    /* Flex row layout */
+    display: flex;
+    /* Gap spacing between preset buttons */
+    gap: 0.5rem;
+    /* Flex wrap for small screens */
+    flex-wrap: wrap;
+}
+
+/* Quick add preset pill button styling */
+.presetBtn {
+    /* Transparent background */
+    background: rgba(255, 255, 255, 0.05);
+    /* Subtle border outline */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Rounded corner pill */
+    border-radius: 16px;
+    /* Padding around button text */
+    padding: 0.25rem 0.6rem;
+    /* Small font size for pills */
+    font-size: 0.75rem;
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Hand pointer cursor indicator */
+    cursor: pointer;
+    /* Transition background effect */
+    transition: all 0.2s ease;
+}
+
+/* Hover state for preset pill button */
+.presetBtn:hover {
+    /* Highlight background on hover */
+    background: rgba(255, 255, 255, 0.15);
+    /* White text color on hover */
+    color: var(--text-primary);
+}
+
+/* Rule 50-30-20 visualization progress bar track */
+.ruleTrack {
+    /* Width 100% container */
+    width: 100%;
+    /* Height of progress bar */
+    height: 12px;
+    /* Rounded corners radius */
+    border-radius: 6px;
+    /* Dark background surface */
+    background: rgba(255, 255, 255, 0.08);
+    /* Hide overflow stops */
+    overflow: hidden;
+    /* Flex display layout model */
+    display: flex;
+    /* Margin top separator */
+    margin-top: 0.5rem;
+}
+
+/* Segment slice inside 50-30-20 progress bar */
+.ruleSegment {
+    /* Height 100% fill */
+    height: 100%;
+    /* Transition width animation */
+    transition: width 0.3s ease;
+}
+
+/* Recommendation callout box styling */
+.tipBox {
+    /* Glassmorphism yellow accent background */
+    background: rgba(255, 202, 40, 0.08);
+    /* Yellow border outline boundary */
+    border: 1px solid rgba(255, 202, 40, 0.25);
+    /* Rounded corners for tip card */
+    border-radius: 8px;
+    /* Inner padding layout */
+    padding: 0.75rem 1rem;
+    /* Flex row layout */
+    display: flex;
+    /* Align icon and text vertically center */
+    align-items: center;
+    /* Spacing gap between icon and text */
+    gap: 0.75rem;
+    /* Font size for tip body text */
+    font-size: 0.85rem;
+    /* Secondary text color rule */
+    color: var(--text-secondary);
+    /* Top margin separator */
+    margin-top: 1rem;
+}
+
+/* Tip icon glyph styling */
+.tipIcon {
+    /* Font size for tip emoji icon */
+    font-size: 1.2rem;
+    /* Flex shrink 0 to keep icon fixed size */
+    flex-shrink: 0;
+}

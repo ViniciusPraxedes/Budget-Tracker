@@ -8,6 +8,8 @@ import { useBudget } from '../context/BudgetContext';
 import { useLocalization } from '../context/LocalizationContext';
 // Import Box card container layout component
 import Box from './Box';
+// Import AI spending analysis insight component
+import AiAnalysis from './AiAnalysis';
 
 // Define mathematical constant to convert degrees to radians
 const RADIAN = Math.PI / 180;
@@ -69,7 +71,7 @@ const renderCustomizedLabel = ({
 // Declare Analytics React component
 const Analytics: React.FC = () => {
     // Destructure budget values from budget context
-    const { income, totalExpenses, categories, currentMonth, currentYear } = useBudget();
+    const { income, totalExpenses, monthlySavingsDeposit, categories, monthlyBudget, currentMonth, currentYear } = useBudget();
     // Destructure currency formatter from localization context
     const { formatCurrency } = useLocalization();
     // Declare state for hovering pie chart slice index
@@ -104,14 +106,16 @@ const Analytics: React.FC = () => {
         return totalValue > 0 ? `${((val / totalValue) * 100).toFixed(1)}%` : '0%';
     };
 
-    // Calculate savings rate percentage
-    const savingsRate = income > 0 ? ((income - totalExpenses) / income) * 100 : 0;
-    // Calculate total days in current month
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    // Calculate average daily spending
-    const dailyAverage = totalExpenses / daysInMonth;
-    // Calculate total category budget sum
-    const totalBudget = categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+    // Total monthly savings deposit amount
+    const monthlySavedAmount = monthlySavingsDeposit;
+    // Calculate committed savings rate percentage relative to net income
+    const savingsRate = income > 0 ? (monthlySavingsDeposit / income) * 100 : 0;
+    // Payday cycle duration in days
+    const paydayCycleDays = 30;
+    // Calculate average daily spending over 30-day payday cycle
+    const dailyAverage = totalExpenses / paydayCycleDays;
+    // Calculate total effective monthly budget target
+    const totalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
     // Calculate budget utilization rate
     const budgetUtilization = totalBudget > 0 ? (totalExpenses / totalBudget) * 100 : 0;
 
@@ -199,23 +203,25 @@ const Analytics: React.FC = () => {
                 {!isCollapsed && (
                     // Column layout container
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+                        {/* AI Financial Assistant Analysis Tool */}
+                        <AiAnalysis />
                 {/* Responsive KPI Metrics Grid */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                     gap: '1rem'
                 }}>
-                    {/* Savings Rate KPI Card */}
+                    {/* Monthly Savings KPI Card */}
                     <div style={{ background: 'var(--background-dark)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                         {/* KPI Title */}
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Savings Rate</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Monthly Savings</div>
                         {/* KPI Value */}
-                        <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: savingsRate >= 20 ? '#00E676' : (savingsRate >= 0 ? 'var(--firebase-yellow)' : 'var(--firebase-red)') }}>
-                            {savingsRate.toFixed(1)}%
+                        <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#AB47BC' }}>
+                            {formatCurrency(monthlySavedAmount)}
                         </div>
                         {/* KPI Subtext */}
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            {savingsRate >= 20 ? 'Target achieved (≥20%)' : 'Below 20% savings target'}
+                            {savingsRate.toFixed(1)}% of income saved
                         </div>
                     </div>
 
@@ -229,7 +235,7 @@ const Analytics: React.FC = () => {
                         </div>
                         {/* KPI Subtext */}
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            Across {daysInMonth} days this month
+                            Across 30 days (25th – 24th Budget Cycle)
                         </div>
                     </div>
 

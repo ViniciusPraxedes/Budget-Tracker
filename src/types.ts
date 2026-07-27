@@ -50,6 +50,10 @@ export interface BudgetContextType {
     savings: number;
     monthlySavingsDeposit: number;
     monthlyBudget: number;
+    paydayStartDay: number;
+    paydayEndDay: number;
+    setPaydayStartDay: (day: number) => void;
+    setPaydayCycleDays: (startDay: number, endDay: number) => void;
     setMonthlyBudget: (amount: number) => void;
     setMonthlySavingsDeposit: (amount: number) => void;
     setIncome: (amount: number) => void;

@@ -1,5 +1,6 @@
 // Import React library for component building
 import React from 'react';
+import { createPortal } from 'react-dom';
 // Import budget context consumer hook
 import { useBudget } from '../context/BudgetContext';
 import { Category, PreviewCategory } from '../types';
@@ -14,7 +15,7 @@ interface MonthSelectorProps {
 // Declare functional component representing month navigator tool with props
 const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
     // Extract current date states, monthly transitions, default settings, and clear operation from context
-    const { currentMonth, currentYear, changeMonth, saveDefaultMonth, defaultMonthSettings, clearMonthData, getRecurringFromPreviousMonth, importRecurringExpenses } = useBudget();
+    const { currentMonth, currentYear, changeMonth, saveDefaultMonth, defaultMonthSettings, clearMonthData, getRecurringFromPreviousMonth, importRecurringExpenses, paydayStartDay, paydayEndDay, setPaydayStartDay, setPaydayCycleDays } = useBudget();
     // Manage state representing visibility status of clean data confirmation modal
     const [showConfirmClean, setShowConfirmClean] = React.useState(false);
     // State to hold the preview data of recurring expenses
@@ -23,6 +24,27 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
     const [isImporting, setIsImporting] = React.useState(false);
     // State to toggle in-app notice modal when no recurring expenses exist
     const [showNoRecurringNotice, setShowNoRecurringNotice] = React.useState(false);
+    // State to toggle Budget Cycle configuration modal visibility
+    const [showPaydayModal, setShowPaydayModal] = React.useState(false);
+    // Helper to format YYYY-MM-DD date strings
+    const formatYMD = (year: number, month: number, day: number) => {
+        const m = (month + 1).toString().padStart(2, '0');
+        const d = Math.min(Math.max(day, 1), 31).toString().padStart(2, '0');
+        return `${year}-${m}-${d}`;
+    };
+    // Helper to format ISO YYYY-MM-DD string into European DD/MM/YYYY
+    const toEuroDate = (ymdStr: string) => {
+        if (!ymdStr) return '';
+        const parts = ymdStr.split('-');
+        if (parts.length !== 3) return ymdStr;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    };
+    // State for temporary start and end dates inside datepicker modal
+    const [tempStartDate, setTempStartDate] = React.useState('');
+    const [tempEndDate, setTempEndDate] = React.useState('');
+    // Refs for hidden datepicker elements
+    const startDatePickerRef = React.useRef<HTMLInputElement>(null);
+    const endDatePickerRef = React.useRef<HTMLInputElement>(null);
 
     // Fetch recurring expenses preview and show modal
     const handleImportRecurring = async () => {
@@ -96,6 +118,18 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
 
     // Resolve month name string representation from active year and month indices
     const monthName = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long' });
+    // Calculate active end day of Budget Cycle
+    const activeEndDay = paydayEndDay ?? (paydayStartDay === 1 ? new Date(currentYear, currentMonth + 1, 0).getDate() : paydayStartDay - 1);
+    // Resolve start date of Budget Cycle
+    const prevMonthDate = new Date(currentYear, paydayStartDay === 1 ? currentMonth : currentMonth - 1, paydayStartDay);
+    // Resolve end date of Budget Cycle
+    const endCycleDate = new Date(currentYear, currentMonth, activeEndDay);
+    // Format start month short name
+    const startMonthName = prevMonthDate.toLocaleString('default', { month: 'short' });
+    // Format end month short name
+    const endMonthName = endCycleDate.toLocaleString('default', { month: 'short' });
+    // Salary period string representation
+    const paydayPeriodStr = `${paydayStartDay} ${startMonthName} – ${activeEndDay} ${endMonthName}`;
 
     // Render month selection and settings toolbar layout
     return (
@@ -125,11 +159,47 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                 >
                     ‹
                 </button>
-                {/* Heading label printing formatted month name */}
-                <h2 style={{ margin: 0, minWidth: '200px', textAlign: 'center', textTransform: 'capitalize' }}>
-                    {/* Render active month and year text */}
-                    {monthName} {currentYear}
-                </h2>
+                {/* Heading label printing formatted month name and Budget Cycle */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <h2 style={{ margin: 0, minWidth: '200px', textAlign: 'center', textTransform: 'capitalize' }}>
+                        {/* Render active month and year text */}
+                        {monthName} {currentYear}
+                    </h2>
+                    {/* Budget Cycle subtitle row with edit pencil icon button trigger */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.15rem' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            {paydayPeriodStr}
+                        </span>
+                        {/* Edit pencil button to open Budget Cycle modal */}
+                        <button
+                            onClick={() => {
+                                const pStart = paydayStartDay || 25;
+                                const pEnd = paydayEndDay || 24;
+                                const startM = pStart === 1 ? currentMonth : (currentMonth === 0 ? 11 : currentMonth - 1);
+                                const startY = pStart === 1 ? currentYear : (currentMonth === 0 ? currentYear - 1 : currentYear);
+                                setTempStartDate(formatYMD(startY, startM, pStart));
+                                setTempEndDate(formatYMD(currentYear, currentMonth, pEnd));
+                                setShowPaydayModal(true);
+                            }}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                padding: '2px',
+                                display: 'inline-flex',
+                                alignItems: 'center'
+                            }}
+                            title="Configure Budget Cycle"
+                        >
+                            {/* Pencil edit icon SVG */}
+                            <svg style={{ width: '12px', height: '12px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 {/* Next month transition button */}
                 <button
                     // Register next month click trigger
@@ -574,6 +644,213 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Render Budget Cycle Configuration Modal Dialog */}
+            {showPaydayModal && typeof document !== 'undefined' && createPortal(
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        padding: '1rem'
+                    }}
+                    onClick={() => setShowPaydayModal(false)}
+                >
+                    <div
+                        style={{
+                            background: 'var(--background-card, #1e1e1e)',
+                            border: '1px solid var(--border-color, #333)',
+                            borderRadius: '12px',
+                            padding: '1.5rem',
+                            maxWidth: '400px',
+                            width: '100%',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0, color: 'white', fontSize: '1.1rem' }}>Configure Budget Cycle</h3>
+                            <button
+                                onClick={() => setShowPaydayModal(false)}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '1.2rem', cursor: 'pointer' }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+                            Select the calendar start and end date range for your monthly salary budget cycle.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                            {/* Cycle Start Date Field */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                    Cycle Start Date
+                                </label>
+                                <div
+                                    style={{
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        background: 'var(--background-dark, #121212)',
+                                        border: '1px solid var(--border-color, #333)',
+                                        borderRadius: '6px',
+                                        padding: '0.6rem 0.8rem',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {/* European Formatted Date Display Input */}
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={toEuroDate(tempStartDate)}
+                                        placeholder="DD/MM/YYYY"
+                                        style={{
+                                            width: '100%',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'white',
+                                            fontSize: '0.95rem',
+                                            cursor: 'pointer',
+                                            outline: 'none',
+                                            fontWeight: 500
+                                        }}
+                                    />
+                                    {/* Calendar Icon SVG */}
+                                    <svg style={{ width: '18px', height: '18px', color: 'var(--text-secondary)', flexShrink: 0 }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    {/* Hidden DatePicker Overlay */}
+                                    <input
+                                        type="date"
+                                        ref={startDatePickerRef}
+                                        value={tempStartDate}
+                                        onChange={(e) => setTempStartDate(e.target.value)}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            opacity: 0,
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Cycle End Date Field */}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                    Cycle End Date
+                                </label>
+                                <div
+                                    style={{
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        background: 'var(--background-dark, #121212)',
+                                        border: '1px solid var(--border-color, #333)',
+                                        borderRadius: '6px',
+                                        padding: '0.6rem 0.8rem',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {/* European Formatted Date Display Input */}
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={toEuroDate(tempEndDate)}
+                                        placeholder="DD/MM/YYYY"
+                                        style={{
+                                            width: '100%',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'white',
+                                            fontSize: '0.95rem',
+                                            cursor: 'pointer',
+                                            outline: 'none',
+                                            fontWeight: 500
+                                        }}
+                                    />
+                                    {/* Calendar Icon SVG */}
+                                    <svg style={{ width: '18px', height: '18px', color: 'var(--text-secondary)', flexShrink: 0 }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    {/* Hidden DatePicker Overlay */}
+                                    <input
+                                        type="date"
+                                        ref={endDatePickerRef}
+                                        value={tempEndDate}
+                                        onChange={(e) => setTempEndDate(e.target.value)}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            opacity: 0,
+                                            cursor: 'pointer'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setShowPaydayModal(false)}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    background: 'transparent',
+                                    border: '1px solid var(--border-color, #444)',
+                                    color: 'white',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (tempStartDate && tempEndDate) {
+                                        const startDt = new Date(tempStartDate + 'T00:00:00');
+                                        const endDt = new Date(tempEndDate + 'T00:00:00');
+                                        if (!isNaN(startDt.getTime()) && !isNaN(endDt.getTime())) {
+                                            setPaydayCycleDays(startDt.getDate(), endDt.getDate());
+                                        }
+                                    }
+                                    setShowPaydayModal(false);
+                                }}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    background: 'var(--firebase-yellow, #FFCA28)',
+                                    border: 'none',
+                                    color: 'black',
+                                    fontWeight: 'bold',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Save Cycle
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
         </>
     );

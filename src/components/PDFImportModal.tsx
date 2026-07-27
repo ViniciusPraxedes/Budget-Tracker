@@ -53,8 +53,8 @@ interface PDFImportModalProps {
 
 // Implement the React functional component for bank statement importing
 const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
-  // Get active categories list, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, and currentYear helper from context
-  const { categories, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, currentYear } = useBudget();
+  // Get active categories list, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, currentYear, and paydayStartDay helper from context
+  const { categories, addExpenses, addMissingCategories, pdfConfig, updatePDFConfig, currentMonth, currentYear, paydayStartDay } = useBudget();
   // Get formatCurrency helper function from localization hook context
   const { formatCurrency } = useLocalization();
   // Manage file drag-over hover state
@@ -1386,6 +1386,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
         const isIgnored = pdfConfig?.ignored.includes(cleanDesc);
         // Check transaction type based on original amountVal sign
         const txType = amountVal < 0 ? 'sent' : 'received';
+        // Determine target budget cycle month (transactions on cutoffDay or later map to next month's salary budget)
+        let budgetMonth = parsedMonth;
+        let budgetYear = parsedYear;
+        const cutoffDay = paydayStartDay || 25;
+        if (cutoffDay > 1 && parsedDay >= cutoffDay) {
+          budgetMonth = parsedMonth + 1;
+          if (budgetMonth > 11) {
+            budgetMonth = 0;
+            budgetYear = parsedYear + 1;
+          }
+        }
         // Add new transaction row data structure object
         parsedTxs.push({
           // Generate unique ID
@@ -1394,10 +1405,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
           date: dateStr,
           // Constrain paymentDay between 1 and 31
           paymentDay: Math.min(Math.max(parsedDay, 1), 31),
-          // Set parsed month
-          month: parsedMonth,
-          // Set parsed year
-          year: parsedYear,
+          // Set parsed month matching payday cycle
+          month: budgetMonth,
+          // Set parsed year matching payday cycle
+          year: budgetYear,
           // Assign description
           description: cleanDesc,
           // Save absolute amount values converted to SEK

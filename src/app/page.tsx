@@ -10,8 +10,8 @@ import CategoryList from "@/components/CategoryList";
 import MonthSelector from "@/components/MonthSelector";
 // Import Analytics component for charts and metrics visualization
 import Analytics from "@/components/Analytics";
-// Import SavingsCalculator component to calculate savings target goals
-import SavingsCalculator from "@/components/SavingsCalculator";
+// Import BudgetPlanner component for budget planning & savings goal calculations
+import BudgetPlanner from "@/components/BudgetPlanner";
 // Import BitcoinTracker component to display BTC price metrics
 import BitcoinTracker from "@/components/BitcoinTracker";
 // Import ScrollToTop button for quick viewport navigation
@@ -20,8 +20,6 @@ import ScrollToTop from "@/components/ScrollToTop";
 import { useAuth } from "@/context/AuthContext";
 // Import PDF import modal component
 import PDFImportModal from "@/components/PDFImportModal";
-// Import AI spending analysis insight tool
-import AiAnalysis from "@/components/AiAnalysis";
 // Import CSS module styles for page layout structure
 import styles from "./page.module.css";
 
@@ -163,14 +161,12 @@ export default function Home() {
                 onImportClick={() => setIsImportOpen(true)}
             // End of MonthSelector component rendering
             />
-            {/* Render AI spending analysis component */}
-            <AiAnalysis />
             {/* Render dashboard totals metrics summary */}
             <Summary />
             {/* Render category analytics charts */}
             <Analytics />
-            {/* Render budget goal calculator tools */}
-            <SavingsCalculator />
+            {/* Render budget goal calculator and planner tools */}
+            <BudgetPlanner />
             {/* Render BTC price tracker ticker */}
             <BitcoinTracker />
 

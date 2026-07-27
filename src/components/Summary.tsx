@@ -30,13 +30,6 @@ const Summary: React.FC = () => {
     // Declare state for temporary monthly savings deposit input string
     const [tempDeposit, setTempDeposit] = useState(monthlySavingsDeposit.toString());
 
-    // Calculate effective monthly budget target amount
-    const effectiveMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
-    // Declare state for inline total monthly budget editing mode
-    const [isEditingMonthlyBudget, setIsEditingMonthlyBudget] = useState(false);
-    // Declare state for temporary monthly budget input string
-    const [tempMonthlyBudget, setTempMonthlyBudget] = useState(effectiveMonthlyBudget > 0 ? effectiveMonthlyBudget.toString() : '');
-
     // Keep temp state in sync with loaded budget context values when not editing
     React.useEffect(() => {
         if (!isEditingIncome) setTempIncome(income.toString());
@@ -50,26 +43,15 @@ const Summary: React.FC = () => {
         if (!isEditingDeposit) setTempDeposit(monthlySavingsDeposit.toString());
     }, [monthlySavingsDeposit, isEditingDeposit]);
 
-    React.useEffect(() => {
-        const effective = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
-        if (!isEditingMonthlyBudget) setTempMonthlyBudget(effective > 0 ? effective.toString() : '');
-    }, [monthlyBudget, categories, isEditingMonthlyBudget]);
+    // Calculate effective monthly budget target amount
+    const effectiveMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
 
-    // Handle saving updated total monthly spending budget
-    const handleMonthlyBudgetSave = () => {
-        // Parse float value from input text
-        const val = parseFloat(tempMonthlyBudget);
-        // Check if parsed number is valid
-        if (!isNaN(val)) {
-            // Invoke setMonthlyBudget handler
-            setMonthlyBudget(val);
-        }
-        // Disable monthly budget editing mode
-        setIsEditingMonthlyBudget(false);
-    };
-
-    // Calculate free operational cash remaining after expenses and savings deposit
-    const freeCash = income - totalExpenses - monthlySavingsDeposit;
+    // Calculate total planned budgeted expenses or actual expenses if higher
+    const plannedExpenses = monthlyBudget > 0 
+        ? Math.max(monthlyBudget, totalExpenses) 
+        : categories.reduce((sum, cat) => sum + (cat.budget !== undefined ? Math.max(cat.budget, cat.expenses.reduce((s, e) => s + e.amount, 0)) : cat.expenses.reduce((s, e) => s + e.amount, 0)), 0);
+    // Calculate free operational cash remaining after budgeted expenses and savings deposit
+    const freeCash = income - plannedExpenses - monthlySavingsDeposit;
 
     // Handle saving updated monthly income value
     const handleIncomeSave = () => {
@@ -191,58 +173,19 @@ const Summary: React.FC = () => {
                     <div className={styles.expenseDisplay}>
                         {formatCurrency(totalExpenses)}
                     </div>
-                    {/* Check if monthly budget editing mode is active */}
-                    {isEditingMonthlyBudget ? (
-                        // Edit container wrapper
-                        <div className={styles.editContainer} style={{ marginTop: '0.25rem' }}>
-                            {/* Input field for monthly budget */}
-                            <input
-                                type="number"
-                                value={tempMonthlyBudget}
-                                onChange={(e) => setTempMonthlyBudget(e.target.value)}
-                                className={styles.editInput}
-                                placeholder="Monthly Budget"
-                                autoFocus
-                            />
-                            {/* Save button trigger */}
-                            <button
-                                onClick={handleMonthlyBudgetSave}
-                                className={styles.saveBtn}
-                            >
-                                Save
-                            </button>
-                        </div>
-                    ) : (
-                        // Budget value display trigger to enable inline editing
-                        <div
-                            onClick={() => {
-                                setTempMonthlyBudget(effectiveMonthlyBudget > 0 ? effectiveMonthlyBudget.toString() : '');
-                                setIsEditingMonthlyBudget(true);
-                            }}
-                            style={{
-                                fontSize: '0.85rem',
-                                color: 'var(--text-secondary)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                cursor: 'pointer',
-                                marginTop: '0.15rem'
-                            }}
-                            title="Click to edit total monthly budget"
-                        >
-                            {/* Render formatted total monthly budget or fallback sum of category budgets */}
-                            <span>
-                                Budgeted: {formatCurrency(monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0))}
-                            </span>
-                            {/* Edit pencil SVG icon */}
-                            <svg className={styles.editIcon} style={{ width: '12px', height: '12px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                {/* SVG path shape */}
-                                <path d="M12 20h9"></path>
-                                {/* SVG path shape */}
-                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                            </svg>
-                        </div>
-                    )}
+                    {/* Render static total monthly budget string */}
+                    <div
+                        style={{
+                            fontSize: '0.85rem',
+                            color: 'var(--text-secondary)',
+                            marginTop: '0.15rem'
+                        }}
+                    >
+                        {/* Render formatted total monthly budget or fallback sum of category budgets */}
+                        <span>
+                            Budgeted: {formatCurrency(effectiveMonthlyBudget)}
+                        </span>
+                    </div>
                     {/* Heatmap progress visual bar */}
                     <div style={{
                         width: '100%',
