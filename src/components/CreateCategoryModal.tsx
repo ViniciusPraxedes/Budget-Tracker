@@ -10,30 +10,49 @@ interface CreateCategoryModalProps {
 
 const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCreated }) => {
     const { categories, addCategory } = useBudget();
+    // State for new category name input
     const [newName, setNewName] = useState('');
+    // State for optional new category monthly budget limit
+    const [newBudget, setNewBudget] = useState('');
     
+    // Get colors currently used across existing categories
     const usedColors = getUsedColors(categories);
+    // Filter available unused color palette options
     const availableColors = getAvailableColors(usedColors);
+    // Select initial unused accent color
     const [newColor, setNewColor] = useState(getUnusedColor(usedColors));
 
+    // Handle creation submit action
     const handleAdd = () => {
+        // Check if category name string is provided
         if (newName) {
-            const newCat = addCategory(newName, newColor);
+            // Parse float value from budget input or leave undefined
+            const parsedBudget = newBudget !== '' ? parseFloat(newBudget) : undefined;
+            // Create category with name, color, and optional budget limit
+            const newCat = addCategory(newName, newColor, parsedBudget);
+            // Trigger callback if listener is registered
             if (onCreated) {
+                // Pass created category ID to callback
                 onCreated(newCat.id);
             }
+            // Close modal dialog
             onClose();
         }
     };
 
+    // Auto pick next available color helper
     const handleAutoPick = () => {
+        // Set new unused color state
         setNewColor(getUnusedColor(usedColors));
     };
 
     return (
+        // Overlay backdrop container
         <div 
             onClick={(e) => {
+                // Stop propagation
                 e.stopPropagation();
+                // Close modal
                 onClose();
             }}
             style={{
@@ -49,6 +68,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCr
                 alignItems: 'center'
             }}
         >
+            {/* Modal card layout wrapper */}
             <div 
                 onClick={(e) => e.stopPropagation()}
                 style={{
@@ -65,6 +85,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCr
                     boxSizing: 'border-box'
                 }}
             >
+                {/* Close modal button */}
                 <button 
                     onClick={onClose} 
                     style={{ 
@@ -81,13 +102,24 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCr
                     &times;
                 </button>
                 
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem' }}>
+                {/* Inputs container */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+                    {/* Category name input */}
                     <input
                         placeholder="Category Name"
                         value={newName}
                         onChange={e => setNewName(e.target.value)}
-                        style={{ flex: 1, minWidth: 0, background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.75rem', borderRadius: '4px', boxSizing: 'border-box' }}
+                        style={{ width: '100%', background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.75rem', borderRadius: '4px', boxSizing: 'border-box' }}
                     />
+                    {/* Optional monthly budget input */}
+                    <input
+                        type="number"
+                        placeholder="Monthly Budget Limit (optional)"
+                        value={newBudget}
+                        onChange={e => setNewBudget(e.target.value)}
+                        style={{ width: '100%', background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.75rem', borderRadius: '4px', boxSizing: 'border-box' }}
+                    />
+                    {/* Create category action button */}
                     <button
                         onClick={handleAdd}
                         style={{
@@ -101,7 +133,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCr
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        Create
+                        Create Category
                     </button>
                 </div>
 

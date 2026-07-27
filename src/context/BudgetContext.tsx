@@ -412,7 +412,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     // Function to add a new custom category
-    const addCategory = (name: string, color: string): Category => {
+    const addCategory = (name: string, color: string, budget?: number): Category => {
         // Create new category object definition
         const newCategory: Category = {
             // Generate unique string ID
@@ -425,6 +425,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             expenses: [],
             // Place at the top position
             order: 0,
+            // Set optional budget parameter
+            budget,
         // Close category object
         };
         // Increment order for all existing categories
@@ -470,10 +472,14 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Close function
     };
 
-    const updateCategory = (id: string, name: string, color: string) => {
+    // Function to update an existing category details
+    const updateCategory = (id: string, name: string, color: string, budget?: number) => {
+        // Map categories array to find and update target category
         const newCategories = categories.map(cat =>
-            cat.id === id ? { ...cat, name, color } : cat
+            // Check matching category ID
+            cat.id === id ? { ...cat, name, color, budget } : cat
         );
+        // Persist updated categories list to database
         updateFirestoreWrapper(income, newCategories);
     };
 
@@ -843,8 +849,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Handler to update monthly savings deposit allocation
     const setMonthlySavingsDeposit = (amount: number) => {
+        // Compute difference between new deposit amount and current deposit
+        const diff = amount - monthlySavingsDeposit;
         // Update local monthly savings deposit state
         setMonthlySavingsDepositState(amount);
+        // Dynamically adjust total savings balance with the deposit delta
+        updateTotalSavings(totalSavings + diff);
         // Persist update to database
         updateFirestore(income, categories, currentMonth, currentYear, amount);
     };

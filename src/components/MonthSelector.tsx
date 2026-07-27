@@ -21,16 +21,24 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
     const [recurringPreview, setRecurringPreview] = React.useState<PreviewCategory[] | null>(null);
     // State to handle loading status during import fetch
     const [isImporting, setIsImporting] = React.useState(false);
+    // State to toggle in-app notice modal when no recurring expenses exist
+    const [showNoRecurringNotice, setShowNoRecurringNotice] = React.useState(false);
 
     // Fetch recurring expenses preview and show modal
     const handleImportRecurring = async () => {
+        // Set loading state true
         setIsImporting(true);
+        // Query recurring expenses from previous active month
         const data = await getRecurringFromPreviousMonth();
-        if (data) {
+        // Check if data exists and contains categories
+        if (data && data.length > 0) {
+            // Update preview state data
             setRecurringPreview(data);
         } else {
-            alert("No recurring transactions found in the previous month.");
+            // Show in-app notice modal
+            setShowNoRecurringNotice(true);
         }
+        // Reset loading state false
         setIsImporting(false);
     };
 
@@ -492,6 +500,76 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ onImportClick }) => {
                                 }}
                             >
                                 Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Render in-app notice modal when no recurring transactions are found */}
+            {showNoRecurringNotice && (
+                // Modal backdrop overlay container
+                <div
+                    // Click backdrop to dismiss notice
+                    onClick={() => setShowNoRecurringNotice(false)}
+                    // Styling for full screen modal backdrop overlay
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 1200,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                >
+                    {/* Inner modal card layout */}
+                    <div
+                        // Prevent click propagation
+                        onClick={(e) => e.stopPropagation()}
+                        // Modal styling
+                        style={{
+                            padding: '1.5rem',
+                            backgroundColor: '#1E1E1E',
+                            borderRadius: '12px',
+                            border: '1px solid var(--border-color)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                            position: 'relative',
+                            width: '90%',
+                            maxWidth: '360px',
+                            boxSizing: 'border-box'
+                        }}
+                    >
+                        {/* Title header */}
+                        <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>
+                            No Recurring Expenses Found
+                        </h3>
+                        {/* Notice message body */}
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                            No recurring transactions were found in the previous month. Mark expenses as recurring in previous months to copy them over.
+                        </p>
+                        {/* Dismiss button container */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                            {/* Action dismiss button */}
+                            <button
+                                onClick={() => setShowNoRecurringNotice(false)}
+                                style={{
+                                    padding: '0.5rem 1.25rem',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'var(--firebase-yellow)',
+                                    color: 'black',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Got it
                             </button>
                         </div>
                     </div>

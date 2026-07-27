@@ -6,12 +6,20 @@ export interface Expense {
     isRecurring?: boolean;
 }
 
+// Category model interface definition
 export interface Category {
+    // Unique category identifier
     id: string;
+    // Name of category
     name: string;
+    // Category visual accent color code
     color: string;
+    // List of expenses under category
     expenses: Expense[];
+    // Display ordering index
     order?: number;
+    // Optional monthly budget limit
+    budget?: number;
 }
 
 export interface PreviewExpense extends Expense {
@@ -42,8 +50,8 @@ export interface BudgetContextType {
     monthlySavingsDeposit: number;
     setMonthlySavingsDeposit: (amount: number) => void;
     setIncome: (amount: number) => void;
-    addCategory: (name: string, color: string) => Category;
-    updateCategory: (id: string, name: string, color: string) => void;
+    addCategory: (name: string, color: string, budget?: number) => Category;
+    updateCategory: (id: string, name: string, color: string, budget?: number) => void;
     deleteCategory: (id: string) => void;
     addExpense: (categoryId: string, expense: Omit<Expense, 'id'>) => void;
     updateExpense: (categoryId: string, expense: Expense) => void;

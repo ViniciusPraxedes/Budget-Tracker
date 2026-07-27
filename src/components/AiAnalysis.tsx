@@ -48,7 +48,7 @@ export default function AiAnalysis() {
         const promptText = `You are an expert personal finance advisor.
 Analyze the user's spending data and budget information for the month of ${currentMonth + 1}/${currentYear} and provide actionable financial tips.
 
-Here is the user's financial profile for this month:
+Financial Profile:
 - Monthly Income: ${formatCurrency(income)}
 - Monthly Expenses: ${formatCurrency(totalExpenses)}
 - Net Monthly Savings: ${formatCurrency(savings)}
@@ -57,12 +57,14 @@ Here is the user's financial profile for this month:
 Category Breakdown:
 ${categoriesSummary}
 
-Please provide:
-1. **Spending Overview**: A brief, friendly summary of the current financial state.
-2. **Key Insights**: Identify unusual spending patterns, categories with high expenditure, or potential issues.
-3. **Actionable Recommendations**: 3-5 specific, practical steps the user can take to save money or optimize their budget based on their data. Mention specific categories or items if relevant.
-
-Be encouraging, professional, and concise. Format the response beautifully using Markdown.`;
+Formatting Rules:
+- Structure your answer cleanly into 3 distinct sections using these exact headers:
+### 1. Spending Overview
+### 2. Key Insights
+### 3. Actionable Recommendations
+- Do NOT use level-4 headers (####), do NOT output raw hashtag (#) symbols, and do NOT output raw '---' horizontal lines.
+- Format action steps as clean numbered items (1., 2., 3.) or bullet points.
+- Be encouraging, highly specific to their actual numbers, professional, and concise.`;
 
         // Define API key from environment variables
         const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
@@ -137,8 +139,10 @@ Be encouraging, professional, and concise. Format the response beautifully using
 
     // Helper to parse inline bold markdown formatting
     const parseInlineMarkdown = (text: string) => {
+        // Strip any stray hashtag symbols from text
+        const cleanText = text.replace(/#/g, '');
         // Split text by double asterisks pattern
-        const parts = text.split(/(\*\*.*?\*\*)/g);
+        const parts = cleanText.split(/(\*\*.*?\*\*)/g);
         // Map over parts to return standard or bold text
         return parts.map((part, index) => {
             // Check if segment is wrapped in double asterisks
@@ -157,34 +161,49 @@ Be encouraging, professional, and concise. Format the response beautifully using
         const lines = text.split('\n');
         // Map each line to a React element
         return lines.map((line, i) => {
-            // Check if line is level 4 header
-            if (line.startsWith('### ')) {
-                // Return h4 element containing parsed text
-                return <h4 key={i} className={styles.mdH4}>{line.replace('### ', '')}</h4>;
+            // Trim leading and trailing whitespace
+            const trimmed = line.trim();
+            // Check for horizontal divider lines like --- or *** or ___
+            if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+                // Return styled horizontal divider element
+                return <hr key={i} className={styles.mdHr} />;
             }
-            // Check if line is level 3 header
-            if (line.startsWith('## ')) {
-                // Return h3 element containing parsed text
-                return <h3 key={i} className={styles.mdH3}>{line.replace('## ', '')}</h3>;
+            // Check if line is any level header (####, ###, ##, #)
+            if (trimmed.startsWith('#')) {
+                // Strip all leading and trailing hashtag characters
+                const headerText = trimmed.replace(/^#+\s*/, '').replace(/#+$/, '').trim();
+                // Return h3 header element containing parsed inline text
+                return <h3 key={i} className={styles.mdH3}>{parseInlineMarkdown(headerText)}</h3>;
             }
-            // Check if line is level 2 header
-            if (line.startsWith('# ')) {
-                // Return h2 element containing parsed text
-                return <h2 key={i} className={styles.mdH2}>{line.replace('# ', '')}</h2>;
-            }
-            // Check if line is bullet list item
-            if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+            // Check if line is bullet list item (- or *)
+            if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
                 // Extract list item content string
-                const content = line.trim().replace(/^[-*]\s+/, '');
+                const content = trimmed.replace(/^[-*]\s+/, '');
                 // Return li element containing parsed text
                 return <li key={i} className={styles.mdLi}>{parseInlineMarkdown(content)}</li>;
             }
+            // Check if line is a numbered list item like "1. ", "2. ", "3. "
+            if (/^\d+\.\s+/.test(trimmed)) {
+                // Extract number match prefix
+                const num = trimmed.match(/^\d+/)?.[0] || '•';
+                // Extract content after number prefix
+                const content = trimmed.replace(/^\d+\.\s+/, '');
+                // Return structured step item container with step number badge
+                return (
+                    <div key={i} className={styles.mdNumberedItem}>
+                        {/* Step number circular badge */}
+                        <span className={styles.mdBadge}>{num}</span>
+                        {/* Step content text */}
+                        <div className={styles.mdNumberedContent}>{parseInlineMarkdown(content)}</div>
+                    </div>
+                );
+            }
             // Check if line is empty spacing
-            if (line.trim() === '') {
+            if (trimmed === '') {
                 // Return spacing div block
                 return <div key={i} className={styles.mdSpace} />;
             }
-            // Return paragraph element containing parsed text
+            // Return paragraph element containing parsed inline text
             return <p key={i} className={styles.mdP}>{parseInlineMarkdown(line)}</p>;
         });
     };

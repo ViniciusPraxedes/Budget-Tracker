@@ -145,18 +145,25 @@ const Summary: React.FC = () => {
             {/* Monthly Expenses summary card */}
             <Box title="Monthly Expenses" className={styles.expenseBox}>
                 {/* Column layout container */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                     {/* Expense total formatted string */}
                     <div className={styles.expenseDisplay}>
                         {formatCurrency(totalExpenses)}
                     </div>
+                    {/* Check if any category budget is assigned */}
+                    {categories.some(c => c.budget !== undefined && c.budget > 0) && (
+                        // Total category budget indicator subtext
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            Budgeted: {formatCurrency(categories.reduce((sum, cat) => sum + (cat.budget || 0), 0))}
+                        </div>
+                    )}
                     {/* Heatmap progress visual bar */}
                     <div style={{
                         width: '100%',
                         height: '6px',
                         background: heatMapBackground,
                         borderRadius: '3px',
-                        marginTop: '0.5rem'
+                        marginTop: '0.25rem'
                     }} title="Expenses Heatmap" />
                 </div>
             </Box>
@@ -191,7 +198,7 @@ const Summary: React.FC = () => {
                             setIsEditingDeposit(true);
                         }}
                         className={styles.valueDisplay}
-                        style={{ color: '#00BCD4' }}
+                        style={{ color: '#00E676' }}
                     >
                         {/* Formatted monthly savings deposit */}
                         {formatCurrency(monthlySavingsDeposit)}
@@ -216,47 +223,55 @@ const Summary: React.FC = () => {
 
             {/* Total Bank Savings summary card */}
             <Box title="Total Savings" className={styles.totalSavingsBox}>
-                {/* Check if total savings editing mode is active */}
-                {isEditingTotalSavings ? (
-                    // Edit container wrapper
-                    <div className={styles.editContainer}>
-                        {/* Input field for editing total savings */}
-                        <input
-                            type="number"
-                            value={tempTotalSavings}
-                            onChange={(e) => setTempTotalSavings(e.target.value)}
-                            className={styles.editInput}
-                            autoFocus
-                        />
-                        {/* Save button trigger */}
-                        <button
-                            onClick={handleTotalSavingsSave}
-                            className={styles.saveBtn}
+                {/* Vertical column wrapper for total savings and monthly contribution subtext */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {/* Check if total savings editing mode is active */}
+                    {isEditingTotalSavings ? (
+                        // Edit container wrapper
+                        <div className={styles.editContainer}>
+                            {/* Input field for editing total savings */}
+                            <input
+                                type="number"
+                                value={tempTotalSavings}
+                                onChange={(e) => setTempTotalSavings(e.target.value)}
+                                className={styles.editInput}
+                                autoFocus
+                            />
+                            {/* Save button trigger */}
+                            <button
+                                onClick={handleTotalSavingsSave}
+                                className={styles.saveBtn}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    ) : (
+                        // Value display element
+                        <div
+                            onClick={() => {
+                                setTempTotalSavings(totalSavings.toString());
+                                setIsEditingTotalSavings(true);
+                            }}
+                            className={styles.valueDisplay}
+                            style={{ color: 'white' }}
                         >
-                            Save
-                        </button>
+                            {/* Formatted total savings currency */}
+                            {formatCurrency(totalSavings)}
+                            {/* Edit pencil SVG icon */}
+                            <svg className={styles.editIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {/* SVG path shape */}
+                                <path d="M12 20h9"></path>
+                                {/* SVG path shape */}
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                        </div>
+                    )}
+                    {/* Subtext display showing monthly deposit contribution */}
+                    <div style={{ fontSize: '0.875rem', color: '#00E676', fontWeight: 500 }}>
+                        {/* Formatted monthly deposit contribution string */}
+                        +{formatCurrency(monthlySavingsDeposit)} this month
                     </div>
-                ) : (
-                    // Value display element
-                    <div
-                        onClick={() => {
-                            setTempTotalSavings(totalSavings.toString());
-                            setIsEditingTotalSavings(true);
-                        }}
-                        className={styles.valueDisplay}
-                        style={{ color: 'white' }}
-                    >
-                        {/* Formatted total savings currency */}
-                        {formatCurrency(totalSavings)}
-                        {/* Edit pencil SVG icon */}
-                        <svg className={styles.editIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            {/* SVG path shape */}
-                            <path d="M12 20h9"></path>
-                            {/* SVG path shape */}
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                        </svg>
-                    </div>
-                )}
+                </div>
             </Box>
         </div>
     );

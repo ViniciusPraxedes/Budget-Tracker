@@ -87,6 +87,23 @@ const CategoryList: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h2 style={{ margin: 0 }}>Categories</h2>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {/* Button to load sample test data */}
+                    <button
+                        onClick={() => loadMockData(defaultIncome, defaultCategories)}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--firebase-yellow)',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '500'
+                        }}
+                    >
+                        ⚡ Load Sample Data
+                    </button>
+                    {/* Expand or collapse all category cards button */}
                     <button
                         onClick={toggleExpandAll}
                         style={{

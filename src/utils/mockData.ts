@@ -11,7 +11,7 @@ const generateId = () => {
 export const defaultIncome = 45000;
 
 // Export default categories configuration for mock initial state
-export const defaultCategories = [
+export const defaultCategories: Category[] = [
     // Housing category configuration
     {
         // Generate random ID
@@ -22,6 +22,8 @@ export const defaultCategories = [
         color: '#FF5722',
         // Set ordering index
         order: 0,
+        // Set monthly category budget target limit
+        budget: 15000,
         // Define initial expenses
         expenses: [
             // Rent expense
@@ -29,9 +31,7 @@ export const defaultCategories = [
             // Utilities expense
             { id: generateId(), name: 'Utilities', amount: 1500, paymentDay: 5, isRecurring: true },
             // Internet expense
-            { id: generateId(), name: 'Internet', amount: 500, paymentDay: 28, isRecurring: true },
-            // Test expense added by user
-            { id: generateId(), name: 'Test Expense', amount: 100, paymentDay: 10, isRecurring: false }
+            { id: generateId(), name: 'Internet', amount: 600, paymentDay: 28, isRecurring: true }
         // End of expenses array
         ]
     // End of Housing category
@@ -46,12 +46,14 @@ export const defaultCategories = [
         color: '#4CAF50',
         // Set ordering index
         order: 1,
+        // Set monthly category budget target limit
+        budget: 5000,
         // Define initial expenses
         expenses: [
             // Groceries expense
-            { id: generateId(), name: 'Groceries', amount: 4000, paymentDay: 10, isRecurring: false },
+            { id: generateId(), name: 'Groceries', amount: 3800, paymentDay: 10, isRecurring: false },
             // Dining Out expense
-            { id: generateId(), name: 'Dining Out', amount: 1200, paymentDay: 15, isRecurring: false },
+            { id: generateId(), name: 'Dining Out', amount: 1400, paymentDay: 15, isRecurring: false },
             // Coffee expense
             { id: generateId(), name: 'Coffee', amount: 400, paymentDay: 20, isRecurring: false }
         // End of expenses array
@@ -68,6 +70,8 @@ export const defaultCategories = [
         color: '#2196F3',
         // Set ordering index
         order: 2,
+        // Set monthly category budget target limit
+        budget: 2500,
         // Define initial expenses
         expenses: [
             // Gas expense
@@ -90,17 +94,41 @@ export const defaultCategories = [
         color: '#9C27B0',
         // Set ordering index
         order: 3,
+        // Set monthly category budget target limit
+        budget: 1000,
         // Define initial expenses
         expenses: [
             // Netflix expense
             { id: generateId(), name: 'Netflix', amount: 159, paymentDay: 18, isRecurring: true },
             // Spotify expense
             { id: generateId(), name: 'Spotify', amount: 119, paymentDay: 22, isRecurring: true },
-            // Movies expense
-            { id: generateId(), name: 'Movies', amount: 300, paymentDay: 14, isRecurring: false }
+            // Movies & Gaming expense
+            { id: generateId(), name: 'Movies & Gaming', amount: 300, paymentDay: 14, isRecurring: false }
         // End of expenses array
         ]
     // End of Entertainment category
+    },
+    // Healthcare category configuration
+    {
+        // Generate random ID
+        id: generateId(),
+        // Set category name
+        name: 'Healthcare & Wellness',
+        // Set color code
+        color: '#00BCD4',
+        // Set ordering index
+        order: 4,
+        // Set monthly category budget target limit
+        budget: 2000,
+        // Define initial expenses
+        expenses: [
+            // Gym Membership expense
+            { id: generateId(), name: 'Gym Membership', amount: 350, paymentDay: 3, isRecurring: true },
+            // Pharmacy expense
+            { id: generateId(), name: 'Pharmacy & Vitamins', amount: 500, paymentDay: 16, isRecurring: false }
+        // End of expenses array
+        ]
+    // End of Healthcare category
     }
 // End of defaultCategories array
 ];

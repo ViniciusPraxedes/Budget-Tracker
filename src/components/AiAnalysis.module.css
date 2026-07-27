@@ -467,3 +467,73 @@
   fill: #ff5252;
 /* Close errorIcon styles */
 }
+
+/* Horizontal line divider for markdown */
+.mdHr {
+  /* Remove default border */
+  border: none;
+  /* Set line height */
+  height: 1px;
+  /* Linear gradient background */
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.5), rgba(99, 102, 241, 0.5), transparent);
+  /* Top bottom margin spacing */
+  margin: 1.25rem 0;
+}
+
+/* Numbered step item container */
+.mdNumberedItem {
+  /* Use flexbox display */
+  display: flex;
+  /* Align items to top */
+  align-items: flex-start;
+  /* Gap spacing between badge and text */
+  gap: 0.75rem;
+  /* Margin bottom spacing */
+  margin-bottom: 0.75rem;
+  /* Translucent dark background surface */
+  background: rgba(255, 255, 255, 0.03);
+  /* Inner padding */
+  padding: 0.75rem 1rem;
+  /* Rounded corners */
+  border-radius: 8px;
+  /* Subtle border line */
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Numbered step circular badge */
+.mdBadge {
+  /* Circle flex shrink 0 */
+  flex-shrink: 0;
+  /* Width dimensions */
+  width: 24px;
+  /* Height dimensions */
+  height: 24px;
+  /* Gradient background pill */
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  /* White text color */
+  color: white;
+  /* Rounded circle */
+  border-radius: 50%;
+  /* Flex center content */
+  display: flex;
+  /* Horizontal center */
+  justify-content: center;
+  /* Vertical center */
+  align-items: center;
+  /* Font size scale */
+  font-size: 0.8rem;
+  /* Bold font weight */
+  font-weight: 700;
+}
+
+/* Numbered content wrapper */
+.mdNumberedContent {
+  /* Text secondary color */
+  color: var(--text-secondary);
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Line height spacing */
+  line-height: 1.5;
+  /* Flex fill 1 */
+  flex: 1;
+}

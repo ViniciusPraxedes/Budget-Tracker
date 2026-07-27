@@ -20,8 +20,13 @@ interface CategoryBoxProps {
 const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggle }) => {
     const { categories, updateCategory, deleteCategory, addExpense, updateExpense, deleteExpense, moveCategory, totalExpenses, moveExpense } = useBudget();
     const [isEditing, setIsEditing] = useState(false);
+    // Declare state for category name editing
     const [editedName, setEditedName] = useState(category.name);
+    // Declare state for category accent color editing
     const [editedColor, setEditedColor] = useState(category.color);
+    // Declare state for category monthly budget limit editing
+    const [editedBudget, setEditedBudget] = useState(category.budget !== undefined ? category.budget.toString() : '');
+    // Declare state for delete confirmation dialog toggle
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const {
@@ -54,8 +59,13 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
     const subtotal = category.expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const percentage = totalExpenses > 0 ? (subtotal / totalExpenses) * 100 : 0;
 
+    // Save updated category details handler
     const handleCategorySave = () => {
-        updateCategory(category.id, editedName, editedColor);
+        // Parse float value from editedBudget or leave undefined if empty
+        const parsedBudget = editedBudget !== '' ? parseFloat(editedBudget) : undefined;
+        // Invoke updateCategory context method with budget parameter
+        updateCategory(category.id, editedName, editedColor, parsedBudget);
+        // Disable inline category editing mode
         setIsEditing(false);
     };
 
@@ -102,11 +112,19 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
+                                    placeholder="Category Name"
                                     value={editedName}
                                     onChange={e => setEditedName(e.target.value)}
                                     style={{ background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.5rem', borderRadius: '4px', flex: 1 }}
                                 />
-                                <button onClick={handleCategorySave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem', cursor: 'pointer' }}>✓</button>
+                                <input
+                                    type="number"
+                                    placeholder="Budget Limit"
+                                    value={editedBudget}
+                                    onChange={e => setEditedBudget(e.target.value)}
+                                    style={{ background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.5rem', borderRadius: '4px', width: '110px' }}
+                                />
+                                <button onClick={handleCategorySave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>✓</button>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -370,14 +388,45 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                 }}>
                     <div style={{ overflow: 'hidden' }}>
                         <div style={{ paddingTop: '0.5rem' }}>
+                            {/* Subtotal and category budget progress section */}
                             <div style={{ marginBottom: '1rem' }}>
+                                {/* Category spending summary title and figures */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                                    <span>Subtotal</span>
-                                    <span style={{ color: 'white', fontWeight: 'bold' }}>{formatCurrency(subtotal)}</span>
+                                    {/* Label display */}
+                                    <span>{category.budget !== undefined ? 'Spent vs Budget' : 'Subtotal'}</span>
+                                    {/* Formatted amount display */}
+                                    <span style={{ color: 'white', fontWeight: 'bold' }}>
+                                        {category.budget !== undefined ? `${formatCurrency(subtotal)} / ${formatCurrency(category.budget)}` : formatCurrency(subtotal)}
+                                    </span>
                                 </div>
-                                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                                    <div style={{ height: '100%', width: `${percentage}%`, background: category.color, transition: 'width 0.5s ease-out' }} />
+                                {/* Progress bar track container */}
+                                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                    {/* Progress bar fill indicator with color coding */}
+                                    <div style={{
+                                        height: '100%',
+                                        width: category.budget !== undefined ? `${Math.min((subtotal / category.budget) * 100, 100)}%` : `${percentage}%`,
+                                        background: category.budget !== undefined
+                                            ? (subtotal > category.budget ? 'var(--firebase-red)' : (subtotal / category.budget >= 0.8 ? 'var(--firebase-orange)' : '#00E676'))
+                                            : category.color,
+                                        transition: 'width 0.5s ease-out'
+                                    }} />
                                 </div>
+                                {/* Check if category budget is defined to show budget status text */}
+                                {category.budget !== undefined && (
+                                    // Row layout for budget status subtext
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginTop: '0.35rem' }}>
+                                        {/* Status message indicating remaining budget or over-budget deficit */}
+                                        <span style={{ color: subtotal > category.budget ? 'var(--firebase-red)' : (subtotal / category.budget >= 0.8 ? 'var(--firebase-orange)' : 'var(--text-secondary)') }}>
+                                            {subtotal > category.budget
+                                                ? `Exceeded by ${formatCurrency(subtotal - category.budget)}`
+                                                : `${formatCurrency(category.budget - subtotal)} remaining`}
+                                        </span>
+                                        {/* Budget percentage usage text */}
+                                        <span style={{ color: 'var(--text-secondary)' }}>
+                                            {Math.round((subtotal / category.budget) * 100)}% used
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
