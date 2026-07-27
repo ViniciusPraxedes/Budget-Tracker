@@ -20,7 +20,7 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
     const currentKey = getMonthKey(currentMonth, currentYear);
-    const { incomeState: income, categoriesState: categories, setIncomeState, setCategoriesState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
+    const { incomeState: income, categoriesState: categories, monthlySavingsDepositState: monthlySavingsDeposit, setIncomeState, setCategoriesState, setMonthlySavingsDepositState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
     const [isInitialized, setIsInitialized] = useState(false);
     const [totalSavings, setTotalSavings] = useState(0);
 
@@ -841,6 +841,14 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(0, []);
     };
 
+    // Handler to update monthly savings deposit allocation
+    const setMonthlySavingsDeposit = (amount: number) => {
+        // Update local monthly savings deposit state
+        setMonthlySavingsDepositState(amount);
+        // Persist update to database
+        updateFirestore(income, categories, currentMonth, currentYear, amount);
+    };
+
     const budgetContextValue = {
         currentMonth,
         currentYear,
@@ -848,6 +856,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         categories,
         totalExpenses,
         savings,
+        monthlySavingsDeposit,
+        setMonthlySavingsDeposit,
         setIncome,
         addCategory,
         updateCategory,

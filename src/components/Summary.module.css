@@ -21,6 +21,14 @@
     border-left: 4px solid #2196F3;
 }
 
+.depositBox {
+    border-left: 4px solid #00BCD4;
+}
+
+.freeCashBox {
+    border-left: 4px solid #AB47BC;
+}
+
 .editContainer {
     display: flex;
     gap: 0.5rem;

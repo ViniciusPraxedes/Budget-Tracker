@@ -29,6 +29,7 @@ export interface MonthData {
     year: number;
     income: number;
     categories: Category[];
+    monthlySavingsDeposit?: number;
 }
 
 export interface BudgetContextType {
@@ -38,6 +39,8 @@ export interface BudgetContextType {
     categories: Category[];
     totalExpenses: number;
     savings: number;
+    monthlySavingsDeposit: number;
+    setMonthlySavingsDeposit: (amount: number) => void;
     setIncome: (amount: number) => void;
     addCategory: (name: string, color: string) => Category;
     updateCategory: (id: string, name: string, color: string) => void;

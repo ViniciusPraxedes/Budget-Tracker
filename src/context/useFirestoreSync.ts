@@ -6,9 +6,15 @@ import { User } from 'firebase/auth';
 import { useToast } from './ToastContext';
 
 export const useFirestoreSync = (user: User | null, currentKey: string) => {
+    // Declare state for monthly income
     const [incomeState, setIncomeState] = useState<number>(0);
+    // Declare state for expense categories
     const [categoriesState, setCategoriesState] = useState<Category[]>([]);
+    // Declare state for monthly savings deposit
+    const [monthlySavingsDepositState, setMonthlySavingsDepositState] = useState<number>(0);
+    // Declare state for loading indicator
     const [loading, setLoading] = useState(true);
+    // Retrieve toast notification handler
     const { addToast } = useToast();
 
     // Subscribe to Firestore updates
@@ -20,6 +26,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
             setIncomeState(0);
             // Set categories array to empty
             setCategoriesState([]);
+            // Set monthly savings deposit to zero
+            setMonthlySavingsDepositState(0);
             // Disable loading spinner
             setLoading(false);
             // Return early
@@ -41,6 +49,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                 .then(data => {
                     // Update income state with retrieved mock income
                     setIncomeState(data.income || 0);
+                    // Update monthly savings deposit state
+                    setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
                     // Retrieve categories array or use empty array default
                     const fetchedCategories = data.categories || [];
                     // Sort categories by their order property
@@ -71,34 +81,58 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
 
         // Set loading state to true
         setLoading(true);
+        // Create Firestore document reference for active month
         const docRef = doc(db, 'users', user.uid, 'months', currentKey);
         
+        // Flag to track document presence
         let documentExists = false;
 
+        // Subscribe to snapshot changes
         const unsubscribe = onSnapshot(docRef, 
+            // Handle snapshot update callback
             (docSnap) => {
+                // Determine document existence status
                 documentExists = docSnap.exists();
+                // If snapshot document exists
                 if (documentExists) {
+                    // Cast snapshot data to MonthData interface
                     const data = docSnap.data() as MonthData;
+                    // Update local income state
                     setIncomeState(data.income || 0);
+                    // Update local monthly savings deposit state
+                    setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
+                    // Retrieve categories list
                     const fetchedCategories = data.categories || [];
+                    // Sort categories by order index
                     fetchedCategories.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    // Set categories state
                     setCategoriesState(fetchedCategories);
+                    // Disable loading spinner
                     setLoading(false);
+                // Handle non-existent document snapshot
                 } else {
                     // Try to auto-initialize recurring expenses from previous month
                     const [y, m] = currentKey.split('-');
+                    // Parse year number
                     const yearNum = parseInt(y, 10);
+                    // Parse month number
                     const monthNum = parseInt(m, 10);
                     
+                    // Create previous date object
                     const prevDate = new Date(yearNum, monthNum - 1, 1);
+                    // Generate key string for previous month
                     const prevKey = `${prevDate.getFullYear()}-${prevDate.getMonth()}`;
                     
+                    // Dynamically import getDoc method from firestore module
                     import('firebase/firestore').then(({ getDoc }) => {
+                        // Query document for previous month
                         getDoc(doc(db, 'users', user.uid, 'months', prevKey)).then(prevSnap => {
+                            // Check if previous month document snapshot exists
                             if (prevSnap.exists()) {
+                                // Extract data for previous month
                                 const prevData = prevSnap.data() as MonthData;
                                 
+                                // Map previous categories and clone recurring expenses
                                 const newCategories = prevData.categories.map(cat => ({
                                     ...cat,
                                     id: Math.random().toString(36).substr(2, 9),
@@ -112,47 +146,77 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     
                                 // Only initialize if we have something to copy
                                 if (newCategories.length > 0) {
+                                    // Exit if document was created concurrently
                                     if (documentExists) return;
+                                    // Save initialized month document in Firestore
                                     setDoc(docRef, {
                                         month: monthNum,
                                         year: yearNum,
                                         income: prevData.income || 0,
+                                        monthlySavingsDeposit: prevData.monthlySavingsDeposit || 0,
                                         categories: newCategories
                                     });
+                                // Handle case where no recurring categories exist
                                 } else {
+                                    // Exit if document exists
                                     if (documentExists) return;
+                                    // Reset income state to zero
                                     setIncomeState(0);
+                                    // Reset categories state to empty
                                     setCategoriesState([]);
+                                    // Reset monthly savings deposit to zero
+                                    setMonthlySavingsDepositState(0);
                                 }
+                            // Handle case where previous month document does not exist
                             } else {
+                                // Exit if document exists
                                 if (documentExists) return;
+                                // Reset income state to zero
                                 setIncomeState(0);
+                                // Reset categories state to empty
                                 setCategoriesState([]);
+                                // Reset monthly savings deposit to zero
+                                setMonthlySavingsDepositState(0);
                             }
+                            // Disable loading spinner
                             setLoading(false);
+                        // Handle catch for previous snapshot fetch
                         }).catch(() => {
+                            // Exit if document exists
                             if (documentExists) return;
+                            // Reset income state to zero
                             setIncomeState(0);
+                            // Reset categories state to empty
                             setCategoriesState([]);
+                            // Reset monthly savings deposit to zero
+                            setMonthlySavingsDepositState(0);
+                            // Disable loading spinner
                             setLoading(false);
                         });
                     });
                 }
             },
+            // Handle subscription error callback
             (error) => {
+                // Log sync error to console
                 console.error("Firestore sync error:", error);
+                // Display error toast notification
                 addToast("Failed to sync with database. Please check your connection.", "error");
+                // Disable loading spinner
                 setLoading(false);
             }
         );
 
+        // Return cleanup function to unsubscribe snapshot listener
         return () => unsubscribe();
     }, [currentKey, user, addToast]);
 
     // Function to push budget updates to the remote or local database
-    const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number) => {
+    const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number, newSavingsDeposit?: number) => {
+        // Determine savings deposit value using state fallback
+        const savingsDepositValue = newSavingsDeposit !== undefined ? newSavingsDeposit : monthlySavingsDepositState;
         // Log update parameters to console for debugging
-        console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, uid: user?.uid });
+        console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, savingsDepositValue });
         // Return early if no user session exists
         if (!user) {
             // Log abort message to console
@@ -169,6 +233,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                 setIncomeState(newIncome);
                 // Update local categories state immediately to ensure reactive UI updates
                 setCategoriesState(newCategories);
+                // Update local monthly savings deposit state immediately
+                setMonthlySavingsDepositState(savingsDepositValue);
                 // Call local API to update month data
                 await fetch('/api/mock-db', {
                     // Use POST HTTP method
@@ -195,6 +261,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                             year,
                             // New monthly income amount
                             income: newIncome,
+                            // New monthly savings deposit amount
+                            monthlySavingsDeposit: savingsDepositValue,
                             // Categories list
                             categories: newCategories
                         // End of monthData object
@@ -215,29 +283,44 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
             return;
         // End of test-user update conditional check
         }
+        // Try saving updated document to Firestore database
         try {
-            console.log("DEBUG: Getting docRef...");
+            // Get reference to Firestore month document
             const docRef = doc(db, 'users', user.uid, 'months', currentKey);
-            console.log("DEBUG: Calling setDoc...");
+            // Save document with updated properties
             await setDoc(docRef, {
                 month,
                 year,
                 income: newIncome,
+                monthlySavingsDeposit: savingsDepositValue,
                 categories: newCategories
             });
-            console.log("DEBUG: setDoc SUCCESS!");
+        // Catch error on saving document to Firestore
         } catch (error) {
+            // Log Firestore update error to console
             console.error("DEBUG: Firestore update error:", error);
+            // Display error toast notification
             addToast("Failed to save changes.", "error");
         }
     };
 
+    // Return hook state values and functions
     return {
+        // Return current income state
         incomeState,
+        // Return current categories list state
         categoriesState,
+        // Return current monthly savings deposit state
+        monthlySavingsDepositState,
+        // Return income state modifier
         setIncomeState,
+        // Return categories state modifier
         setCategoriesState,
+        // Return monthly savings deposit modifier
+        setMonthlySavingsDepositState,
+        // Return loading state status
         loading,
+        // Return database update function
         updateFirestore
     };
 };
