@@ -102,8 +102,12 @@ Be encouraging, professional, and concise. Format the response beautifully using
 
             // Check if network request failed
             if (!response.ok) {
-                // Throw response status error
-                throw new Error(`API returned status ${response.status}`);
+                // Read and parse error details from response payload
+                const errorData = await response.json().catch(() => ({}));
+                // Extract error message string or fallback to status code
+                const errorMessage = errorData?.error?.message || `API returned status ${response.status}`;
+                // Throw error with extracted message detail
+                throw new Error(errorMessage);
             }
 
             // Parse response body as JSON data
