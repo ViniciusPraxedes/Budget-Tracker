@@ -12,7 +12,7 @@ import styles from './Summary.module.css';
 // Declare Summary React functional component
 const Summary: React.FC = () => {
     // Destructure budget metrics and setters from context hook
-    const { income, totalExpenses, savings, setIncome, categories, totalSavings, updateTotalSavings, monthlySavingsDeposit, setMonthlySavingsDeposit, monthlyBudget, setMonthlyBudget } = useBudget();
+    const { income, totalExpenses, savings, setIncome, categories, totalSavings, updateTotalSavings, monthlySavingsDeposit, setMonthlySavingsDeposit, monthlyBudget, setMonthlyBudget, savingsGoal } = useBudget();
     // Destructure currency formatter from localization hook
     const { formatCurrency } = useLocalization();
     // Declare state for inline income editing mode
@@ -92,30 +92,23 @@ const Summary: React.FC = () => {
         setIsEditingDeposit(false);
     };
 
-    // Initialize accumulator for category heatmap percentages
-    let currentPercentage = 0;
-    // Map categories to linear gradient stops
-    const gradientStops = categories.map(cat => {
-        // Compute total spending for category
-        const catTotal = cat.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-        // Calculate category spending percentage relative to total expenses
-        const catPercentage = totalExpenses > 0 ? (catTotal / totalExpenses) * 100 : 0;
-        // Return null if percentage is zero
-        if (catPercentage === 0) return null;
-        
-        // Save current start percentage
-        const start = currentPercentage;
-        // Accumulate percentage to end boundary
-        currentPercentage += catPercentage;
-        // Save end percentage boundary
-        const end = currentPercentage;
-        // Return gradient stop string segment
-        return `${cat.color} ${start}%, ${cat.color} ${end}%`;
-    // Filter out null stops and join segments
-    }).filter(Boolean).join(', ');
+    // Calculate percentage of budget consumed by actual expenses
+    const budgetUsedPercentage = effectiveMonthlyBudget > 0 ? (totalExpenses / effectiveMonthlyBudget) * 100 : 0;
+    // Clamp displayed bar width to 100% so overspend doesn't overflow the track
+    const budgetBarWidth = Math.min(budgetUsedPercentage, 100);
+    // Choose progress bar color based on how close to or over budget
+    const budgetBarColor = budgetUsedPercentage >= 100
+        ? 'var(--firebase-red)'
+        : budgetUsedPercentage >= 80
+            ? 'var(--firebase-yellow)'
+            : '#00E676';
 
-    // Construct background CSS linear gradient string
-    const heatMapBackground = gradientStops ? `linear-gradient(to right, ${gradientStops})` : 'var(--border-color)';
+    // Calculate percentage of savings goal reached by current total savings
+    const savingsGoalPercentage = savingsGoal > 0 ? (totalSavings / savingsGoal) * 100 : 0;
+    // Clamp displayed bar width to 100% once the goal is reached or exceeded
+    const savingsGoalBarWidth = Math.min(savingsGoalPercentage, 100);
+    // Highlight bar in green once the goal has been reached, otherwise the card's accent blue
+    const savingsGoalBarColor = savingsGoalPercentage >= 100 ? '#00E676' : '#2196F3';
 
     // Return component visual tree
     return (
@@ -176,6 +169,8 @@ const Summary: React.FC = () => {
                     {/* Render static total monthly budget string */}
                     <div
                         style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
                             fontSize: '0.85rem',
                             color: 'var(--text-secondary)',
                             marginTop: '0.15rem'
@@ -185,15 +180,29 @@ const Summary: React.FC = () => {
                         <span>
                             Budgeted: {formatCurrency(effectiveMonthlyBudget)}
                         </span>
+                        {/* Render percentage of budget consumed so far */}
+                        <span style={{ color: budgetBarColor, fontWeight: 600 }}>
+                            {Math.round(budgetUsedPercentage)}%
+                        </span>
                     </div>
-                    {/* Heatmap progress visual bar */}
+                    {/* Budget usage progress bar track */}
                     <div style={{
                         width: '100%',
                         height: '6px',
-                        background: heatMapBackground,
+                        background: 'var(--border-color)',
                         borderRadius: '3px',
-                        marginTop: '0.25rem'
-                    }} title="Expenses Heatmap" />
+                        marginTop: '0.25rem',
+                        overflow: 'hidden'
+                    }} title={`${Math.round(budgetUsedPercentage)}% of budget used`}>
+                        {/* Budget usage progress bar fill */}
+                        <div style={{
+                            width: `${budgetBarWidth}%`,
+                            height: '100%',
+                            background: budgetBarColor,
+                            borderRadius: '3px',
+                            transition: 'width 0.3s ease'
+                        }} />
+                    </div>
                 </div>
             </Box>
 
@@ -299,6 +308,43 @@ const Summary: React.FC = () => {
                     <div style={{ fontSize: '0.875rem', color: '#00E676', fontWeight: 500 }}>
                         {/* Formatted monthly deposit contribution string */}
                         +{formatCurrency(monthlySavingsDeposit)} this month
+                    </div>
+                    {/* Savings goal progress label row */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-secondary)',
+                            marginTop: '0.15rem'
+                        }}
+                    >
+                        {/* Render formatted savings goal target */}
+                        <span>
+                            Goal: {formatCurrency(savingsGoal)}
+                        </span>
+                        {/* Render percentage of savings goal reached so far */}
+                        <span style={{ color: savingsGoalBarColor, fontWeight: 600 }}>
+                            {Math.round(savingsGoalPercentage)}%
+                        </span>
+                    </div>
+                    {/* Savings goal progress bar track */}
+                    <div style={{
+                        width: '100%',
+                        height: '6px',
+                        background: 'var(--border-color)',
+                        borderRadius: '3px',
+                        marginTop: '0.25rem',
+                        overflow: 'hidden'
+                    }} title={`${Math.round(savingsGoalPercentage)}% of savings goal reached`}>
+                        {/* Savings goal progress bar fill */}
+                        <div style={{
+                            width: `${savingsGoalBarWidth}%`,
+                            height: '100%',
+                            background: savingsGoalBarColor,
+                            borderRadius: '3px',
+                            transition: 'width 0.3s ease'
+                        }} />
                     </div>
                 </div>
             </Box>

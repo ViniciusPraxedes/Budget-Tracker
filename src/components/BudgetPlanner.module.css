@@ -146,62 +146,6 @@
     color: var(--text-secondary);
 }
 
-/* Section tab selector container */
-.tabContainer {
-    /* Flexbox display layout model */
-    display: flex;
-    /* Spacing gap between tabs */
-    gap: 0.5rem;
-    /* Bottom margin separator */
-    margin-bottom: 1.25rem;
-    /* Bottom border separator */
-    border-bottom: 1px solid var(--border-color);
-    /* Padding bottom spacing */
-    padding-bottom: 0.5rem;
-}
-
-/* Tab button element styling */
-.tabButton {
-    /* Transparent background */
-    background: transparent;
-    /* Remove default button border */
-    border: none;
-    /* Padding for touch target */
-    padding: 0.5rem 1rem;
-    /* Rounded corner tab pill */
-    border-radius: 6px;
-    /* Secondary text color rule */
-    color: var(--text-secondary);
-    /* Hand pointer cursor indicator */
-    cursor: pointer;
-    /* Font weight setting */
-    font-weight: 500;
-    /* Font size for tab text */
-    font-size: 0.9rem;
-    /* Transition color background */
-    transition: all 0.2s ease;
-}
-
-/* Active state for selected tab button */
-.activeTab {
-    /* Dark active tab background */
-    background: rgba(255, 255, 255, 0.1);
-    /* White primary text color */
-    color: var(--text-primary);
-    /* Bold font weight */
-    font-weight: 600;
-}
-
-/* Interactive calculator box grid layout */
-.calcGrid {
-    /* CSS Grid display layout model */
-    display: grid;
-    /* Multi-column grid for calculator and projections */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    /* Gap spacing between calculation blocks */
-    gap: 1.25rem;
-}
-
 /* Calculator input panel box styling */
 .panelBox {
     /* Glassmorphism dark background */
@@ -266,98 +210,116 @@
     outline: none;
 }
 
-/* Quick add contribution button row */
-.presetRow {
-    /* Flex row layout */
+/* Form controls grid wrapper styling for savings goal inputs */
+.goalFormGrid {
+    /* Set CSS grid layout model */
+    display: grid;
+    /* Responsive two column grid layout */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Grid item gap spacing */
+    gap: 1rem;
+    /* Margin bottom separation */
+    margin-bottom: 1.25rem;
+}
+
+/* Progress bar track outer container styling */
+.progressBarTrack {
+    /* Full width container fill */
+    width: 100%;
+    /* Dark semi-transparent background fill */
+    background: rgba(255, 255, 255, 0.08);
+    /* Rounded corners radius */
+    border-radius: 6px;
+    /* Fixed track height */
+    height: 10px;
+    /* Hide overflowing bar content */
+    overflow: hidden;
+}
+
+/* Progress bar fill gradient indicator styling */
+.progressBarFill {
+    /* Full height element fill */
+    height: 100%;
+    /* Modern vibrant blue to purple linear gradient */
+    background: linear-gradient(90deg, #2196F3 0%, #9C27B0 100%);
+    /* Rounded corners radius */
+    border-radius: 6px;
+    /* Smooth width transition animation */
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Progress bar fill green state when goal is reached */
+.progressBarFillReached {
+    /* Emerald green to cyan gradient fill */
+    background: linear-gradient(90deg, #00E676 0%, #00B0FF 100%);
+}
+
+/* Estimated completion card container styling */
+.estimationCard {
+    /* Top margin spacing separator */
+    margin-top: 1rem;
+    /* Inner box padding space */
+    padding: 0.85rem 1.1rem;
+    /* Rounded corners radius */
+    border-radius: 10px;
+    /* Glassmorphism gradient background tint */
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(156, 39, 176, 0.12) 100%);
+    /* Subtle blue glowing border line */
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    /* Light accent text color rule */
+    color: #90CAF9;
+    /* Font size for estimated card body */
+    font-size: 0.85rem;
+    /* Flexbox display layout model */
     display: flex;
-    /* Gap spacing between preset buttons */
-    gap: 0.5rem;
-    /* Flex wrap for small screens */
+    /* Space out elements to opposite edges */
+    justify-content: space-between;
+    /* Vertical centering alignment */
+    align-items: center;
+    /* Flex gap spacing between items */
+    gap: 0.75rem;
+    /* Allow wrapping on narrow screens */
     flex-wrap: wrap;
 }
 
-/* Quick add preset pill button styling */
-.presetBtn {
-    /* Transparent background */
-    background: rgba(255, 255, 255, 0.05);
-    /* Subtle border outline */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    /* Rounded corner pill */
-    border-radius: 16px;
-    /* Padding around button text */
-    padding: 0.25rem 0.6rem;
-    /* Small font size for pills */
-    font-size: 0.75rem;
-    /* Secondary text color rule */
-    color: var(--text-secondary);
-    /* Hand pointer cursor indicator */
-    cursor: pointer;
-    /* Transition background effect */
-    transition: all 0.2s ease;
-}
-
-/* Hover state for preset pill button */
-.presetBtn:hover {
-    /* Highlight background on hover */
-    background: rgba(255, 255, 255, 0.15);
-    /* White text color on hover */
-    color: var(--text-primary);
-}
-
-/* Rule 50-30-20 visualization progress bar track */
-.ruleTrack {
-    /* Width 100% container */
-    width: 100%;
-    /* Height of progress bar */
-    height: 12px;
-    /* Rounded corners radius */
-    border-radius: 6px;
-    /* Dark background surface */
-    background: rgba(255, 255, 255, 0.08);
-    /* Hide overflow stops */
-    overflow: hidden;
-    /* Flex display layout model */
+/* Estimation card label side layout styling */
+.estimationLabel {
+    /* Flexbox layout mode */
     display: flex;
-    /* Margin top separator */
-    margin-top: 0.5rem;
-}
-
-/* Segment slice inside 50-30-20 progress bar */
-.ruleSegment {
-    /* Height 100% fill */
-    height: 100%;
-    /* Transition width animation */
-    transition: width 0.3s ease;
-}
-
-/* Recommendation callout box styling */
-.tipBox {
-    /* Glassmorphism yellow accent background */
-    background: rgba(255, 202, 40, 0.08);
-    /* Yellow border outline boundary */
-    border: 1px solid rgba(255, 202, 40, 0.25);
-    /* Rounded corners for tip card */
-    border-radius: 8px;
-    /* Inner padding layout */
-    padding: 0.75rem 1rem;
-    /* Flex row layout */
-    display: flex;
-    /* Align icon and text vertically center */
+    /* Align icon and text vertically centered */
     align-items: center;
-    /* Spacing gap between icon and text */
-    gap: 0.75rem;
-    /* Font size for tip body text */
-    font-size: 0.85rem;
+    /* Gap spacing between icon and text */
+    gap: 0.5rem;
     /* Secondary text color rule */
     color: var(--text-secondary);
-    /* Top margin separator */
-    margin-top: 1rem;
+    /* Medium font weight style rule */
+    font-weight: 500;
 }
 
-/* Tip icon glyph styling */
-.tipIcon {
-    /* Font size for tip emoji icon */
-    font-size: 1.2rem;
-    /* Flex shrink 0 to keep icon fixed size */
-    flex-shrink: 0;
+/* Estimation card value badge styling */
+.estimationBadge {
+    /* Flexbox inline display layout */
+    display: flex;
+    /* Align text along baseline */
+    align-items: baseline;
+    /* Gap spacing between main count and date */
+    gap: 0.4rem;
+    /* Bold text weight rule */
+    font-weight: 700;
+    /* White primary text color */
+    color: #ffffff;
+    /* Font size for months badge value */
+    font-size: 0.95rem;
 }
+
+/* Target completion date subtext styling inside estimation badge */
+.estimationDate {
+    /* Smaller font size for date string */
+    font-size: 0.8rem;
+    /* Medium font weight */
+    font-weight: 500;
+    /* Semi-transparent white text color */
+    color: rgba(255, 255, 255, 0.7);
+}
+
+

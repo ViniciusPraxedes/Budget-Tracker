@@ -8,18 +8,18 @@ import { useLocalization } from '../context/LocalizationContext';
 import Box from './Box';
 // Import CSS module styles for budget planner layout
 import styles from './BudgetPlanner.module.css';
+// Import shared payday cycle resolver so cycle math stays consistent across components
+import { resolvePaydayCycle } from '../utils/paydayCycle';
 
 // Declare functional component representing Budget Planner & Savings Center
 const BudgetPlanner: React.FC = () => {
     // Destructure metrics and state from budget context provider
-    const { income, totalExpenses, monthlySavingsDeposit, totalSavings, categories, monthlyBudget, setMonthlyBudget, paydayStartDay } = useBudget();
+    const { income, totalExpenses, monthlySavingsDeposit, setMonthlySavingsDeposit, totalSavings, categories, monthlyBudget, setMonthlyBudget, paydayStartDay, paydayEndDay, currentMonth, currentYear, savingsGoal, setSavingsGoal } = useBudget();
     // Destructure formatCurrency function from localization context provider
     const { formatCurrency } = useLocalization();
 
     // Declare state for collapsible section visibility (hidden by default)
     const [isExpanded, setIsExpanded] = useState(false);
-    // Declare state for active tab selection ('savings' | 'rules' | 'health')
-    const [activeTab, setActiveTab] = useState<'savings' | 'rules' | 'health'>('savings');
 
     // Total effective budget threshold calculation
     const effectiveTotalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((s, c) => s + (c.budget || 0), 0);
@@ -35,115 +35,104 @@ const BudgetPlanner: React.FC = () => {
         }
     }, [effectiveTotalBudget, isEditingMonthlyBudget]);
 
-    // Savings Goal state initializations
-    // Declare state string for savings target goal amount
-    const [goalAmount, setGoalAmount] = useState('50000');
-    // Declare state string for monthly contribution amount
-    const [monthlyContrib, setMonthlyContrib] = useState(monthlySavingsDeposit > 0 ? monthlySavingsDeposit.toString() : '2000');
-    // Declare state for goal calculation result object
-    const [savingsResult, setSavingsResult] = useState<{ months: number; targetDate: string; totalInterestSaved: number } | null>(null);
+    // Commit the pending monthly budget edit, ignoring non-numeric input
+    const commitMonthlyBudget = () => {
+        const val = parseFloat(tempMonthlyBudget);
+        if (!isNaN(val)) setMonthlyBudget(val);
+        setIsEditingMonthlyBudget(false);
+    };
 
-    // Keep monthly contribution state updated if context deposit changes
+    // Abandon the pending monthly budget edit and restore the persisted value
+    const cancelMonthlyBudgetEdit = () => {
+        setTempMonthlyBudget(effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : '');
+        setIsEditingMonthlyBudget(false);
+    };
+
+    // Savings Goal state initializations
+    // Declare state string for savings target goal amount, pre-filled from persisted context value
+    const [goalAmount, setGoalAmount] = useState(savingsGoal > 0 ? savingsGoal.toString() : '50000');
+
+    // Keep goalAmount in sync if the persisted savings goal loads or changes externally
     useEffect(() => {
-        // Check if monthly savings deposit exists in context
-        if (monthlySavingsDeposit > 0) {
-            // Update monthly contribution string state
-            setMonthlyContrib(monthlySavingsDeposit.toString());
+        if (savingsGoal > 0) {
+            setGoalAmount(savingsGoal.toString());
         }
+    }, [savingsGoal]);
+
+    // Persist goal amount changes to context/Firestore, debounced so typing doesn't spam writes
+    useEffect(() => {
+        const val = parseFloat(goalAmount);
+        if (isNaN(val) || val <= 0 || val === savingsGoal) return;
+        const timeout = setTimeout(() => {
+            setSavingsGoal(val);
+        }, 600);
+        return () => clearTimeout(timeout);
+    }, [goalAmount, savingsGoal, setSavingsGoal]);
+
+    // State for local monthly savings contribution input string
+    const [monthlyContributionInput, setMonthlyContributionInput] = useState(monthlySavingsDeposit > 0 ? monthlySavingsDeposit.toString() : '');
+
+    // Sync input string with monthlySavingsDeposit context updates
+    useEffect(() => {
+        // Update input string state when context value changes externally
+        setMonthlyContributionInput(monthlySavingsDeposit > 0 ? monthlySavingsDeposit.toString() : '');
     }, [monthlySavingsDeposit]);
 
-    // Recalculate savings projection whenever goal amount or monthly contribution changes
-    useEffect(() => {
-        // Parse float value from goal amount string
-        const target = parseFloat(goalAmount);
-        // Parse float value from monthly contribution string
-        const monthly = parseFloat(monthlyContrib);
-        // Current existing bank savings balance
-        const current = totalSavings;
-
-        // Validate numbers are positive and valid floats
-        if (isNaN(target) || isNaN(monthly) || monthly <= 0 || target <= current) {
-            // Reset calculation result state to null if invalid or goal reached
-            setSavingsResult(null);
-            // Return early
-            return;
+    // Handle change for monthly contribution input field
+    const handleContributionChange = (valStr: string) => {
+        // Update local state value for contribution input
+        setMonthlyContributionInput(valStr);
+        // Parse float number from input string
+        const val = parseFloat(valStr);
+        // Check if parsed value is valid non-negative number
+        if (!isNaN(val) && val >= 0) {
+            // Commit updated deposit to budget context
+            setMonthlySavingsDeposit(val);
         }
+    };
 
-        // Calculate net remaining balance needed to reach target goal
-        const needed = target - current;
-        // Compute total months required to reach target
-        const months = Math.ceil(needed / monthly);
-        
-        // Calculate estimated completion date
-        const date = new Date();
-        // Add calculated months to current date
-        date.setMonth(date.getMonth() + months);
-        // Format date string to Month Year (e.g. October 2026)
-        const dateStr = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    // Parsed numeric value of the goal input, NaN when the field is empty or non-numeric
+    const parsedGoal = parseFloat(goalAmount);
+    // Whether the entered goal is a usable positive target
+    const isGoalValid = !isNaN(parsedGoal) && parsedGoal > 0;
+    // Percentage of the goal reached, only meaningful once a valid goal is entered
+    const goalProgressPct = isGoalValid ? Math.min(100, (totalSavings / parsedGoal) * 100) : 0;
+    // Whether current savings meet or exceed the entered goal
+    const isGoalReached = isGoalValid && totalSavings >= parsedGoal;
+    // Parsed numeric value of monthly contribution input
+    const parsedContribution = parseFloat(monthlyContributionInput);
+    // Effective numeric monthly contribution amount
+    const effectiveContribution = !isNaN(parsedContribution) && parsedContribution > 0 ? parsedContribution : 0;
+    // Remaining balance needed to hit the target goal
+    const remainingGoal = isGoalValid ? Math.max(0, parsedGoal - totalSavings) : 0;
+    // Estimated months remaining to achieve goal
+    const monthsToGoal = isGoalValid && effectiveContribution > 0 && !isGoalReached ? Math.ceil(remainingGoal / effectiveContribution) : null;
+    // Target completion date string calculated from current date plus months remaining
+    const targetCompletionDate = (() => {
+        // Check if months to goal calculation is valid and greater than zero
+        if (monthsToGoal === null || monthsToGoal <= 0) return '';
+        // Create date object for current date
+        const now = new Date();
+        // Resolve target completion month and year
+        const targetDate = new Date(now.getFullYear(), now.getMonth() + monthsToGoal, 1);
+        // Return formatted month and year string
+        return targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    })();
 
-        // Update calculation result state
-        setSavingsResult({
-            // Set required months count
-            months,
-            // Set formatted target completion date
-            targetDate: dateStr,
-            // Simple projected cushion bonus metric
-            totalInterestSaved: Math.round(monthly * months * 0.02)
-        });
-    }, [goalAmount, monthlyContrib, totalSavings]);
-
-    // Financial 50/30/20 Rule Calculations
-    // Calculate total budgeted or actual income threshold
-    const netIncome = income > 0 ? income : 1;
-    // Recommended 50% Needs allocation amount
-    const recNeeds = netIncome * 0.5;
-    // Recommended 30% Wants allocation amount
-    const recWants = netIncome * 0.3;
-    // Recommended 20% Savings allocation amount
-    const recSavings = netIncome * 0.2;
-
-    // Estimate actual expenses distribution across Needs, Wants, and Savings
-    // Calculate total expenses for categories labeled as Needs / Essential
-    const actualNeeds = categories.reduce((sum, cat) => {
-        // Match category names for essential utilities, rent, housing, food, transport
-        const isNeed = /rent|housing|bill|utility|grocery|food|transport|car|health/i.test(cat.name);
-        // Accumulate subtotal if category matches essential criteria
-        return isNeed ? sum + cat.expenses.reduce((s, e) => s + e.amount, 0) : sum;
-    }, 0);
-
-    // Calculate actual Wants expenses as total expenses minus Needs
-    const actualWants = Math.max(0, totalExpenses - actualNeeds);
-    // Actual savings allocated this month
-    const actualSavings = monthlySavingsDeposit;
-
-    // Percentages of income spent on Needs, Wants, Savings
-    // Percentage spent on Needs
-    const pctNeeds = Math.min(100, (actualNeeds / netIncome) * 100);
-    // Percentage spent on Wants
-    const pctWants = Math.min(100, (actualWants / netIncome) * 100);
-    // Percentage saved
-    const pctSavings = Math.min(100, (actualSavings / netIncome) * 100);
-
-    // Calculate budget burn rate relative to configured payday cycle
-    const startDay = paydayStartDay || 25;
-    const now = new Date();
-    const todayNum = now.getDate();
-    // Determine days elapsed in payday cycle starting on startDay
-    const paydayDaysElapsed = startDay === 1
-        ? todayNum
-        : (todayNum >= startDay
-            ? (todayNum - startDay + 1)
-            : (new Date(now.getFullYear(), now.getMonth(), 0).getDate() - startDay + 1 + todayNum));
-    // Total duration of payday cycle (30 days average)
-    const paydayCycleLength = 30;
-    // Percentage of payday cycle elapsed
-    const monthElapsedPct = Math.min(100, Math.round((paydayDaysElapsed / paydayCycleLength) * 100));
+    // Resolve payday cycle boundaries and elapsed progress for the month currently being viewed
+    const paydayCycle = resolvePaydayCycle(paydayStartDay, paydayEndDay, currentMonth, currentYear);
+    // Days of the viewed month's cycle elapsed so far, clamped to the cycle bounds
+    const paydayDaysElapsed = paydayCycle.daysElapsed;
+    // Total duration of the viewed month's configured payday cycle
+    const paydayCycleLength = paydayCycle.lengthInDays;
+    // Percentage of the viewed month's payday cycle elapsed
+    const monthElapsedPct = paydayCycle.elapsedPct;
     // Percentage of budget spent so far
     const budgetSpentPct = effectiveTotalBudget > 0 ? Math.round((totalExpenses / effectiveTotalBudget) * 100) : 0;
 
     // Calculate total planned budgeted expenses or actual expenses if higher
-    const plannedExpenses = monthlyBudget > 0 
-        ? Math.max(monthlyBudget, totalExpenses) 
+    const plannedExpenses = monthlyBudget > 0
+        ? Math.max(monthlyBudget, totalExpenses)
         : categories.reduce((sum, cat) => sum + (cat.budget !== undefined ? Math.max(cat.budget, cat.expenses.reduce((s, e) => s + e.amount, 0)) : cat.expenses.reduce((s, e) => s + e.amount, 0)), 0);
 
     // Calculate remaining net free cash flow incorporating budget limits
@@ -153,8 +142,8 @@ const BudgetPlanner: React.FC = () => {
     return (
         // Standard Box component wrapper matching Analytics and BitcoinTracker cards
         <Box
-            // Remove margin bottom on header title when collapsed
-            style={{ marginBottom: '1.5rem' }}
+            // Set outer bottom margin spacing matching surrounding card components
+            style={{ marginBottom: '1rem' }}
             // Pass title header component layout matching surrounding dashboard components
             title={
                 // Header row wrapper div with click trigger to toggle expanded state
@@ -200,83 +189,47 @@ const BudgetPlanner: React.FC = () => {
                 <div style={{ marginTop: '0.5rem' }}>
                     {/* Top metrics summary grid */}
                     <div className={styles.metricsGrid}>
-                        {/* Metric card 1: Net Free Cash */}
+                        {/* Metric card 1: Total Monthly Budget */}
                         <div className={styles.metricCard}>
                             {/* Metric label string */}
                             <span className={styles.metricLabel}>
-                                Net Free Cash
-                            </span>
-                            {/* Formatted net free cash figure */}
-                            <span className={styles.metricValue} style={{ color: netFreeCash < 0 ? 'var(--firebase-red)' : '#00E676' }}>
-                                {formatCurrency(netFreeCash)}
-                            </span>
-                            {/* Metric subtext string */}
-                            <span className={styles.metricSubtext}>
-                                Unallocated income available
-                            </span>
-                        </div>
-
-                        {/* Metric card 2: Month Pace & Burn Rate */}
-                        <div className={styles.metricCard}>
-                            {/* Metric label string */}
-                            <span className={styles.metricLabel}>
-                                Payday Pace (Day {paydayDaysElapsed}/{paydayCycleLength})
-                            </span>
-                            {/* Burn rate compare value string */}
-                            <span className={styles.metricValue} style={{ color: budgetSpentPct > monthElapsedPct ? 'var(--firebase-orange)' : '#00E676' }}>
-                                {budgetSpentPct}% spent
-                            </span>
-                            {/* Metric subtext comparison string */}
-                            <span className={styles.metricSubtext}>
-                                {monthElapsedPct}% of month elapsed
-                            </span>
-                        </div>
-
-                        {/* Metric card 3: Monthly Savings Rate */}
-                        <div className={styles.metricCard}>
-                            {/* Metric label string */}
-                            <span className={styles.metricLabel}>
-                                Monthly Savings Rate
-                            </span>
-                            {/* Savings rate percentage value */}
-                            <span className={styles.metricValue} style={{ color: '#AB47BC' }}>
-                                {Math.round((monthlySavingsDeposit / (income || 1)) * 100)}%
-                            </span>
-                            {/* Metric subtext string */}
-                            <span className={styles.metricSubtext}>
-                                {formatCurrency(monthlySavingsDeposit)} saved / month
-                            </span>
-                        </div>
-
-                        {/* Metric card 4: Total Monthly Budget */}
-                        <div className={styles.metricCard}>
-                            {/* Metric label string */}
-                            <span className={styles.metricLabel}>
-                                Total Monthly Budget
+                                Monthly Budget
                             </span>
                             {/* Check if monthly budget editing mode is active */}
                             {isEditingMonthlyBudget ? (
                                 // Edit input container row
                                 <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem' }}>
-                                    {/* Number input control for total monthly budget */}
+                                    {/* Number input control for total monthly budget, committing on Enter and aborting on Escape */}
                                     <input
                                         type="number"
                                         value={tempMonthlyBudget}
                                         onChange={(e) => setTempMonthlyBudget(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                commitMonthlyBudget();
+                                            } else if (e.key === 'Escape') {
+                                                cancelMonthlyBudgetEdit();
+                                            }
+                                        }}
                                         className={styles.input}
                                         style={{ padding: '0.3rem 0.5rem', fontSize: '0.9rem' }}
                                         autoFocus
                                     />
                                     {/* Save button trigger */}
                                     <button
-                                        onClick={() => {
-                                            const val = parseFloat(tempMonthlyBudget);
-                                            if (!isNaN(val)) setMonthlyBudget(val);
-                                            setIsEditingMonthlyBudget(false);
-                                        }}
+                                        onClick={commitMonthlyBudget}
+                                        title="Save budget (Enter)"
                                         style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontWeight: 'bold', color: 'black' }}
                                     >
                                         ✓
+                                    </button>
+                                    {/* Cancel button discarding the pending edit */}
+                                    <button
+                                        onClick={cancelMonthlyBudgetEdit}
+                                        title="Cancel (Esc)"
+                                        style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                    >
+                                        ✕
                                     </button>
                                 </div>
                             ) : (
@@ -307,277 +260,150 @@ const BudgetPlanner: React.FC = () => {
                                 {monthlyBudget > 0 ? 'Custom budget set' : 'Category budgets sum'}
                             </span>
                         </div>
+
+                        {/* Metric card 2: Net Free Cash */}
+                        <div className={styles.metricCard}>
+                            {/* Metric label string */}
+                            <span className={styles.metricLabel}>
+                                Net Free Cash
+                            </span>
+                            {/* Formatted net free cash figure */}
+                            <span className={styles.metricValue} style={{ color: netFreeCash < 0 ? 'var(--firebase-red)' : '#00E676' }}>
+                                {formatCurrency(netFreeCash)}
+                            </span>
+                            {/* Metric subtext string */}
+                            <span className={styles.metricSubtext}>
+                                Unallocated income available
+                            </span>
+                        </div>
+
+                        {/* Metric card 3: Monthly Savings Rate */}
+                        <div className={styles.metricCard}>
+                            {/* Metric label string */}
+                            <span className={styles.metricLabel}>
+                                Monthly Savings Rate
+                            </span>
+                            {/* Savings rate percentage value */}
+                            <span className={styles.metricValue} style={{ color: '#AB47BC' }}>
+                                {Math.round((monthlySavingsDeposit / (income || 1)) * 100)}%
+                            </span>
+                            {/* Metric subtext string */}
+                            <span className={styles.metricSubtext}>
+                                {formatCurrency(monthlySavingsDeposit)} saved / month
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Navigation tabs row container */}
-                    <div className={styles.tabContainer}>
-                        {/* Tab button 1: Savings Goal Planner */}
-                        <button
-                            // Switch tab state to 'savings' on click
-                            onClick={() => setActiveTab('savings')}
-                            // Apply active tab styling conditionally
-                            className={`${styles.tabButton} ${activeTab === 'savings' ? styles.activeTab : ''}`}
-                        >
-                            Savings Goal Calculator
-                        </button>
-                        {/* Tab button 2: 50-30-20 Rule Breakdown */}
-                        <button
-                            // Switch tab state to 'rules' on click
-                            onClick={() => setActiveTab('rules')}
-                            // Apply active tab styling conditionally
-                            className={`${styles.tabButton} ${activeTab === 'rules' ? styles.activeTab : ''}`}
-                        >
-                            50-30-20 Rule
-                        </button>
-                        {/* Tab button 3: Budget Health Analysis */}
-                        <button
-                            // Switch tab state to 'health' on click
-                            onClick={() => setActiveTab('health')}
-                            // Apply active tab styling conditionally
-                            className={`${styles.tabButton} ${activeTab === 'health' ? styles.activeTab : ''}`}
-                        >
-                            Budget Health
-                        </button>
+                    {/* Section heading for the savings goal */}
+                    <div style={{ fontWeight: 600, marginBottom: '0.75rem' }}>
+                        Savings Goal
                     </div>
 
-                    {/* Render active tab content view */}
-                    {activeTab === 'savings' && (
-                        // Calculator grid container wrapper
-                        <div className={styles.calcGrid}>
-                            {/* Left panel: Savings goal inputs */}
-                            <div className={styles.panelBox}>
-                                {/* Form row for target goal amount */}
-                                <div className={styles.formGroup}>
-                                    {/* Input label */}
-                                    <label className={styles.label}>
-                                        Target Savings Goal
-                                    </label>
-                                    {/* Goal number input control */}
-                                    <input
-                                        type="number"
-                                        value={goalAmount}
-                                        onChange={(e) => setGoalAmount(e.target.value)}
-                                        className={styles.input}
-                                        placeholder="e.g. 50000"
-                                    />
-                                </div>
-
-                                {/* Form row for monthly contribution */}
-                                <div className={styles.formGroup}>
-                                    {/* Input label */}
-                                    <label className={styles.label}>
-                                        Monthly Deposit Contribution
-                                    </label>
-                                    {/* Contribution number input control */}
-                                    <input
-                                        type="number"
-                                        value={monthlyContrib}
-                                        onChange={(e) => setMonthlyContrib(e.target.value)}
-                                        className={styles.input}
-                                        placeholder="e.g. 2000"
-                                    />
-                                    {/* Quick add preset button pills row */}
-                                    <div className={styles.presetRow}>
-                                        {/* Preset button +500 kr */}
-                                        <button
-                                            onClick={() => setMonthlyContrib((prev) => (parseFloat(prev || '0') + 500).toString())}
-                                            className={styles.presetBtn}
-                                        >
-                                            +500 kr
-                                        </button>
-                                        {/* Preset button +1000 kr */}
-                                        <button
-                                            onClick={() => setMonthlyContrib((prev) => (parseFloat(prev || '0') + 1000).toString())}
-                                            className={styles.presetBtn}
-                                        >
-                                            +1000 kr
-                                        </button>
-                                        {/* Preset button 20% of income */}
-                                        {income > 0 && (
-                                            <button
-                                                onClick={() => setMonthlyContrib(Math.round(income * 0.2).toString())}
-                                                className={styles.presetBtn}
-                                            >
-                                                20% Income ({Math.round(income * 0.2)} kr)
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                    {/* Goal panel box panel container */}
+                    <div className={styles.panelBox}>
+                        {/* Input controls form grid container */}
+                        <div className={styles.goalFormGrid}>
+                            {/* Form control group for target savings goal */}
+                            <div className={styles.formGroup}>
+                                {/* Target goal text label */}
+                                <label className={styles.label}>
+                                    Target Savings Goal
+                                </label>
+                                {/* Target goal numeric input control */}
+                                <input
+                                    type="number"
+                                    value={goalAmount}
+                                    onChange={(e) => setGoalAmount(e.target.value)}
+                                    className={styles.input}
+                                    placeholder="e.g. 50000"
+                                />
                             </div>
 
-                            {/* Right panel: Savings projection results */}
-                            <div className={styles.panelBox}>
-                                {/* Header sublabel */}
-                                <span className={styles.metricLabel}>
-                                    Target Projection ETA
-                                </span>
-                                {/* Check if calculation result exists */}
-                                {savingsResult ? (
-                                    // Flex layout container for projection metrics
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        {/* Big ETA date highlight typography */}
-                                        <div className={styles.metricValue} style={{ color: '#00E676' }}>
-                                            {savingsResult.targetDate}
+                            {/* Form control group for monthly savings contribution */}
+                            <div className={styles.formGroup}>
+                                {/* Monthly savings contribution text label */}
+                                <label className={styles.label}>
+                                    Monthly Contribution
+                                </label>
+                                {/* Monthly savings contribution numeric input control */}
+                                <input
+                                    type="number"
+                                    value={monthlyContributionInput}
+                                    onChange={(e) => handleContributionChange(e.target.value)}
+                                    className={styles.input}
+                                    placeholder="e.g. 500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Check if target goal value is valid */}
+                        {isGoalValid ? (
+                            <>
+                                {/* Progress bar track background line */}
+                                <div className={styles.progressBarTrack}>
+                                    {/* Progress bar active fill bar */}
+                                    <div
+                                        className={`${styles.progressBarFill} ${isGoalReached ? styles.progressBarFillReached : ''}`}
+                                        style={{
+                                            width: `${goalProgressPct}%`
+                                        }}
+                                    />
+                                </div>
+                                {/* Current savings vs target goal line summary */}
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+                                    {/* Formatted current total savings and parsed goal figure */}
+                                    <span>{formatCurrency(totalSavings)} / {formatCurrency(parsedGoal)}</span>
+                                    {/* Formatted percentage label string */}
+                                    <span style={{ color: isGoalReached ? '#00E676' : 'var(--text-secondary)', fontWeight: 600 }}>
+                                        {isGoalReached ? 'Reached!' : `${Math.round(goalProgressPct)}%`}
+                                    </span>
+                                </div>
+                                {/* Conditional banner rendering based on goal state */}
+                                {isGoalReached ? (
+                                    <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '6px', background: 'rgba(0, 230, 118, 0.15)', color: '#00E676', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        {/* Celebration icon symbol */}
+                                        <span>🎉</span>
+                                        {/* Goal reached message */}
+                                        <span>Congratulations! You have reached your savings goal.</span>
+                                    </div>
+                                ) : monthsToGoal !== null ? (
+                                    <div className={styles.estimationCard}>
+                                        {/* Estimation label side container */}
+                                        <div className={styles.estimationLabel}>
+                                            {/* Timer SVG icon indicator */}
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
+                                                {/* Clock circle path */}
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                {/* Clock hands polyline */}
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            {/* Estimated duration text label */}
+                                            <span>Estimated time to reach goal</span>
                                         </div>
-                                        {/* Subtext info for months remaining */}
-                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                                            Achieved in <strong>{savingsResult.months} months</strong> with current monthly contribution of {formatCurrency(parseFloat(monthlyContrib))}.
-                                        </div>
-                                        {/* Progress bar visual for existing total savings vs goal */}
-                                        <div style={{ width: '100%', background: 'rgba(255,255,255,0.08)', borderRadius: '4px', height: '8px', overflow: 'hidden', marginTop: '0.25rem' }}>
-                                            {/* Fill bar segment */}
-                                            <div
-                                                style={{
-                                                    height: '100%',
-                                                    width: `${Math.min(100, (totalSavings / (parseFloat(goalAmount) || 1)) * 100)}%`,
-                                                    background: '#00E676',
-                                                    transition: 'width 0.3s ease'
-                                                }}
-                                            />
-                                        </div>
-                                        {/* Subtext info showing total accumulated balance */}
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
-                                            <span>Current: {formatCurrency(totalSavings)}</span>
-                                            <span>Target: {formatCurrency(parseFloat(goalAmount) || 0)}</span>
+                                        {/* Estimation value badge */}
+                                        <div className={styles.estimationBadge}>
+                                            {/* Months remaining numeric text */}
+                                            <span>{monthsToGoal} {monthsToGoal === 1 ? 'month' : 'months'}</span>
+                                            {/* Target completion month date text */}
+                                            <span className={styles.estimationDate}>({targetCompletionDate})</span>
                                         </div>
                                     </div>
                                 ) : (
-                                    // Fallback display message when goal is reached or invalid
-                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', padding: '1rem 0' }}>
-                                        {totalSavings >= parseFloat(goalAmount || '0')
-                                            ? 'You have already reached or exceeded this savings goal!'
-                                            : 'Enter a valid target goal and monthly deposit to calculate your estimated timeline.'}
+                                    <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                        {/* Prompt to set monthly contribution */}
+                                        Set a monthly savings contribution above to estimate how long it will take to reach your goal.
                                     </div>
                                 )}
+                            </>
+                        ) : (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                {/* Prompt message shown when target goal is empty */}
+                                Enter a target above to track progress. Your saved goal of{' '}
+                                {/* Formatted savings goal context value */}
+                                <strong>{formatCurrency(savingsGoal)}</strong> stays active until you set a new one.
                             </div>
-                        </div>
-                    )}
-
-                    {/* Render 50-30-20 Rule Tab */}
-                    {activeTab === 'rules' && (
-                        // Panel box wrapper
-                        <div className={styles.panelBox}>
-                            {/* Section explanation text */}
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                The 50-30-20 rule recommends spending <strong>50% on Needs</strong>, <strong>30% on Wants</strong>, and saving <strong>20% of Net Income</strong>.
-                            </div>
-
-                            {/* Needs row bar */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                {/* Label and values display */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                    <span>Needs (Target: 50% = {formatCurrency(recNeeds)})</span>
-                                    <span>{formatCurrency(actualNeeds)} ({Math.round(pctNeeds)}%)</span>
-                                </div>
-                                {/* Track bar */}
-                                <div className={styles.ruleTrack}>
-                                    {/* Segment fill */}
-                                    <div
-                                        className={styles.ruleSegment}
-                                        style={{
-                                            width: `${pctNeeds}%`,
-                                            background: pctNeeds > 50 ? 'var(--firebase-orange)' : '#29B6F6'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Wants row bar */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.75rem' }}>
-                                {/* Label and values display */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                    <span>Wants (Target: 30% = {formatCurrency(recWants)})</span>
-                                    <span>{formatCurrency(actualWants)} ({Math.round(pctWants)}%)</span>
-                                </div>
-                                {/* Track bar */}
-                                <div className={styles.ruleTrack}>
-                                    {/* Segment fill */}
-                                    <div
-                                        className={styles.ruleSegment}
-                                        style={{
-                                            width: `${pctWants}%`,
-                                            background: pctWants > 30 ? 'var(--firebase-red)' : '#AB47BC'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Savings row bar */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.75rem' }}>
-                                {/* Label and values display */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                                    <span>Savings (Target: 20% = {formatCurrency(recSavings)})</span>
-                                    <span>{formatCurrency(actualSavings)} ({Math.round(pctSavings)}%)</span>
-                                </div>
-                                {/* Track bar */}
-                                <div className={styles.ruleTrack}>
-                                    {/* Segment fill */}
-                                    <div
-                                        className={styles.ruleSegment}
-                                        style={{
-                                            width: `${pctSavings}%`,
-                                            background: pctSavings >= 20 ? '#00E676' : 'var(--firebase-yellow)'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Render Budget Health Analysis Tab */}
-                    {activeTab === 'health' && (
-                        // Panel box wrapper
-                        <div className={styles.panelBox}>
-                            {/* Health status summary title */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-                                <span>Health Status:</span>
-                                <span style={{ color: budgetSpentPct <= monthElapsedPct ? '#00E676' : 'var(--firebase-orange)' }}>
-                                    {budgetSpentPct <= monthElapsedPct ? 'Healthy Spending Velocity' : 'Spending Faster Than Time Elapsed'}
-                                </span>
-                            </div>
-
-                            {/* Monthly Budget Setting Form Group */}
-                            <div className={styles.formGroup} style={{ marginTop: '0.5rem' }}>
-                                <label className={styles.label}>Total Monthly Budget Limit</label>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <input
-                                        type="number"
-                                        value={tempMonthlyBudget}
-                                        onChange={(e) => setTempMonthlyBudget(e.target.value)}
-                                        className={styles.input}
-                                        placeholder="Set total monthly budget"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            const val = parseFloat(tempMonthlyBudget);
-                                            if (!isNaN(val)) setMonthlyBudget(val);
-                                        }}
-                                        style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '6px', padding: '0.6rem 1rem', cursor: 'pointer', fontWeight: 'bold', color: 'black', flexShrink: 0 }}
-                                    >
-                                        Save Budget
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Health details list */}
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <div>• <strong>Burn Rate:</strong> You have spent {budgetSpentPct}% of your budget with {monthElapsedPct}% of the month completed.</div>
-                                <div>• <strong>Free Cash Balance:</strong> You have {formatCurrency(netFreeCash)} remaining unallocated after expenses and savings.</div>
-                                <div>• <strong>Category Coverage:</strong> {categories.filter(c => (c.expenses.reduce((s,e)=>s+e.amount,0)) > (c.budget || 0)).length} category(ies) currently exceeding their budget limit.</div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Smart recommendation callout tip box */}
-                    {netFreeCash > 0 && (
-                        // Tip box wrapper
-                        <div className={styles.tipBox}>
-                            {/* Tip description text */}
-                            <div>
-                                You have <strong>{formatCurrency(netFreeCash)}</strong> in unallocated free cash flow. Allocating 50% ({formatCurrency(Math.round(netFreeCash * 0.5))}) to your savings deposit will accelerate your target goal by several months!
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             )}
         </Box>

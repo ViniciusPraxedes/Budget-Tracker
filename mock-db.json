@@ -5,30 +5,8 @@
       "defaultMonth": 7,
       "defaultYear": 2026,
       "pdfConfig": {
-        "mappings": {
-          "AMAZON SE* B": "5x99qkhr3",
-          "Avier Unione": "zfwz99w2c",
-          "FILMSTADEN B": "5x99qkhr3",
-          "GELATERIA PO": "m843pk89m",
-          "HEMKOP MOLND": "m843pk89m",
-          "ICA KVANTUM": "m843pk89m",
-          "Ivans Pilsne": "5x99qkhr3",
-          "Jysk AB Swish Jysk A": "l1k935laa",
-          "KARUIZAWA SU": "m843pk89m",
-          "Kronans Apot": "ptilkn7g6",
-          "M/S GOTAPETT": "5x99qkhr3",
-          "Microsoft*Xb": "5x99qkhr3",
-          "NORDSTANSKEB": "m843pk89m",
-          "NORMAL M@LND": "ptilkn7g6",
-          "Stora Teater Swish Stora": "5x99qkhr3",
-          "Västtrafik T Swish Västtr": "zfwz99w2c"
-        },
-        "ignored": [
-          "Avier Unione",
-          "CAPIO PRIM#R",
-          "CSN",
-          "nordicwell"
-        ]
+        "mappings": {},
+        "ignored": []
       },
       "months": {
         "2026-7": {
@@ -51,13 +29,13 @@
                   "id": "0enyl78vq"
                 }
               ],
-              "order": 0
+              "order": 2
             },
             {
               "id": "l1k935laa",
               "name": "Home",
               "color": "#651FFF",
-              "order": 1,
+              "order": 3,
               "expenses": [
                 {
                   "id": "6vxl4riub",
@@ -80,7 +58,7 @@
               "id": "zfwz99w2c",
               "name": "Fixed",
               "color": "#2979FF",
-              "order": 2,
+              "order": 4,
               "expenses": [
                 {
                   "id": "exfwk9t7l",
@@ -193,7 +171,7 @@
               "id": "5x99qkhr3",
               "name": "Fun",
               "color": "#FF5252",
-              "order": 3,
+              "order": 5,
               "expenses": [
                 {
                   "id": "jkc5xq63j",
@@ -244,7 +222,7 @@
               "id": "m843pk89m",
               "name": "Food",
               "color": "#DD2C00",
-              "order": 4,
+              "order": 6,
               "budget": 5000,
               "expenses": [
                 {
@@ -288,7 +266,7 @@
               "id": "ptilkn7g6",
               "name": "Health and beauty",
               "color": "#FF4081",
-              "order": 5,
+              "order": 7,
               "budget": 500,
               "expenses": [
                 {
@@ -308,8 +286,179 @@
               ]
             }
           ]
+        },
+        "2026-8": {
+          "month": 8,
+          "year": 2026,
+          "income": 25886,
+          "categories": [
+            {
+              "id": "eu349jg67",
+              "name": "Rent",
+              "color": "#FFC400",
+              "order": 1,
+              "expenses": [
+                {
+                  "id": "i7b2f89n9",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "43fvws3yl",
+              "name": "Home",
+              "color": "#651FFF",
+              "order": 2,
+              "expenses": []
+            },
+            {
+              "id": "rf15uhqk8",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "rs54r9lqp",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true
+                },
+                {
+                  "id": "g7f5w6w0e",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true
+                },
+                {
+                  "id": "y3faey6sa",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true
+                },
+                {
+                  "id": "8t7r8dn8z",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true
+                },
+                {
+                  "id": "1leduwlpk",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 199,
+                  "paymentDay": 6,
+                  "isRecurring": true
+                },
+                {
+                  "id": "dw2g8chfb",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true
+                },
+                {
+                  "id": "mm9lldr50",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true
+                },
+                {
+                  "id": "4iw19zn3n",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 120,
+                  "paymentDay": 29,
+                  "isRecurring": true
+                },
+                {
+                  "id": "ugpwrwx30",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true
+                },
+                {
+                  "id": "ffceogts7",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true
+                },
+                {
+                  "id": "wieex7895",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true
+                },
+                {
+                  "id": "qj02pi2k2",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true
+                },
+                {
+                  "id": "gd5gm7yfr",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true
+                },
+                {
+                  "id": "rsm3u41sr",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true
+                },
+                {
+                  "id": "1ct538z47",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true
+                }
+              ]
+            },
+            {
+              "id": "dk1oq5prp",
+              "name": "Fun",
+              "color": "#FF5252",
+              "order": 4,
+              "expenses": []
+            },
+            {
+              "id": "rq515726h",
+              "name": "Food",
+              "color": "#DD2C00",
+              "order": 5,
+              "expenses": []
+            },
+            {
+              "id": "jw8krz98q",
+              "name": "Health and beauty",
+              "color": "#FF4081",
+              "order": 6,
+              "expenses": []
+            }
+          ]
         }
-      }
+      },
+      "savingsGoal": 100000,
+      "savingsGoals": [
+        {
+          "id": "qkdl0p9yf",
+          "name": "Emergency Fund",
+          "target": 100000
+        }
+      ]
     }
   }
 }

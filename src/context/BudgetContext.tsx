@@ -23,6 +23,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { incomeState: income, categoriesState: categories, monthlySavingsDepositState: monthlySavingsDeposit, monthlyBudgetState: monthlyBudget, setIncomeState, setCategoriesState, setMonthlySavingsDepositState, setMonthlyBudgetState, loading, updateFirestore } = useFirestoreSync(user, currentKey);
     const [isInitialized, setIsInitialized] = useState(false);
     const [totalSavings, setTotalSavings] = useState(0);
+    // Declare state for persisted list of named savings goals
+    const [savingsGoal, setSavingsGoalState] = useState(50000);
 
     const [defaultMonthSettings, setDefaultMonthSettings] = useState<{ month: number, year: number } | null>(null);
     // Declare state for importing PDF mappings and ignored lists
@@ -85,6 +87,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     // Update total savings state
                     setTotalSavings(userData.totalSavings);
                 // End of totalSavings check
+                }
+                // Check if savingsGoal is defined
+                if (userData.savingsGoal !== undefined) {
+                    // Update savings goal state
+                    setSavingsGoalState(userData.savingsGoal);
+                // End of savingsGoal check
                 }
                 // Check if pdfConfig is defined in mock database response
                 if (userData.pdfConfig !== undefined) {
@@ -159,6 +167,12 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         // Set savings state
                         setTotalSavings(userData.totalSavings);
                     // End of totalSavings validation
+                    }
+                    // If savingsGoal is defined
+                    if (userData.savingsGoal !== undefined) {
+                        // Set savings goal state
+                        setSavingsGoalState(userData.savingsGoal);
+                    // End of savingsGoal validation
                     }
                     // If pdfConfig is defined in Firestore record
                     if (userData.pdfConfig !== undefined) {
@@ -363,6 +377,71 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // End of catch block
         }
     // End of updateTotalSavings definition
+    };
+
+    // Function to update and persist target savings goal amount
+    const setSavingsGoal = async (amount: number) => {
+        // Set local savings goal state immediately
+        setSavingsGoalState(amount);
+        // Return early if no active user session
+        if (!user) return;
+        // Check if user is the mock test user
+        if (user.uid === 'test-user') {
+            // Attempt to update mock database savings goal
+            try {
+                // Post new savings goal to local API
+                await fetch('/api/mock-db', {
+                    // Use POST HTTP method
+                    method: 'POST',
+                    // Set request headers to JSON content type
+                    headers: {
+                        // Specify application/json content type
+                        'Content-Type': 'application/json'
+                    // End of headers object definition
+                    },
+                    // Stringify mock POST request parameters
+                    body: JSON.stringify({
+                        // User ID identifying mock session
+                        userId: 'test-user',
+                        // Specify update_settings action
+                        action: 'update_settings',
+                        // Settings details payload
+                        settings: {
+                            // Update savings goal
+                            savingsGoal: amount
+                        // End of settings object
+                        }
+                    // End of body stringification
+                    })
+                // End of fetch options definition
+                });
+            // Catch error on network/saving request failure
+            } catch (error) {
+                // Log error details to console
+                console.error("Error saving mock savings goal:", error);
+            // End of catch block
+            }
+            // Exit early
+            return;
+        // End of test-user savings goal conditional check
+        }
+        // Attempt Firestore write
+        try {
+            // Lazy load setDoc function from Firestore
+            const { setDoc: lazySetDoc } = await import('firebase/firestore');
+            // Write updated savings goal to user document
+            await lazySetDoc(doc(db, 'users', user.uid), {
+                // Set savings goal amount
+                savingsGoal: amount
+            // Merge to preserve existing preferences
+            }, { merge: true });
+        // Catch saving errors
+        } catch (error) {
+            // Log update savings goal errors
+            console.error("Error saving savings goal:", error);
+        // End of catch block
+        }
+    // End of setSavingsGoal definition
     };
 
     // Function to update and persist PDF import configurations mapping
@@ -954,6 +1033,8 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         loadMockData,
         totalSavings,
         updateTotalSavings,
+        savingsGoal,
+        setSavingsGoal,
         setMonth: changeMonth,
         // Add batch category adder helper function
         addMissingCategories,

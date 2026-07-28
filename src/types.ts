@@ -76,6 +76,10 @@ export interface BudgetContextType {
     loadMockData: (income: number, categories: Category[]) => void;
     totalSavings: number;
     updateTotalSavings: (amount: number) => void;
+    // Persisted target savings goal amount
+    savingsGoal: number;
+    // Function to save updated target savings goal amount
+    setSavingsGoal: (amount: number) => void;
     // Function to add multiple categories at once if they are missing
     addMissingCategories: (missing: { name: string, color: string }[]) => void;
     // Function to add multiple expenses at once (batch import)

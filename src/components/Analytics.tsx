@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 // Import Recharts components for data visualization charts
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+// Import shared payday cycle resolver so cycle math stays consistent across components
+import { resolvePaydayCycle } from '../utils/paydayCycle';
 // Import useBudget context hook
 import { useBudget } from '../context/BudgetContext';
 // Import useLocalization context hook
@@ -71,7 +73,7 @@ const renderCustomizedLabel = ({
 // Declare Analytics React component
 const Analytics: React.FC = () => {
     // Destructure budget values from budget context
-    const { income, totalExpenses, monthlySavingsDeposit, categories, monthlyBudget, currentMonth, currentYear } = useBudget();
+    const { income, totalExpenses, monthlySavingsDeposit, categories, monthlyBudget, currentMonth, currentYear, paydayStartDay, paydayEndDay } = useBudget();
     // Destructure currency formatter from localization context
     const { formatCurrency } = useLocalization();
     // Declare state for hovering pie chart slice index
@@ -110,10 +112,12 @@ const Analytics: React.FC = () => {
     const monthlySavedAmount = monthlySavingsDeposit;
     // Calculate committed savings rate percentage relative to net income
     const savingsRate = income > 0 ? (monthlySavingsDeposit / income) * 100 : 0;
-    // Payday cycle duration in days
-    const paydayCycleDays = 30;
-    // Calculate average daily spending over 30-day payday cycle
-    const dailyAverage = totalExpenses / paydayCycleDays;
+    // Resolve the configured payday cycle for the month being viewed
+    const paydayCycle = resolvePaydayCycle(paydayStartDay, paydayEndDay, currentMonth, currentYear);
+    // Payday cycle duration in days, driven by the user's configured cycle rather than a fixed 30
+    const paydayCycleDays = paydayCycle.lengthInDays;
+    // Calculate average daily spending across the configured payday cycle
+    const dailyAverage = paydayCycleDays > 0 ? totalExpenses / paydayCycleDays : 0;
     // Calculate total effective monthly budget target
     const totalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
     // Calculate budget utilization rate
@@ -187,7 +191,7 @@ const Analytics: React.FC = () => {
                         }}
                     >
                         {/* Main section title label */}
-                        <span>Monthly Analytics & Insights</span>
+                        <span>Analytics & Insights</span>
                         {/* Rotating arrow indicator element */}
                         <span style={{
                             transform: isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)',
@@ -235,7 +239,7 @@ const Analytics: React.FC = () => {
                         </div>
                         {/* KPI Subtext */}
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                            Across 30 days (25th – 24th Budget Cycle)
+                            Across {paydayCycleDays} days ({paydayCycle.label} Budget Cycle)
                         </div>
                     </div>
 

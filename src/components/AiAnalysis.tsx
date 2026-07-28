@@ -13,7 +13,7 @@ import styles from './AiAnalysis.module.css';
 // Declare AI spending analysis React component
 export default function AiAnalysis() {
     // Retrieve budget variables from state hook
-    const { income, categories, totalExpenses, savings, totalSavings, currentMonth, currentYear } = useBudget();
+    const { income, categories, totalExpenses, savings, totalSavings, currentMonth, currentYear, monthlyBudget } = useBudget();
     // Retrieve currency formatter from localization hook
     const { formatCurrency } = useLocalization();
     // Declare state for modal open status
@@ -33,14 +33,27 @@ export default function AiAnalysis() {
         setError('');
         // Open modal dialog container window
         setIsOpen(true);
+        // Calculate effective overall monthly budget target, falling back to sum of category budgets
+        const effectiveMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        // Calculate combined total of expenses flagged as recurring across all categories
+        const recurringTotal = categories.reduce((sum, cat) => sum + cat.expenses.filter(exp => exp.isRecurring).reduce((s, exp) => s + exp.amount, 0), 0);
+        // Calculate user's savings rate as a percentage of income
+        const savingsRate = income > 0 ? (savings / income) * 100 : 0;
+
         // Build readable category summary string
         const categoriesSummary = categories.map(cat => {
             // Calculate total expenses for the category
             const total = cat.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            // Calculate percentage of category budget consumed, if a budget is set
+            const budgetPct = cat.budget && cat.budget > 0 ? (total / cat.budget) * 100 : null;
+            // Build a budget status label for this category
+            const budgetStatus = budgetPct === null
+                ? 'No budget set'
+                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% used${budgetPct > 100 ? ' - OVER BUDGET' : ''})`;
             // Format expenses in the category as list
             const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Recurring)' : ''}`).join('\n');
             // Return formatted string for this category
-            return `Category: ${cat.name}\nTotal Spending: ${formatCurrency(total)}\nExpenses:\n${expensesList}`;
+            return `Category: ${cat.name}\nTotal Spending: ${formatCurrency(total)}\n${budgetStatus}\nExpenses:\n${expensesList}`;
         // Join all category summaries with double newlines
         }).join('\n\n');
 
@@ -51,10 +64,12 @@ Analyze the user's spending data and budget information for the month of ${curre
 Financial Profile:
 - Monthly Income: ${formatCurrency(income)}
 - Monthly Expenses: ${formatCurrency(totalExpenses)}
-- Net Monthly Savings: ${formatCurrency(savings)}
+- Overall Monthly Budget: ${formatCurrency(effectiveMonthlyBudget)}
+- Net Monthly Savings: ${formatCurrency(savings)} (${savingsRate.toFixed(1)}% of income)
 - Cumulative Total Savings: ${formatCurrency(totalSavings)}
+- Recurring Subscriptions/Bills Total: ${formatCurrency(recurringTotal)}
 
-Category Breakdown:
+Category Breakdown (includes per-category budget and % used where a budget is set):
 ${categoriesSummary}
 
 Formatting Rules:
@@ -64,6 +79,8 @@ Formatting Rules:
 ### 3. Actionable Recommendations
 - Do NOT use level-4 headers (####), do NOT output raw hashtag (#) symbols, and do NOT output raw '---' horizontal lines.
 - Format action steps as clean numbered items (1., 2., 3.) or bullet points.
+- In Key Insights, explicitly call out any categories that are over budget by name and amount, and note whether the savings rate is healthy (aim for 20%+).
+- In Actionable Recommendations, flag specific recurring subscriptions that look reducible or redundant if any stand out.
 - Be encouraging, highly specific to their actual numbers, professional, and concise.`;
 
         // Define API key from environment variables

@@ -58,6 +58,8 @@ interface MonthData {
 interface MockUser {
     // User total savings amount
     totalSavings: number;
+    // User persisted target savings goal amount
+    savingsGoal?: number;
     // Default start month
     defaultMonth: number | null;
     // Default start year
@@ -343,6 +345,12 @@ export async function POST(request: NextRequest) {
                 // Update total savings
                 user.totalSavings = settings.totalSavings;
             // End of totalSavings check
+            }
+            // If savingsGoal is defined
+            if (typeof settings.savingsGoal === 'number') {
+                // Update savings goal
+                user.savingsGoal = settings.savingsGoal;
+            // End of savingsGoal check
             }
             // If defaultMonth is defined
             if (typeof settings.defaultMonth === 'number' || settings.defaultMonth === null) {
