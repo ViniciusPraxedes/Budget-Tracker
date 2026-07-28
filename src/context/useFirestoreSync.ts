@@ -5,6 +5,33 @@ import { MonthData, Category } from '../types';
 import { User } from 'firebase/auth';
 import { useToast } from './ToastContext';
 
+// Helper function to recursively strip undefined properties from Firestore payloads
+const sanitizeForFirestore = <T>(obj: T): T => {
+    // Return primitive null or undefined values directly
+    if (obj === undefined || obj === null) return obj;
+    // Check if element is not a JavaScript object
+    if (typeof obj !== 'object') return obj;
+    // Check if element is an array
+    if (Array.isArray(obj)) {
+        // Recursively sanitize each item in the array
+        return obj.map(sanitizeForFirestore) as unknown as T;
+    }
+    // Record dictionary object for cleaned key-value pairs
+    const cleaned: Record<string, any> = {};
+    // Loop over keys of the target object
+    for (const key of Object.keys(obj as Record<string, any>)) {
+        // Get property value for the key
+        const val = (obj as Record<string, any>)[key];
+        // Only preserve property key if value is defined
+        if (val !== undefined) {
+            // Recursively sanitize nested value
+            cleaned[key] = sanitizeForFirestore(val);
+        }
+    }
+    // Return sanitized object cast to input generic type
+    return cleaned as T;
+};
+
 export const useFirestoreSync = (user: User | null, currentKey: string) => {
     // Declare state for monthly income
     const [incomeState, setIncomeState] = useState<number>(0);
@@ -119,96 +146,16 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setLoading(false);
                 // Handle non-existent document snapshot
                 } else {
-                    // Try to auto-initialize recurring expenses from previous month
-                    const [y, m] = currentKey.split('-');
-                    // Parse year number
-                    const yearNum = parseInt(y, 10);
-                    // Parse month number
-                    const monthNum = parseInt(m, 10);
-                    
-                    // Create previous date object
-                    const prevDate = new Date(yearNum, monthNum - 1, 1);
-                    // Generate key string for previous month
-                    const prevKey = `${prevDate.getFullYear()}-${prevDate.getMonth()}`;
-                    
-                    // Dynamically import getDoc method from firestore module
-                    import('firebase/firestore').then(({ getDoc }) => {
-                        // Query document for previous month
-                        getDoc(doc(db, 'users', user.uid, 'months', prevKey)).then(prevSnap => {
-                            // Check if previous month document snapshot exists
-                            if (prevSnap.exists()) {
-                                // Extract data for previous month
-                                const prevData = prevSnap.data() as MonthData;
-                                
-                                // Map previous categories and clone recurring expenses
-                                const newCategories = prevData.categories.map(cat => ({
-                                    ...cat,
-                                    id: Math.random().toString(36).substr(2, 9),
-                                    expenses: cat.expenses
-                                        .filter(exp => exp.isRecurring)
-                                        .map(exp => ({
-                                            ...exp,
-                                            id: Math.random().toString(36).substr(2, 9)
-                                        }))
-                                }));
-    
-                                // Only initialize if we have something to copy
-                                if (newCategories.length > 0) {
-                                    // Exit if document was created concurrently
-                                    if (documentExists) return;
-                                    // Save initialized month document in Firestore
-                                    setDoc(docRef, {
-                                        month: monthNum,
-                                        year: yearNum,
-                                        income: prevData.income || 0,
-                                        monthlySavingsDeposit: prevData.monthlySavingsDeposit || 0,
-                                        monthlyBudget: prevData.monthlyBudget || 0,
-                                        categories: newCategories
-                                    });
-                                // Handle case where no recurring categories exist
-                                } else {
-                                    // Exit if document exists
-                                    if (documentExists) return;
-                                    // Reset income state to zero
-                                    setIncomeState(0);
-                                    // Reset categories state to empty
-                                    setCategoriesState([]);
-                                    // Reset monthly savings deposit to zero
-                                    setMonthlySavingsDepositState(0);
-                                    // Reset monthly budget state to zero
-                                    setMonthlyBudgetState(0);
-                                }
-                            // Handle case where previous month document does not exist
-                            } else {
-                                // Exit if document exists
-                                if (documentExists) return;
-                                // Reset income state to zero
-                                setIncomeState(0);
-                                // Reset categories state to empty
-                                setCategoriesState([]);
-                                // Reset monthly savings deposit to zero
-                                setMonthlySavingsDepositState(0);
-                                // Reset monthly budget state to zero
-                                setMonthlyBudgetState(0);
-                            }
-                            // Disable loading spinner
-                            setLoading(false);
-                        // Handle catch for previous snapshot fetch
-                        }).catch(() => {
-                            // Exit if document exists
-                            if (documentExists) return;
-                            // Reset income state to zero
-                            setIncomeState(0);
-                            // Reset categories state to empty
-                            setCategoriesState([]);
-                            // Reset monthly savings deposit to zero
-                            setMonthlySavingsDepositState(0);
-                            // Reset monthly budget state to zero
-                            setMonthlyBudgetState(0);
-                            // Disable loading spinner
-                            setLoading(false);
-                        });
-                    });
+                    // Reset income state to zero
+                    setIncomeState(0);
+                    // Reset categories state to empty
+                    setCategoriesState([]);
+                    // Reset monthly savings deposit to zero
+                    setMonthlySavingsDepositState(0);
+                    // Reset monthly budget state to zero
+                    setMonthlyBudgetState(0);
+                    // Disable loading spinner
+                    setLoading(false);
                 }
             },
             // Handle subscription error callback
@@ -229,9 +176,9 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     // Function to push budget updates to the remote or local database
     const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number, newSavingsDeposit?: number, newMonthlyBudget?: number) => {
         // Determine savings deposit value using state fallback
-        const savingsDepositValue = newSavingsDeposit !== undefined ? newSavingsDeposit : monthlySavingsDepositState;
+        const savingsDepositValue = newSavingsDeposit !== undefined ? newSavingsDeposit : (monthlySavingsDepositState || 0);
         // Determine monthly budget value using state fallback
-        const monthlyBudgetValue = newMonthlyBudget !== undefined ? newMonthlyBudget : monthlyBudgetState;
+        const monthlyBudgetValue = newMonthlyBudget !== undefined ? newMonthlyBudget : (monthlyBudgetState || 0);
         // Log update parameters to console for debugging
         console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, savingsDepositValue, monthlyBudgetValue });
         // Return early if no user session exists
@@ -308,15 +255,15 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
         try {
             // Get reference to Firestore month document
             const docRef = doc(db, 'users', user.uid, 'months', currentKey);
-            // Save document with updated properties
-            await setDoc(docRef, {
+            // Save document with sanitized updated properties
+            await setDoc(docRef, sanitizeForFirestore({
                 month,
                 year,
-                income: newIncome,
+                income: newIncome || 0,
                 monthlySavingsDeposit: savingsDepositValue,
                 monthlyBudget: monthlyBudgetValue,
-                categories: newCategories
-            });
+                categories: newCategories || []
+            }));
         // Catch error on saving document to Firestore
         } catch (error) {
             // Log Firestore update error to console
