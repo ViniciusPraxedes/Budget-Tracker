@@ -1,0 +1,439 @@
+/* Main container wrapper for the Horizon Planner widget */
+.container {
+    /* Set flex column layout */
+    display: flex;
+    /* Column flow */
+    flex-direction: column;
+    /* Spacing gap between modular sections */
+    gap: 1.25rem;
+    /* Top margin */
+    margin-top: 1rem;
+}
+
+/* Card panel container matching dashboard box theme */
+.panelCard {
+    /* Dark semi-transparent card background */
+    background: rgba(255, 255, 255, 0.03);
+    /* Subtle border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corner radius */
+    border-radius: 10px;
+    /* Inner padding layout */
+    padding: 1.25rem;
+}
+
+/* Card header row with title and action elements */
+.cardHeader {
+    /* Flexbox display */
+    display: flex;
+    /* Space between title and actions */
+    justify-content: space-between;
+    /* Align vertically centered */
+    align-items: center;
+    /* Bottom margin separation */
+    margin-bottom: 1rem;
+    /* Allow wrapping on narrow screens */
+    flex-wrap: wrap;
+    /* Gap between wrapped elements */
+    gap: 0.5rem;
+}
+
+/* Section title typography */
+.cardTitle {
+    /* Font size */
+    font-size: 1rem;
+    /* Semi-bold text weight */
+    font-weight: 600;
+    /* White text color */
+    color: var(--text-primary);
+    /* Flex display */
+    display: flex;
+    /* Align centered */
+    align-items: center;
+    /* Gap for icon */
+    gap: 0.5rem;
+}
+
+/* Unified form grid */
+.formGrid {
+    /* CSS Grid display */
+    display: grid;
+    /* Responsive columns */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Gap */
+    gap: 0.85rem;
+    /* Bottom margin */
+    margin-bottom: 0.85rem;
+}
+
+/* Form group container */
+.formGroup {
+    /* Flex column */
+    display: flex;
+    /* Column flow */
+    flex-direction: column;
+    /* Gap */
+    gap: 0.35rem;
+}
+
+/* Input label */
+.label {
+    /* Small font size */
+    font-size: 0.8rem;
+    /* Muted text color */
+    color: var(--text-secondary);
+    /* Medium weight */
+    font-weight: 500;
+}
+
+/* Unified text and number input */
+.input {
+    /* Dark background */
+    background: rgba(0, 0, 0, 0.25);
+    /* Border matching theme */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Text color */
+    color: var(--text-primary);
+    /* Padding */
+    padding: 0.55rem 0.75rem;
+    /* Font size */
+    font-size: 0.9rem;
+    /* Transition */
+    transition: border-color 0.2s ease;
+}
+
+/* Input focus pseudo class */
+.input:focus {
+    /* Highlight border color */
+    border-color: #64B5F6;
+    /* Remove default outline */
+    outline: none;
+}
+
+/* Dropdown select control */
+.select {
+    /* Dark background */
+    background: rgba(0, 0, 0, 0.4);
+    /* Border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Text color */
+    color: var(--text-primary);
+    /* Padding */
+    padding: 0.55rem 0.75rem;
+    /* Font size */
+    font-size: 0.9rem;
+}
+
+/* Primary action button */
+.primaryButton {
+    /* Accent blue background */
+    background: #1976D2;
+    /* White text */
+    color: white;
+    /* Border reset */
+    border: none;
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Padding */
+    padding: 0.55rem 1.1rem;
+    /* Font size */
+    font-size: 0.85rem;
+    /* Bold text */
+    font-weight: 600;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Transition */
+    transition: background 0.2s ease;
+    /* Flexbox display */
+    display: inline-flex;
+    /* Center align */
+    align-items: center;
+    /* Gap */
+    gap: 0.4rem;
+}
+
+/* Primary button hover */
+.primaryButton:hover {
+    /* Darker blue */
+    background: #1565C0;
+}
+
+/* Secondary outline button */
+.secondaryButton {
+    /* Transparent background */
+    background: transparent;
+    /* White text */
+    color: var(--text-primary);
+    /* Border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Padding */
+    padding: 0.45rem 0.85rem;
+    /* Font size */
+    font-size: 0.8rem;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Transition */
+    transition: background 0.2s ease;
+}
+
+/* Secondary button hover */
+.secondaryButton:hover {
+    /* Light tint */
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Danger / Delete button */
+.dangerButton {
+    /* Transparent background */
+    background: transparent;
+    /* Warning red text */
+    color: #FF5252;
+    /* Border reset */
+    border: none;
+    /* Padding */
+    padding: 0.3rem 0.5rem;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Font size */
+    font-size: 0.82rem;
+}
+
+/* Horizontal scrollable strip of projected months */
+.monthStrip {
+    /* Flexbox layout */
+    display: flex;
+    /* Gap between pills */
+    gap: 0.65rem;
+    /* Enable horizontal scrolling */
+    overflow-x: auto;
+    /* Top padding */
+    padding-top: 0.25rem;
+    /* Bottom padding */
+    padding-bottom: 0.65rem;
+}
+
+/* Individual month navigator card pill */
+.monthPill {
+    /* Flex column */
+    display: flex;
+    /* Column flow */
+    flex-direction: column;
+    /* Gap between metrics */
+    gap: 0.35rem;
+    /* Minimum fixed width */
+    min-width: 140px;
+    /* Padding */
+    padding: 0.75rem 0.85rem;
+    /* Subtle background */
+    background: rgba(255, 255, 255, 0.02);
+    /* Border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Transition */
+    transition: all 0.2s ease;
+    /* Prevent shrinking */
+    flex-shrink: 0;
+}
+
+/* Month pill hover state */
+.monthPill:hover {
+    /* Background highlight */
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Active selected month pill highlight */
+.monthPillActive {
+    /* Accent background tint */
+    background: rgba(33, 150, 243, 0.12);
+    /* Accent border color */
+    border-color: #64B5F6;
+}
+
+/* Month pill title text */
+.monthPillTitle {
+    /* Bold text */
+    font-weight: 600;
+    /* Font size */
+    font-size: 0.88rem;
+    /* White text */
+    color: var(--text-primary);
+}
+
+/* Month pill net savings badge */
+.pillSavingsBadge {
+    /* Font size */
+    font-size: 0.75rem;
+    /* Bold weight */
+    font-weight: 700;
+}
+
+/* Positive savings highlight */
+.positiveValue {
+    /* Bright green text */
+    color: #00E676;
+}
+
+/* Negative deficit highlight */
+.negativeValue {
+    /* Red text */
+    color: #FF5252;
+}
+
+/* Checkbox multi-month selector bar */
+.checkboxBar {
+    /* Flexbox display */
+    display: flex;
+    /* Wrap items on multiple rows */
+    flex-wrap: wrap;
+    /* Gap between items */
+    gap: 0.6rem;
+    /* Inner padding */
+    padding: 0.75rem;
+    /* Background tint */
+    background: rgba(0, 0, 0, 0.2);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Bottom margin */
+    margin-bottom: 1rem;
+}
+
+/* Individual month checkbox chip */
+.checkboxChip {
+    /* Flexbox display */
+    display: inline-flex;
+    /* Center align */
+    align-items: center;
+    /* Gap between check and label */
+    gap: 0.35rem;
+    /* Font size */
+    font-size: 0.82rem;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Padding */
+    padding: 0.25rem 0.5rem;
+    /* Rounded radius */
+    border-radius: 4px;
+    /* Transition */
+    transition: background 0.15s ease;
+}
+
+/* Chip hover */
+.checkboxChip:hover {
+    /* Highlight */
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Batch operation tabs container */
+.batchTabs {
+    /* Flexbox display */
+    display: flex;
+    /* Wrap if tight */
+    flex-wrap: wrap;
+    /* Gap between buttons */
+    gap: 0.4rem;
+    /* Bottom margin */
+    margin-bottom: 1rem;
+    /* Bottom border */
+    border-bottom: 1px solid var(--border-color);
+    /* Bottom padding */
+    padding-bottom: 0.5rem;
+}
+
+/* Tab button inside batch tools */
+.batchTabBtn {
+    /* Transparent background */
+    background: transparent;
+    /* Border reset */
+    border: none;
+    /* Text color */
+    color: var(--text-secondary);
+    /* Padding */
+    padding: 0.4rem 0.75rem;
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Font size */
+    font-size: 0.82rem;
+    /* Medium weight */
+    font-weight: 500;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Transition */
+    transition: all 0.2s ease;
+}
+
+/* Active batch tab highlight */
+.batchTabBtnActive {
+    /* Active tint */
+    background: rgba(33, 150, 243, 0.15);
+    /* Active text */
+    color: #64B5F6;
+    /* Bold */
+    font-weight: 600;
+}
+
+/* Category section accordion inside month editor */
+.categoryBlock {
+    /* Flex column */
+    display: flex;
+    /* Column flow */
+    flex-direction: column;
+    /* Gap */
+    gap: 0.4rem;
+    /* Padding */
+    padding: 0.65rem 0.75rem;
+    /* Background */
+    background: rgba(255, 255, 255, 0.02);
+    /* Border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Bottom margin */
+    margin-bottom: 0.5rem;
+}
+
+/* Expense row item */
+.expenseRow {
+    /* Flexbox display */
+    display: flex;
+    /* Space between */
+    justify-content: space-between;
+    /* Center align */
+    align-items: center;
+    /* Padding */
+    padding: 0.35rem 0.5rem;
+    /* Subtle background */
+    background: rgba(0, 0, 0, 0.15);
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Gap */
+    gap: 0.5rem;
+}
+
+/* Small inline number input */
+.inlineInput {
+    /* Fixed width */
+    width: 95px;
+    /* Dark background */
+    background: rgba(0, 0, 0, 0.35);
+    /* Border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Padding */
+    padding: 0.25rem 0.45rem;
+    /* Text color */
+    color: var(--text-primary);
+    /* Font size */
+    font-size: 0.82rem;
+    /* Right text alignment */
+    text-align: right;
+}

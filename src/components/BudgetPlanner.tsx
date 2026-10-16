@@ -10,6 +10,8 @@ import Box from './Box';
 import styles from './BudgetPlanner.module.css';
 // Import shared payday cycle resolver so cycle math stays consistent across components
 import { resolvePaydayCycle } from '../utils/paydayCycle';
+// Import Horizon Planner multi-month simulation and batch editing component
+import HorizonPlanner from './HorizonPlanner';
 
 // Declare functional component representing Budget Planner & Savings Center
 const BudgetPlanner: React.FC = () => {
@@ -20,6 +22,8 @@ const BudgetPlanner: React.FC = () => {
 
     // Declare state for collapsible section visibility (hidden by default)
     const [isExpanded, setIsExpanded] = useState(false);
+    // Declare state for active tab selection inside budget planner
+    const [activeTab, setActiveTab] = useState<'planner' | 'horizon'>('planner');
 
     // Total effective budget threshold calculation
     const effectiveTotalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((s, c) => s + (c.budget || 0), 0);
@@ -187,8 +191,38 @@ const BudgetPlanner: React.FC = () => {
             {isExpanded && (
                 // Wrapper div for expanded content body
                 <div style={{ marginTop: '0.5rem' }}>
-                    {/* Top metrics summary grid */}
-                    <div className={styles.metricsGrid}>
+                    {/* Tab navigation bar container */}
+                    <div className={styles.tabsContainer}>
+                        {/* Tab button for Current Month Budget & Goals */}
+                        <button
+                            type="button"
+                            className={`${styles.tabButton} ${activeTab === 'planner' ? styles.tabButtonActive : ''}`}
+                            onClick={() => setActiveTab('planner')}
+                        >
+                            {/* Target icon symbol */}
+                            <span>🎯</span>
+                            {/* Tab label text */}
+                            <span>Current Month Budget & Goals</span>
+                        </button>
+                        {/* Tab button for Multi-Month Horizon Planner */}
+                        <button
+                            type="button"
+                            className={`${styles.tabButton} ${activeTab === 'horizon' ? styles.tabButtonActive : ''}`}
+                            onClick={() => setActiveTab('horizon')}
+                        >
+                            {/* Horizon crystal ball icon symbol */}
+                            <span>🔮</span>
+                            {/* Tab label text */}
+                            <span>Multi-Month Horizon & Mass Editor</span>
+                        </button>
+                    </div>
+                    {/* Render Horizon Planner widget when horizon tab is active */}
+                    {activeTab === 'horizon' ? (
+                        <HorizonPlanner />
+                    ) : (
+                        <>
+                            {/* Top metrics summary grid */}
+                            <div className={styles.metricsGrid}>
                         {/* Metric card 1: Total Monthly Budget */}
                         <div className={styles.metricCard}>
                             {/* Metric label string */}
@@ -404,6 +438,8 @@ const BudgetPlanner: React.FC = () => {
                             </div>
                         )}
                     </div>
+                        </>
+                    )}
                 </div>
             )}
         </Box>

@@ -384,6 +384,18 @@ export async function POST(request: NextRequest) {
             user.months[monthKey] = monthData;
         // End of values validation check
         }
+    // Check if batch updating multiple months at once
+    } else if (action === 'batch_update_months') {
+        // Retrieve months dictionary from payload
+        const monthsPayload = body.months;
+        // Verify months payload exists and is dictionary
+        if (monthsPayload && typeof monthsPayload === 'object') {
+            // Iterate over each month key and data entry
+            for (const [key, mData] of Object.entries(monthsPayload)) {
+                // Assign month data to user record
+                user.months[key] = mData as MonthData;
+            }
+        }
     // Handle invalid action parameter
     } else {
         // Return 400 status with invalid action message

@@ -322,4 +322,68 @@
     color: rgba(255, 255, 255, 0.7);
 }
 
+/* Tab navigation container row */
+.tabsContainer {
+    /* Set flexbox display layout */
+    display: flex;
+    /* Gap between tab buttons */
+    gap: 0.5rem;
+    /* Bottom margin separation */
+    margin-bottom: 1rem;
+    /* Bottom border divider */
+    border-bottom: 1px solid var(--border-color);
+    /* Bottom padding spacing */
+    padding-bottom: 0.75rem;
+    /* Allow wrapping on small screens */
+    flex-wrap: wrap;
+}
+
+/* Base tab button style */
+.tabButton {
+    /* Transparent button background */
+    background: transparent;
+    /* Border stroke */
+    border: 1px solid transparent;
+    /* Secondary text color */
+    color: var(--text-secondary);
+    /* Font size */
+    font-size: 0.88rem;
+    /* Font weight */
+    font-weight: 500;
+    /* Padding dimensions */
+    padding: 0.45rem 0.85rem;
+    /* Rounded corners radius */
+    border-radius: 6px;
+    /* Pointer cursor on hover */
+    cursor: pointer;
+    /* Flexbox display */
+    display: flex;
+    /* Center align vertically */
+    align-items: center;
+    /* Gap between icon and label */
+    gap: 0.4rem;
+    /* Transition animation */
+    transition: all 0.2s ease;
+}
+
+/* Tab button hover effect */
+.tabButton:hover {
+    /* Light hover background */
+    background: rgba(255, 255, 255, 0.05);
+    /* Primary text color on hover */
+    color: var(--text-primary);
+}
+
+/* Active selected tab button */
+.tabButtonActive {
+    /* Accent tint background */
+    background: rgba(59, 130, 246, 0.15);
+    /* Accent blue text color */
+    color: #60a5fa;
+    /* Semi-bold text */
+    font-weight: 600;
+    /* Accent subtle border outline */
+    border-color: rgba(59, 130, 246, 0.35);
+}
+
 
