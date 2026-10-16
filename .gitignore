@@ -25,7 +25,17 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+.env.production
+
+# sensitive data and exports
+mock-db.json
+Transaktioner_*
+*.csv
+*.xlsx
+*.pdf
+*.png
 
 # vercel
 .vercel

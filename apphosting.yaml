@@ -1,9 +1,50 @@
+# Firebase App Hosting runtime configuration container block
 runConfig:
+  # Configure CPU allocation limit per instance
   cpu: 1
+  # Configure RAM memory limit in megabytes per instance
   memoryMiB: 512
+  # Configure minimum running instances threshold
   minInstances: 0
+  # Configure maximum scaling instances ceiling
   maxInstances: 10
+  # Configure max concurrent request handling per instance
   concurrency: 80
+# Environment variables block for cloud build and runtime
 env:
+  # Map entry for Firebase API Key environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    # Set public API key value
+    value: AIzaSyDDPXUbQ-Mrd1I0aFhgCEoRhvLzqSfabn0
+  # Map entry for Firebase Auth Domain environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    # Set auth domain host value
+    value: skilled-bonus-478612-q2.firebaseapp.com
+  # Map entry for Firebase Project ID environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    # Set project identifier string
+    value: skilled-bonus-478612-q2
+  # Map entry for Firebase Storage Bucket environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    # Set storage bucket domain value
+    value: skilled-bonus-478612-q2.firebasestorage.app
+  # Map entry for Firebase Messaging Sender ID environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    # Set messaging sender ID string
+    value: "382650047660"
+  # Map entry for Firebase Web App ID environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    # Set Web App unique registration identifier
+    value: 1:382650047660:web:727877532d5945ead95309
+  # Map entry for Firebase Measurement ID environment variable
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    # Set measurement ID value for analytics
+    value: G-XSL4WG1NKN
+  # Map entry for emulator mode toggle environment variable
+  - variable: NEXT_PUBLIC_USE_EMULATOR
+    # Set emulator flag to false for production cloud deployment
+    value: "false"
+  # Map entry for Gemini API Key secret reference
   - variable: NEXT_PUBLIC_GEMINI_API_KEY
+    # Link secret manager secret key identifier
     secret: NEXT_PUBLIC_GEMINI_API_KEY
