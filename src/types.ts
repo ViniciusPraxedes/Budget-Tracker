@@ -1,9 +1,27 @@
+// Expense item model interface definition
 export interface Expense {
+    // Unique identifier
     id: string;
+    // Expense name
     name: string;
+    // Numeric expense cost
     amount: number;
+    // Day of month payment is due
     paymentDay: number;
+    // Recurring expense flag
     isRecurring?: boolean;
+    // Financed purchase installment flag
+    isInstallment?: boolean;
+    // Total principal amount
+    totalAmount?: number;
+    // Total number of installments
+    totalInstallments?: number;
+    // Number of remaining installment payments
+    remainingInstallments?: number;
+    // Annual percentage rate
+    annualInterestRate?: number;
+    // Starting month key for installments
+    installmentStartMonth?: string;
 }
 
 // Category model interface definition

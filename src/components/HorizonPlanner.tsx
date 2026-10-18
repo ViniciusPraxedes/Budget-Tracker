@@ -496,7 +496,7 @@ export default function HorizonPlanner() {
         // Calculate savings rate percentage of income
         const sRate = (activeMonthData.income || 0) > 0 ? Math.round(((activeMonthData.monthlySavingsDeposit || 0) / activeMonthData.income) * 100) : 0;
         // Calculate budget consumption percentage
-        const bUsage = (activeMonthData.monthlyBudget || 0) > 0 ? Math.round((expensesSum / activeMonthData.monthlyBudget) * 100) : 0;
+        const bUsage = (activeMonthData.monthlyBudget || 0) > 0 ? Math.round((expensesSum / (activeMonthData.monthlyBudget || 1)) * 100) : 0;
         // Calculate remaining budget headroom
         const bRemaining = (activeMonthData.monthlyBudget || 0) - expensesSum;
         // Find index of currently inspected month in the horizon sequence
