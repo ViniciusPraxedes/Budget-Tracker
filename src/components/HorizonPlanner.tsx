@@ -21,22 +21,10 @@ import styles from './HorizonPlanner.module.css';
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 // Month short abbreviations list
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Predefined category visual accent color swatches
+const COLOR_PRESETS = ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0', '#00BCD4', '#FF5722', '#607D8B'];
 
-// Helper to calculate amortization payment
-function calculateInstallmentMonthly(principal: number, terms: number, apr: number = 0): number {
-    // Guard against non-positive terms or principal
-    if (terms <= 0 || principal <= 0) return 0;
-    // Handle interest-free financing
-    if (apr <= 0) return Math.round((principal / terms) * 100) / 100;
-    // Monthly interest decimal
-    const r = (apr / 100) / 12;
-    // Compounding growth factor
-    const factor = Math.pow(1 + r, terms);
-    // Standard amortization formula
-    const payment = principal * ((r * factor) / (factor - 1));
-    // Return rounded result
-    return Math.round(payment * 100) / 100;
-}
+
 
 // Generate sequence of month keys between start and end inclusive
 function getHorizonSequence(startM: number, startY: number, endM: number, endY: number): { month: number, year: number, key: string, label: string }[] {
@@ -77,7 +65,7 @@ function getHorizonSequence(startM: number, startY: number, endM: number, endY: 
 // Declare HorizonPlanner component
 export default function HorizonPlanner() {
     // Retrieve budget variables from state hook
-    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget } = useBudget();
+    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget, totalSavings, savingsGoal } = useBudget();
     // Retrieve currency formatter from localization hook
     const { formatCurrency } = useLocalization();
     // Retrieve current user session from auth context
@@ -103,42 +91,14 @@ export default function HorizonPlanner() {
     // Selected month key in the in-widget browser inspector
     const [activeInspectorKey, setActiveInspectorKey] = useState<string>(`${currentYear}-${currentMonth}`);
 
-    // Selected month keys for the mass change tool
+    // Selected target month keys for the mass data tool
     const [selectedBatchKeys, setSelectedBatchKeys] = useState<string[]>([]);
-    // Active tab in mass change tool
-    const [batchTab, setBatchTab] = useState<'savings_income' | 'update_expense' | 'add_expense' | 'installments'>('savings_income');
-
-    // Batch form state: Income
-    const [batchIncomeInput, setBatchIncomeInput] = useState<string>('');
-    // Batch form state: Monthly Savings Contribution
-    const [batchSavingsInput, setBatchSavingsInput] = useState<string>('');
-    // Batch form state: Monthly Budget Limit
-    const [batchBudgetInput, setBatchBudgetInput] = useState<string>('');
-
-    // Batch form state: Target expense to update or delete
-    const [batchTargetExpense, setBatchTargetExpense] = useState<string>('');
-    // Batch form state: Action update amount or delete
-    const [batchExpenseAction, setBatchExpenseAction] = useState<'update_amount' | 'remove'>('update_amount');
-    // Batch form state: New amount
-    const [batchNewAmount, setBatchNewAmount] = useState<string>('');
-
-    // Batch form state: Add new bill name
-    const [batchBillName, setBatchBillName] = useState<string>('');
-    // Batch form state: Add new bill amount
-    const [batchBillAmount, setBatchBillAmount] = useState<string>('');
-    // Batch form state: Add new bill category
-    const [batchBillCategoryId, setBatchBillCategoryId] = useState<string>(categories[0]?.id || '');
-
-    // Batch form state: Installment item name
-    const [instName, setInstName] = useState<string>('');
-    // Batch form state: Installment principal total
-    const [instTotal, setInstTotal] = useState<string>('');
-    // Batch form state: Installment terms count
-    const [instTerms, setInstTerms] = useState<string>('12');
-    // Batch form state: Installment APR
-    const [instApr, setInstApr] = useState<string>('0');
-    // Batch form state: Installment category
-    const [instCategoryId, setInstCategoryId] = useState<string>(categories[0]?.id || '');
+    // Selected source base month key to copy data from
+    const [copySourceKey, setCopySourceKey] = useState<string>(`${currentYear}-${currentMonth}`);
+    // Checkbox state: whether to copy monthly parameters (income, savings, and budget limit)
+    const [copyScopeIncomeSavings, setCopyScopeIncomeSavings] = useState<boolean>(true);
+    // Checkbox state: whether to copy category structure and itemized expenses
+    const [copyScopeCategories, setCopyScopeCategories] = useState<boolean>(true);
 
     // Single month quick add expense state
     const [singleExpName, setSingleExpName] = useState<string>('');
@@ -146,6 +106,24 @@ export default function HorizonPlanner() {
     const [singleExpAmount, setSingleExpAmount] = useState<string>('');
     // Single month quick add category
     const [singleExpCatId, setSingleExpCatId] = useState<string>(categories[0]?.id || '');
+
+    // State to toggle new category form visibility in inspected month
+    const [isAddingCategory, setIsAddingCategory] = useState<boolean>(false);
+    // New category name input state
+    const [newCatName, setNewCatName] = useState<string>('');
+    // New category color input state
+    const [newCatColor, setNewCatColor] = useState<string>('#4CAF50');
+    // New category budget limit input state
+    const [newCatBudget, setNewCatBudget] = useState<string>('');
+
+    // ID of category currently in edit mode
+    const [editingCatId, setEditingCatId] = useState<string | null>(null);
+    // Edited category name input state
+    const [editCatName, setEditCatName] = useState<string>('');
+    // Edited category color input state
+    const [editCatColor, setEditCatColor] = useState<string>('#4CAF50');
+    // Edited category budget limit input state
+    const [editCatBudget, setEditCatBudget] = useState<string>('');
 
     // Sequence of months in the configured horizon range
     const horizonSequence = useMemo(() => {
@@ -242,11 +220,16 @@ export default function HorizonPlanner() {
     // Re-run if storage key changes
     }, [simStorageKey]);
 
-    // Initialize default batch selection to all months in horizon
+    // Key representing the first month of the configured prediction range
+    const firstMonthKey = `${startYear}-${startMonth}`;
+    // Flag indicating whether active inspector month is the baseline starting month
+    const isBaseMonth = activeInspectorKey === firstMonthKey;
+
+    // Initialize default batch selection to all months in horizon excluding base month and copy source month
     useEffect(() => {
-        // Default select all months in range
-        setSelectedBatchKeys(horizonSequence.map(item => item.key));
-    }, [horizonSequence]);
+        // Default select only future simulation months that are not the copy source
+        setSelectedBatchKeys(horizonSequence.filter(item => item.key !== firstMonthKey && item.key !== copySourceKey).map(item => item.key));
+    }, [horizonSequence, firstMonthKey, copySourceKey]);
 
     // Helper to persist simulation updates to state and localStorage (isolated sandbox, never touches main database)
     const saveSimulationState = (updatedSim: Record<string, MonthData>) => {
@@ -271,8 +254,6 @@ export default function HorizonPlanner() {
     // End saveSimulationState definition
     };
 
-    // Key representing the first month of the configured prediction range
-    const firstMonthKey = `${startYear}-${startMonth}`;
     // Loaded real month record for the first month of the range if available
     const firstMonthData: MonthData | undefined = realMonths[firstMonthKey];
 
@@ -510,6 +491,36 @@ export default function HorizonPlanner() {
         }, 0);
         // Net savings balance
         const net = (activeMonthData.income || 0) - expensesSum;
+        // Calculate net free cash after spending and savings deposit
+        const freeCash = net - (activeMonthData.monthlySavingsDeposit || 0);
+        // Calculate savings rate percentage of income
+        const sRate = (activeMonthData.income || 0) > 0 ? Math.round(((activeMonthData.monthlySavingsDeposit || 0) / activeMonthData.income) * 100) : 0;
+        // Calculate budget consumption percentage
+        const bUsage = (activeMonthData.monthlyBudget || 0) > 0 ? Math.round((expensesSum / activeMonthData.monthlyBudget) * 100) : 0;
+        // Calculate remaining budget headroom
+        const bRemaining = (activeMonthData.monthlyBudget || 0) - expensesSum;
+        // Find index of currently inspected month in the horizon sequence
+        const inspectedIndex = horizonSequence.findIndex(item => item.key === activeInspectorKey);
+        // Accumulated simulated monthly deposits up to this inspected month
+        let cumulativeDeposits = 0;
+        // Check if inspected month was found in sequence and is beyond starting baseline month
+        if (inspectedIndex > 0) {
+            // Loop through future months from index 1 up to inspected month
+            for (let i = 1; i <= inspectedIndex; i++) {
+                // Get sequence month item
+                const seqItem = horizonSequence[i];
+                // Get month simulation data
+                const sData = getSimulatedMonthData(seqItem.key, seqItem.month, seqItem.year);
+                // Accumulate monthly savings deposit
+                cumulativeDeposits += (sData.monthlySavingsDeposit || 0);
+            // End sequence accumulation loop
+            }
+        // End index check
+        }
+        // Calculate projected total savings in bank
+        const projectedTotalSavings = (totalSavings || 0) + cumulativeDeposits;
+        // Calculate progress percentage towards savings goal
+        const goalPercent = (savingsGoal || 0) > 0 ? Math.round((projectedTotalSavings / (savingsGoal || 1)) * 100) : 0;
         // Return metrics
         return {
             // Month income
@@ -518,47 +529,59 @@ export default function HorizonPlanner() {
             totalExpenses: Math.round(expensesSum * 100) / 100,
             // Net savings
             netSavings: Math.round(net * 100) / 100,
+            // Net free cash
+            netFreeCash: Math.round(freeCash * 100) / 100,
             // Monthly savings deposit
             savingsDeposit: activeMonthData.monthlySavingsDeposit || 0,
             // Monthly budget limit
             budget: activeMonthData.monthlyBudget || 0,
+            // Savings rate percentage
+            savingsRate: sRate,
+            // Budget consumption percentage
+            budgetUsagePercent: bUsage,
+            // Remaining budget
+            budgetRemaining: Math.round(bRemaining * 100) / 100,
+            // Projected cumulative total savings
+            projectedTotalSavings,
+            // Cumulative deposits in horizon
+            cumulativeDeposits,
+            // Savings goal percentage
+            savingsGoalPercentage: goalPercent,
         // End of metrics object
         };
-    // Re-evaluate when active month data changes
-    }, [activeMonthData]);
+    // Re-evaluate when active month data, sequence, or baseline changes
+    }, [activeMonthData, horizonSequence, activeInspectorKey, totalSavings, savingsGoal, simulationMonths, rangeBaseline, firstMonthKey]);
 
-    // Distinct list of expense names across all months in the horizon for easy batch selection
-    const distinctExpenseNames = useMemo(() => {
-        // Set to collect unique names
-        const namesSet = new Set<string>();
-        // Iterate through all months in horizon
-        for (const item of horizonSequence) {
-            // Retrieve simulated month data
+    // Precompute projected cumulative total savings for each month in horizon sequence
+    const timelineSavingsMap = useMemo(() => {
+        // Savings accumulator map
+        const map: Record<string, number> = {};
+        // Running savings total starting at current savings
+        let runningTotal = totalSavings || 0;
+        // Iterate horizon sequence
+        horizonSequence.forEach((item, index) => {
+            // Retrieve month simulation data
             const mData = getSimulatedMonthData(item.key, item.month, item.year);
-            // If month data exists
-            if (mData && Array.isArray(mData.categories)) {
-                // Iterate categories
-                for (const cat of mData.categories) {
-                    // Iterate expenses
-                    for (const exp of cat.expenses || []) {
-                        // Add trimmed name
-                        if (exp.name) namesSet.add(exp.name.trim());
-                    // End of name check
-                    }
-                // End of expenses loop
-                }
-            // End of categories check
+            // If beyond base starting month, add monthly savings deposit
+            if (index > 0) {
+                // Increment running total by monthly savings deposit
+                runningTotal += (mData.monthlySavingsDeposit || 0);
+            // End index check
             }
-        // End of horizon sequence loop
-        }
-        // Return sorted array
-        return Array.from(namesSet).sort();
-    // Re-evaluate when sequence, simulation, or baseline change
-    }, [horizonSequence, simulationMonths, rangeBaseline]);
+            // Store projected savings for this month
+            map[item.key] = runningTotal;
+        // End iteration
+        });
+        // Return map
+        return map;
+    // Recompute when sequence, baseline, total savings, or simulations change
+    }, [horizonSequence, totalSavings, simulationMonths, rangeBaseline, firstMonthKey]);
+
+
     // Handler to update an inspected month's core metric (income, savings deposit, or budget)
     const handleUpdateSingleMonthField = (field: 'income' | 'monthlySavingsDeposit' | 'monthlyBudget', valueStr: string) => {
-        // Return if active month data not loaded
-        if (!activeMonthData) return;
+        // Return if active month data not loaded or base month
+        if (!activeMonthData || isBaseMonth) return;
         // Parse float value
         const val = parseFloat(valueStr) || 0;
         // Updated month object
@@ -576,8 +599,8 @@ export default function HorizonPlanner() {
 
     // Handler to update an expense amount in the currently inspected month
     const handleUpdateSingleExpenseAmount = (categoryId: string, expenseId: string, amountStr: string) => {
-        // Return if active month data not loaded
-        if (!activeMonthData) return;
+        // Return if active month data not loaded or base month
+        if (!activeMonthData || isBaseMonth) return;
         // Parse numeric amount
         const newAmt = parseFloat(amountStr) || 0;
         // Update categories array
@@ -607,8 +630,8 @@ export default function HorizonPlanner() {
 
     // Handler to remove an expense from the currently inspected month
     const handleDeleteSingleExpense = (categoryId: string, expenseId: string) => {
-        // Return if active month data not loaded
-        if (!activeMonthData) return;
+        // Return if active month data not loaded or base month
+        if (!activeMonthData || isBaseMonth) return;
         // Update categories array filtering out target expense
         const newCats = activeMonthData.categories.map(cat => {
             // Check matching category
@@ -636,8 +659,8 @@ export default function HorizonPlanner() {
 
     // Handler to add a new expense to the currently inspected month
     const handleAddSingleExpense = () => {
-        // Return if active month data not loaded or name empty
-        if (!activeMonthData || !singleExpName.trim()) return;
+        // Return if active month data not loaded, name empty, or base month
+        if (!activeMonthData || !singleExpName.trim() || isBaseMonth) return;
         // Parse amount
         const amt = parseFloat(singleExpAmount);
         // Guard positive amount
@@ -681,308 +704,240 @@ export default function HorizonPlanner() {
     // End of handleAddSingleExpense definition
     };
 
-    // Toggle a month in the mass change selection list
+    // Handler to add a new category to the currently inspected month
+    const handleAddSingleCategory = () => {
+        // Return if active month data not loaded, name empty, or base month
+        if (!activeMonthData || !newCatName.trim() || isBaseMonth) return;
+        // Parse optional budget
+        const budgetNum = parseFloat(newCatBudget);
+        // Create new category object
+        const newCategory: Category = {
+            // Unique category ID
+            id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            // Category name
+            name: newCatName.trim(),
+            // Category color
+            color: newCatColor || '#4CAF50',
+            // Optional budget limit
+            budget: !isNaN(budgetNum) && budgetNum > 0 ? budgetNum : undefined,
+            // Empty expenses array
+            expenses: [],
+        // End of category object
+        };
+        // Updated month with appended category
+        const updatedMonth: MonthData = {
+            // Spread existing
+            ...activeMonthData,
+            // Append category
+            categories: [...activeMonthData.categories, newCategory],
+        // End of updated month
+        };
+        // Save to simulation state
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Reset name
+        setNewCatName('');
+        // Reset budget
+        setNewCatBudget('');
+        // Close form
+        setIsAddingCategory(false);
+        // Show success notification
+        addToast(`Category "${newCategory.name}" added`, 'success');
+    // End of handleAddSingleCategory definition
+    };
+
+    // Handler to initiate editing of a category
+    const handleStartEditCategory = (cat: Category) => {
+        // Set target category ID
+        setEditingCatId(cat.id);
+        // Pre-fill name
+        setEditCatName(cat.name);
+        // Pre-fill color
+        setEditCatColor(cat.color || '#4CAF50');
+        // Pre-fill budget
+        setEditCatBudget(cat.budget ? cat.budget.toString() : '');
+    // End of handleStartEditCategory definition
+    };
+
+    // Handler to save edits to an existing category
+    const handleSaveEditCategory = (categoryId: string) => {
+        // Return if active month data not loaded, name empty, or base month
+        if (!activeMonthData || !editCatName.trim() || isBaseMonth) return;
+        // Parse optional budget
+        const budgetNum = parseFloat(editCatBudget);
+        // Map categories array
+        const newCats = activeMonthData.categories.map(cat => {
+            // Check matching category
+            if (cat.id === categoryId) {
+                // Return updated category
+                return {
+                    // Spread existing
+                    ...cat,
+                    // Updated name
+                    name: editCatName.trim(),
+                    // Updated color
+                    color: editCatColor || cat.color,
+                    // Updated budget
+                    budget: !isNaN(budgetNum) && budgetNum > 0 ? budgetNum : undefined,
+                // End of updated category
+                };
+            // End of matching check
+            }
+            // Return unchanged category
+            return cat;
+        // End of categories mapping
+        });
+        // Updated month
+        const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
+        // Save to simulation state
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Close edit mode
+        setEditingCatId(null);
+        // Show success notification
+        addToast('Category updated', 'success');
+    // End of handleSaveEditCategory definition
+    };
+
+    // Handler to remove a category from the currently inspected month
+    const handleDeleteSingleCategory = (categoryId: string) => {
+        // Return if active month data not loaded or base month
+        if (!activeMonthData || isBaseMonth) return;
+        // Filter out category
+        const newCats = activeMonthData.categories.filter(cat => cat.id !== categoryId);
+        // Updated month
+        const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
+        // Save to simulation state
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Show notification
+        addToast('Category removed', 'info');
+    // End of handleDeleteSingleCategory definition
+    };
+
+    // Toggle a target month in the copy selection list
     const toggleBatchKey = (key: string) => {
+        // Prevent selecting the base month or the source month
+        if (key === firstMonthKey || key === copySourceKey) return;
         // Flip inclusion
         setSelectedBatchKeys(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+    // End toggleBatchKey definition
     };
 
-    // Select all months in horizon
+    // Select all eligible target months excluding base month and source month
     const handleSelectAllBatch = () => {
-        // Assign all keys
-        setSelectedBatchKeys(horizonSequence.map(item => item.key));
+        // Assign all eligible future keys
+        setSelectedBatchKeys(horizonSequence.filter(item => item.key !== firstMonthKey && item.key !== copySourceKey).map(item => item.key));
+    // End handleSelectAllBatch definition
     };
 
-    // Deselect all months
+    // Clear all selected target months
     const handleDeselectAllBatch = () => {
         // Clear list
         setSelectedBatchKeys([]);
+    // End handleDeselectAllBatch definition
     };
 
-    // Batch Action 1: Apply Income, Savings Deposit, and/or Monthly Budget across selected months
-    const handleApplyBatchSavingsIncome = async () => {
-        // Guard at least one month selected
+    // Execute copying data from selected source month to all selected target months
+    const handleExecuteCopyData = () => {
+        // Guard at least one target month selected
         if (selectedBatchKeys.length === 0) {
-            addToast("Please select at least one month.", "error");
+            // Show error notification
+            addToast("Please select at least one target month.", "error");
+            // Exit early
             return;
+        // End target count check
         }
-        // Payload accumulator
+        // Guard at least one copy scope selected
+        if (!copyScopeIncomeSavings && !copyScopeCategories) {
+            // Show error notification
+            addToast("Please select at least one data type to copy.", "error");
+            // Exit early
+            return;
+        // End scope check
+        }
+        // Find source sequence item
+        const sourceItem = horizonSequence.find(item => item.key === copySourceKey);
+        // Source month index
+        const sMonth = sourceItem ? sourceItem.month : startMonth;
+        // Source year
+        const sYear = sourceItem ? sourceItem.year : startYear;
+        // Retrieve source month simulation data
+        const sourceData = getSimulatedMonthData(copySourceKey, sMonth, sYear);
+        // Guard valid source data
+        if (!sourceData) {
+            // Show error notification
+            addToast("Unable to load base month data.", "error");
+            // Exit early
+            return;
+        // End source check
+        }
+        // Batch payload accumulator
         const batchPayload: Record<string, MonthData> = {};
-        // Parse inputs
-        const incomeVal = parseFloat(batchIncomeInput);
-        const savingsVal = parseFloat(batchSavingsInput);
-        const budgetVal = parseFloat(batchBudgetInput);
-
-        // Iterate selected keys
-        for (const key of selectedBatchKeys) {
-            // Retrieve sequence item
-            const item = horizonSequence.find(seq => seq.key === key);
-            // Month index
-            const mMonth = item ? item.month : startMonth;
-            // Year
-            const mYear = item ? item.year : startYear;
-            // Retrieve simulated month data
-            const existing = getSimulatedMonthData(key, mMonth, mYear);
-            // Update fields if entered
-            batchPayload[key] = {
-                // Spread existing month
-                ...existing,
-                // Update income
-                income: !isNaN(incomeVal) && incomeVal >= 0 ? incomeVal : existing.income,
-                // Update monthly savings
-                monthlySavingsDeposit: !isNaN(savingsVal) && savingsVal >= 0 ? savingsVal : existing.monthlySavingsDeposit,
-                // Update monthly budget
-                monthlyBudget: !isNaN(budgetVal) && budgetVal >= 0 ? budgetVal : existing.monthlyBudget,
-            // End of batch month payload object
+        // Iterate through all selected target month keys
+        for (const targetKey of selectedBatchKeys) {
+            // Skip base starting month or source month
+            if (targetKey === firstMonthKey || targetKey === copySourceKey) continue;
+            // Find target sequence item
+            const targetItem = horizonSequence.find(seq => seq.key === targetKey);
+            // Target month index
+            const tMonth = targetItem ? targetItem.month : startMonth;
+            // Target year
+            const tYear = targetItem ? targetItem.year : startYear;
+            // Retrieve target month current data
+            const existingTarget = getSimulatedMonthData(targetKey, tMonth, tYear);
+            // Prepare categories array
+            let finalCategories = existingTarget.categories;
+            // If copying categories structure and expenses
+            if (copyScopeCategories) {
+                // Deep clone categories with fresh IDs for itemized expenses
+                finalCategories = (sourceData.categories || []).map(cat => ({
+                    // Category ID
+                    id: cat.id,
+                    // Category name
+                    name: cat.name,
+                    // Category color
+                    color: cat.color,
+                    // Category order
+                    order: cat.order,
+                    // Category budget
+                    budget: cat.budget,
+                    // Clone expenses with fresh random unique IDs
+                    expenses: (cat.expenses || []).map(exp => ({
+                        // Spread expense attributes
+                        ...exp,
+                        // Assign fresh random unique ID
+                        id: Math.random().toString(36).substr(2, 9),
+                    // End expense mapping
+                    })),
+                // End category mapping
+                }));
+            // End category scope check
+            }
+            // Assemble updated target month object
+            batchPayload[targetKey] = {
+                // Spread existing target
+                ...existingTarget,
+                // Ensure target month index preserved
+                month: tMonth,
+                // Ensure target year preserved
+                year: tYear,
+                // Assign copied or existing income
+                income: copyScopeIncomeSavings ? (sourceData.income || 0) : existingTarget.income,
+                // Assign copied or existing monthly savings deposit
+                monthlySavingsDeposit: copyScopeIncomeSavings ? (sourceData.monthlySavingsDeposit || 0) : existingTarget.monthlySavingsDeposit,
+                // Assign copied or existing monthly budget limit
+                monthlyBudget: copyScopeIncomeSavings ? (sourceData.monthlyBudget || 0) : existingTarget.monthlyBudget,
+                // Assign copied or existing categories
+                categories: finalCategories,
+            // End target month payload
             };
-        // End of selected batch loop
+        // End target keys iteration
         }
-        // Save to simulation state
+        // Save batch updates to simulation state and localStorage
         saveSimulationState(batchPayload);
-        // Success toast
-        addToast(`Updated income/savings across ${selectedBatchKeys.length} simulation months!`, 'success');
-    // End of handleApplyBatchSavingsIncome definition
-    };
-
-    // Batch Action 2: Update amount or delete an expense across selected months
-    const handleApplyBatchExpenseAction = async () => {
-        // Guard conditions
-        if (selectedBatchKeys.length === 0 || !batchTargetExpense) {
-            addToast("Please select months and choose an expense name.", "error");
-            return;
-        }
-        // Parse new amount if action is update
-        const newAmt = parseFloat(batchNewAmount);
-        if (batchExpenseAction === 'update_amount' && (isNaN(newAmt) || newAmt < 0)) {
-            addToast("Please enter a valid expense amount.", "error");
-            return;
-        }
-        // Payload accumulator
-        const batchPayload: Record<string, MonthData> = {};
-        // Iterate selected months
-        for (const key of selectedBatchKeys) {
-            // Retrieve sequence item
-            const item = horizonSequence.find(seq => seq.key === key);
-            // Month index
-            const mMonth = item ? item.month : startMonth;
-            // Year
-            const mYear = item ? item.year : startYear;
-            // Retrieve simulated month data
-            const mData = getSimulatedMonthData(key, mMonth, mYear);
-            // If categories exist
-            if (mData && Array.isArray(mData.categories)) {
-                // Update categories
-                const updatedCategories = mData.categories.map(cat => {
-                    // Action: remove expense
-                    if (batchExpenseAction === 'remove') {
-                        // Return category filtering out target expense
-                        return {
-                            // Spread category
-                            ...cat,
-                            // Filter expenses
-                            expenses: cat.expenses.filter(e => e.name.toLowerCase() !== batchTargetExpense.toLowerCase()),
-                        // End of category object
-                        };
-                    // End of remove action check
-                    }
-                    // Action: update expense amount
-                    return {
-                        // Spread category
-                        ...cat,
-                        // Map expenses with updated amount
-                        expenses: cat.expenses.map(e => e.name.toLowerCase() === batchTargetExpense.toLowerCase() ? { ...e, amount: newAmt } : e),
-                    // End of category object
-                    };
-                // End of categories mapping
-                });
-                // Assign updated month
-                batchPayload[key] = { ...mData, categories: updatedCategories };
-            // End of categories check
-            }
-        // End of selected batch loop
-        }
-        // Save to simulation state
-        saveSimulationState(batchPayload);
-        // Success toast
-        addToast(`Applied expense action across ${selectedBatchKeys.length} simulation months!`, 'success');
-    // End of handleApplyBatchExpenseAction definition
-    };
-
-    // Batch Action 3: Add new bill across selected months
-    const handleApplyBatchAddBill = async () => {
-        // Validate inputs
-        if (selectedBatchKeys.length === 0 || !batchBillName.trim()) {
-            addToast("Please select months and enter a bill name.", "error");
-            return;
-        }
-        // Parse amount
-        const amt = parseFloat(batchBillAmount);
-        if (isNaN(amt) || amt <= 0) {
-            addToast("Please enter a valid bill amount.", "error");
-            return;
-        }
-        // Payload accumulator
-        const batchPayload: Record<string, MonthData> = {};
-        // Iterate selected months
-        for (const key of selectedBatchKeys) {
-            // Retrieve sequence item
-            const item = horizonSequence.find(seq => seq.key === key);
-            // Month index
-            const mMonth = item ? item.month : startMonth;
-            // Year
-            const mYear = item ? item.year : startYear;
-            // Retrieve simulated month data
-            const mData = getSimulatedMonthData(key, mMonth, mYear);
-            // If categories exist
-            if (mData && Array.isArray(mData.categories)) {
-                // Target category
-                const catId = batchBillCategoryId || mData.categories[0]?.id;
-                // Add expense
-                const updatedCategories = mData.categories.map(cat => {
-                    // Match target category
-                    if (cat.id === catId) {
-                        // Return category with appended new bill
-                        return {
-                            // Spread category
-                            ...cat,
-                            // Append new expense item
-                            expenses: [
-                                // Existing expenses
-                                ...cat.expenses,
-                                // New expense object
-                                {
-                                    // Unique ID
-                                    id: Math.random().toString(36).substr(2, 9),
-                                    // Name
-                                    name: batchBillName.trim(),
-                                    // Amount
-                                    amount: amt,
-                                    // Payment day
-                                    paymentDay: 1,
-                                    // Recurring flag
-                                    isRecurring: true,
-                                // End of new expense object
-                                },
-                            // End of expenses list
-                            ],
-                        // End of category object
-                        };
-                    // End of target category check
-                    }
-                    // Return unmodified category
-                    return cat;
-                // End of category mapping
-                });
-                // Assign updated month
-                batchPayload[key] = { ...mData, categories: updatedCategories };
-            // End of categories check
-            }
-        // End of selected batch loop
-        }
-        // Save to simulation state
-        saveSimulationState(batchPayload);
-        // Success toast
-        addToast(`Added bill across ${selectedBatchKeys.length} simulation months!`, 'success');
-        // Reset inputs
-        setBatchBillName('');
-        // Reset amount
-        setBatchBillAmount('');
-    // End of handleApplyBatchAddBill definition
-    };
-
-    // Batch Action 4: Distribute installment purchase across selected months
-    const handleApplyBatchInstallment = async () => {
-        // Validate inputs
-        if (selectedBatchKeys.length === 0 || !instName.trim()) {
-            addToast("Please select months and enter an installment item name.", "error");
-            return;
-        }
-        // Parse principal
-        const principal = parseFloat(instTotal);
-        if (isNaN(principal) || principal <= 0) {
-            addToast("Please enter a valid purchase price.", "error");
-            return;
-        }
-        // Parse terms count
-        const terms = parseInt(instTerms, 10);
-        if (isNaN(terms) || terms <= 0) {
-            addToast("Please enter a valid number of installments.", "error");
-            return;
-        }
-        // Parse APR
-        const apr = parseFloat(instApr) || 0;
-        // Compute monthly payment
-        const monthlyPayment = calculateInstallmentMonthly(principal, terms, apr);
-        // Payload accumulator
-        const batchPayload: Record<string, MonthData> = {};
-        // Take up to `terms` months from the selected keys list
-        const applicableKeys = selectedBatchKeys.slice(0, terms);
-
-        // Iterate applicable keys
-        applicableKeys.forEach((key, idx) => {
-            // Retrieve sequence item
-            const item = horizonSequence.find(seq => seq.key === key);
-            // Month index
-            const mMonth = item ? item.month : startMonth;
-            // Year
-            const mYear = item ? item.year : startYear;
-            // Retrieve simulated month data
-            const mData = getSimulatedMonthData(key, mMonth, mYear);
-            // If categories exist
-            if (mData && Array.isArray(mData.categories)) {
-                // Category identifier
-                const catId = instCategoryId || mData.categories[0]?.id;
-                // Construct installment expense item
-                const instExpense: Expense = {
-                    // Unique ID
-                    id: Math.random().toString(36).substr(2, 9),
-                    // Formatted name with installment index
-                    name: `${instName.trim()} (${idx + 1}/${terms})`,
-                    // Monthly payment
-                    amount: monthlyPayment,
-                    // Payment day
-                    paymentDay: 1,
-                    // Recurring flag
-                    isRecurring: true,
-                    // Installment flag
-                    isInstallment: true,
-                    // Total principal
-                    totalAmount: principal,
-                    // Total installment count
-                    totalInstallments: terms,
-                    // Remaining count
-                    remainingInstallments: terms - idx,
-                    // Interest rate
-                    annualInterestRate: apr,
-                // End of installment expense
-                };
-                // Update categories
-                const updatedCategories = mData.categories.map(cat => {
-                    // Match category
-                    if (cat.id === catId) {
-                        // Return category with added installment expense
-                        return { ...cat, expenses: [...cat.expenses, instExpense] };
-                    // End of match
-                    }
-                    // Return unmodified category
-                    return cat;
-                // End of category mapping
-                });
-                // Assign updated month
-                batchPayload[key] = { ...mData, categories: updatedCategories };
-            // End of categories check
-            }
-        // End of applicable keys loop
-        });
-        // Save to simulation state
-        saveSimulationState(batchPayload);
-        // Success toast
-        addToast(`Distributed installments across ${applicableKeys.length} simulation months!`, 'success');
-        // Reset inputs
-        setInstName('');
-        // Reset principal
-        setInstTotal('');
-    // End of handleApplyBatchInstallment definition
+        // Source month label
+        const sourceLabel = sourceItem ? sourceItem.label : copySourceKey;
+        // Show success notification
+        addToast(`Copied ${sourceLabel} data to ${selectedBatchKeys.length} target months!`, 'success');
+    // End handleExecuteCopyData definition
     };
 
     // Render component JSX markup
@@ -1122,6 +1077,10 @@ export default function HorizonPlanner() {
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                     Out: {formatCurrency(expTotal)}
                                 </div>
+                                {/* Projected total savings */}
+                                <div style={{ fontSize: '0.75rem', color: '#b388ff', fontWeight: 600 }}>
+                                    Savings: {formatCurrency(timelineSavingsMap[item.key] ?? (totalSavings || 0))}
+                                </div>
                                 {/* Net savings badge */}
                                 <div className={`${styles.pillSavingsBadge} ${net >= 0 ? styles.positiveValue : styles.negativeValue}`}>
                                     Net: {formatCurrency(net)}
@@ -1146,561 +1105,862 @@ export default function HorizonPlanner() {
                                 Inspecting & Editing: {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}
                             </span>
                         </div>
-                        {/* Simulation indicator badge */}
-                        <span style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(124, 77, 255, 0.15)', color: '#b388ff', border: '1px solid rgba(124, 77, 255, 0.3)' }}>
-                            🧪 Simulation Mode
+                        {/* Simulation indicator or read-only baseline badge */}
+                        <span
+                            style={{
+                                fontSize: '0.78rem',
+                                padding: '0.25rem 0.6rem',
+                                borderRadius: '4px',
+                                background: isBaseMonth ? 'rgba(255, 171, 0, 0.15)' : 'rgba(124, 77, 255, 0.15)',
+                                color: isBaseMonth ? '#FFAB00' : '#b388ff',
+                                border: isBaseMonth ? '1px solid rgba(255, 171, 0, 0.3)' : '1px solid rgba(124, 77, 255, 0.3)'
+                            }}
+                        >
+                            {isBaseMonth ? '📌 Starting Month (Read-Only Baseline)' : '🧪 Simulation Mode'}
                         </span>
                     </div>
 
-                    {/* Core monthly metrics editing form */}
-                    <div className={styles.formGrid}>
-                        {/* Income field */}
-                        <div className={styles.formGroup}>
-                            {/* Label */}
-                            <label className={styles.label}>Monthly Income</label>
-                            {/* Input */}
-                            <input
-                                type="number"
-                                className={styles.input}
-                                value={activeMonthData.income || ''}
-                                onChange={(e) => handleUpdateSingleMonthField('income', e.target.value)}
-                            />
-                        </div>
-
-                        {/* Monthly savings contribution */}
-                        <div className={styles.formGroup}>
-                            {/* Label */}
-                            <label className={styles.label}>Monthly Savings Contribution</label>
-                            {/* Input */}
-                            <input
-                                type="number"
-                                className={styles.input}
-                                value={activeMonthData.monthlySavingsDeposit || ''}
-                                onChange={(e) => handleUpdateSingleMonthField('monthlySavingsDeposit', e.target.value)}
-                            />
-                        </div>
-
-                        {/* Monthly spending budget limit */}
-                        <div className={styles.formGroup}>
-                            {/* Label */}
-                            <label className={styles.label}>Total Spending Budget Limit</label>
-                            {/* Input */}
-                            <input
-                                type="number"
-                                className={styles.input}
-                                value={activeMonthData.monthlyBudget || ''}
-                                onChange={(e) => handleUpdateSingleMonthField('monthlyBudget', e.target.value)}
-                            />
-                        </div>
-
-                        {/* Net projected result box */}
-                        <div className={styles.formGroup} style={{ justifyContent: 'center' }}>
-                            {/* Label */}
-                            <span className={styles.label}>Net Balance:</span>
-                            {/* Metric */}
-                            <span style={{ fontSize: '1.05rem', fontWeight: 700, color: inspectedMetrics.netSavings >= 0 ? '#00E676' : '#FF5252' }}>
-                                {formatCurrency(inspectedMetrics.netSavings)}
+                    {/* Read-only base month notification banner */}
+                    {isBaseMonth && (
+                        <div
+                            style={{
+                                padding: '0.6rem 0.85rem',
+                                marginBottom: '1rem',
+                                borderRadius: '6px',
+                                background: 'rgba(255, 171, 0, 0.1)',
+                                border: '1px solid rgba(255, 171, 0, 0.25)',
+                                color: '#FFD54F',
+                                fontSize: '0.82rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            {/* Banner icon */}
+                            <span>ℹ️</span>
+                            {/* Banner message text */}
+                            <span>
+                                This is the starting month of your planning horizon. It serves as your fixed baseline and cannot be modified within the simulation.
                             </span>
+                        </div>
+                    )}
+
+                    {/* Financial Statistics Overview Grid */}
+                    <div className={styles.statsGrid}>
+                        {/* Stat Card 1: Money Spent */}
+                        <div className={styles.statCard}>
+                            {/* Card Header */}
+                            <div className={styles.statHeader}>
+                                {/* Header label */}
+                                <span>💳 Money Spent</span>
+                                {/* Check if budget limit is configured */}
+                                {activeMonthData.monthlyBudget && activeMonthData.monthlyBudget > 0 ? (
+                                    <span
+                                        className={styles.statBadge}
+                                        style={{
+                                            background: inspectedMetrics.budgetUsagePercent <= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 82, 82, 0.15)',
+                                            color: inspectedMetrics.budgetUsagePercent <= 100 ? '#00E676' : '#FF5252'
+                                        }}
+                                    >
+                                        {/* Budget percentage text */}
+                                        {inspectedMetrics.budgetUsagePercent}% of budget
+                                    </span>
+                                ) : null}
+                            </div>
+                            {/* Value display */}
+                            <div className={styles.statValue}>
+                                {formatCurrency(inspectedMetrics.totalExpenses)}
+                            </div>
+                            {/* Subtext description */}
+                            <div className={styles.statSubtext}>
+                                {/* Check if budget is active */}
+                                {activeMonthData.monthlyBudget && activeMonthData.monthlyBudget > 0 ? (
+                                    <span>
+                                        {/* Remaining or over budget text */}
+                                        {formatCurrency(Math.abs(inspectedMetrics.budgetRemaining))} {inspectedMetrics.budgetRemaining >= 0 ? 'remaining of' : 'over'} {formatCurrency(activeMonthData.monthlyBudget)}
+                                    </span>
+                                ) : (
+                                    <span>
+                                        {/* Total expenses label */}
+                                        Total expenses across categories
+                                    </span>
+                                )}
+                            </div>
+                            {/* Progress bar when budget is configured */}
+                            {activeMonthData.monthlyBudget && activeMonthData.monthlyBudget > 0 ? (
+                                <div className={styles.statProgressBar}>
+                                    <div
+                                        className={styles.statProgressFill}
+                                        style={{
+                                            width: `${Math.min(inspectedMetrics.budgetUsagePercent, 100)}%`,
+                                            background: inspectedMetrics.budgetUsagePercent <= 100 ? '#2196F3' : '#FF5252'
+                                        }}
+                                    />
+                                </div>
+                            ) : null}
+                        </div>
+
+                        {/* Stat Card 2: Monthly Savings */}
+                        <div className={styles.statCard}>
+                            {/* Card Header */}
+                            <div className={styles.statHeader}>
+                                {/* Header label */}
+                                <span>📥 Monthly Savings</span>
+                                {/* Savings rate badge */}
+                                <span
+                                    className={styles.statBadge}
+                                    style={{
+                                        background: 'rgba(33, 150, 243, 0.15)',
+                                        color: '#64B5F6'
+                                    }}
+                                >
+                                    {/* Savings rate percentage */}
+                                    {inspectedMetrics.savingsRate}% saved
+                                </span>
+                            </div>
+                            {/* Value display */}
+                            <div className={styles.statValue}>
+                                {formatCurrency(inspectedMetrics.savingsDeposit)}
+                            </div>
+                            {/* Subtext description */}
+                            <div className={styles.statSubtext}>
+                                <span>
+                                    {/* Allocation description */}
+                                    Allocated from {formatCurrency(activeMonthData.income || 0)} income
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Stat Card 3: Projected Total Savings */}
+                        <div className={styles.statCard}>
+                            {/* Card Header */}
+                            <div className={styles.statHeader}>
+                                {/* Header label */}
+                                <span>🏦 Total Savings</span>
+                                {/* Check if target savings goal is set */}
+                                {savingsGoal && savingsGoal > 0 ? (
+                                    <span
+                                        className={styles.statBadge}
+                                        style={{
+                                            background: inspectedMetrics.savingsGoalPercentage >= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(124, 77, 255, 0.15)',
+                                            color: inspectedMetrics.savingsGoalPercentage >= 100 ? '#00E676' : '#b388ff'
+                                        }}
+                                    >
+                                        {/* Savings goal progress percentage text */}
+                                        {inspectedMetrics.savingsGoalPercentage}% goal
+                                    </span>
+                                ) : null}
+                            </div>
+                            {/* Value display */}
+                            <div className={styles.statValue}>
+                                {formatCurrency(inspectedMetrics.projectedTotalSavings)}
+                            </div>
+                            {/* Subtext description */}
+                            <div className={styles.statSubtext}>
+                                {/* Check if savings goal exists */}
+                                {savingsGoal && savingsGoal > 0 ? (
+                                    <span>
+                                        {/* Goal amount label */}
+                                        Goal: {formatCurrency(savingsGoal)}
+                                    </span>
+                                ) : inspectedMetrics.cumulativeDeposits > 0 ? (
+                                    <span>
+                                        {/* Accumulated deposits label */}
+                                        +{formatCurrency(inspectedMetrics.cumulativeDeposits)} accumulated
+                                    </span>
+                                ) : (
+                                    <span>
+                                        {/* Baseline balance label */}
+                                        Starting baseline balance
+                                    </span>
+                                )}
+                            </div>
+                            {/* Goal progress bar */}
+                            {savingsGoal && savingsGoal > 0 ? (
+                                <div className={styles.statProgressBar}>
+                                    <div
+                                        className={styles.statProgressFill}
+                                        style={{
+                                            width: `${Math.min(inspectedMetrics.savingsGoalPercentage, 100)}%`,
+                                            background: inspectedMetrics.savingsGoalPercentage >= 100 ? '#00E676' : '#b388ff'
+                                        }}
+                                    />
+                                </div>
+                            ) : null}
+                        </div>
+
+                        {/* Stat Card 4: Net Free Cash */}
+                        <div className={styles.statCard}>
+                            {/* Card Header */}
+                            <div className={styles.statHeader}>
+                                {/* Header label */}
+                                <span>💵 Net Free Cash</span>
+                                {/* Status badge */}
+                                <span
+                                    className={styles.statBadge}
+                                    style={{
+                                        background: inspectedMetrics.netFreeCash >= 0 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 82, 82, 0.15)',
+                                        color: inspectedMetrics.netFreeCash >= 0 ? '#00E676' : '#FF5252'
+                                    }}
+                                >
+                                    {inspectedMetrics.netFreeCash >= 0 ? 'Surplus' : 'Deficit'}
+                                </span>
+                            </div>
+                            {/* Value display with dynamic color */}
+                            <div
+                                className={styles.statValue}
+                                style={{
+                                    color: inspectedMetrics.netFreeCash >= 0 ? '#00E676' : '#FF5252'
+                                }}
+                            >
+                                {formatCurrency(inspectedMetrics.netFreeCash)}
+                            </div>
+                            {/* Subtext description */}
+                            <div className={styles.statSubtext}>
+                                <span>Income − Expenses − Savings</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Parameter Adjustment Inputs Subsection */}
+                    <div style={{ marginBottom: '0.85rem' }}>
+                        {/* Section header */}
+                        <span className={styles.label} style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+                            ⚙️ Adjust Monthly Parameters (Simulation Only)
+                        </span>
+                        {/* Form grid */}
+                        <div className={styles.formGrid}>
+                            {/* Income field */}
+                            <div className={styles.formGroup}>
+                                {/* Label */}
+                                <label className={styles.label}>Monthly Income</label>
+                                {/* Input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    value={activeMonthData.income || ''}
+                                    onChange={(e) => handleUpdateSingleMonthField('income', e.target.value)}
+                                    disabled={isBaseMonth}
+                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                                />
+                            </div>
+
+                            {/* Monthly savings contribution */}
+                            <div className={styles.formGroup}>
+                                {/* Label */}
+                                <label className={styles.label}>Monthly Savings Contribution</label>
+                                {/* Input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    value={activeMonthData.monthlySavingsDeposit || ''}
+                                    onChange={(e) => handleUpdateSingleMonthField('monthlySavingsDeposit', e.target.value)}
+                                    disabled={isBaseMonth}
+                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                                />
+                            </div>
+
+                            {/* Monthly spending budget limit */}
+                            <div className={styles.formGroup}>
+                                {/* Label */}
+                                <label className={styles.label}>Total Spending Budget Limit</label>
+                                {/* Input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    value={activeMonthData.monthlyBudget || ''}
+                                    onChange={(e) => handleUpdateSingleMonthField('monthlyBudget', e.target.value)}
+                                    disabled={isBaseMonth}
+                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Quick Add Expense to this month */}
-                    <div style={{ marginTop: '0.75rem', marginBottom: '1rem', padding: '0.65rem 0.75rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                        {/* Section label */}
-                        <span className={styles.label} style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
-                            + Add Expense to this Month
+                    {!isBaseMonth && (
+                        <div style={{ marginTop: '0.75rem', marginBottom: '1rem', padding: '0.65rem 0.75rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
+                            {/* Section label */}
+                            <span className={styles.label} style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
+                                + Add Expense to this Month
+                            </span>
+                            {/* Inline grid */}
+                            <div className={styles.formGrid}>
+                                {/* Name input */}
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="Expense Name (e.g. Electricity)"
+                                    value={singleExpName}
+                                    onChange={(e) => setSingleExpName(e.target.value)}
+                                />
+                                {/* Amount input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    placeholder="Amount"
+                                    value={singleExpAmount}
+                                    onChange={(e) => setSingleExpAmount(e.target.value)}
+                                />
+                                {/* Category selector */}
+                                <select
+                                    className={styles.select}
+                                    value={singleExpCatId}
+                                    onChange={(e) => setSingleExpCatId(e.target.value)}
+                                >
+                                    {activeMonthData.categories.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                                {/* Add button */}
+                                <button
+                                    type="button"
+                                    className={styles.secondaryButton}
+                                    onClick={handleAddSingleExpense}
+                                >
+                                    + Add Expense
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Categories and Expenses Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                        {/* Section Title */}
+                        <span className={styles.label} style={{ fontWeight: 600 }}>
+                            📁 Categories & Expenses Breakdown
                         </span>
-                        {/* Inline grid */}
-                        <div className={styles.formGrid}>
-                            {/* Name input */}
-                            <input
-                                type="text"
-                                className={styles.input}
-                                placeholder="Expense Name (e.g. Electricity)"
-                                value={singleExpName}
-                                onChange={(e) => setSingleExpName(e.target.value)}
-                            />
-                            {/* Amount input */}
-                            <input
-                                type="number"
-                                className={styles.input}
-                                placeholder="Amount"
-                                value={singleExpAmount}
-                                onChange={(e) => setSingleExpAmount(e.target.value)}
-                            />
-                            {/* Category selector */}
-                            <select
-                                className={styles.select}
-                                value={singleExpCatId}
-                                onChange={(e) => setSingleExpCatId(e.target.value)}
-                            >
-                                {activeMonthData.categories.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
-                            </select>
-                            {/* Add button */}
+                        {/* Add Category button when not base month */}
+                        {!isBaseMonth && (
                             <button
                                 type="button"
                                 className={styles.secondaryButton}
-                                onClick={handleAddSingleExpense}
+                                style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem' }}
+                                onClick={() => setIsAddingCategory(prev => !prev)}
                             >
-                                + Add Expense
+                                {isAddingCategory ? '✕ Cancel' : '+ Add Category'}
                             </button>
-                        </div>
+                        )}
                     </div>
+
+                    {/* Inline Add Category Form */}
+                    {!isBaseMonth && isAddingCategory && (
+                        <div className={styles.categoryFormBox}>
+                            {/* Form Title */}
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                                New Category
+                            </span>
+                            {/* Inputs row */}
+                            <div className={styles.formGrid}>
+                                {/* Name Input */}
+                                <input
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="Category Name"
+                                    value={newCatName}
+                                    onChange={(e) => setNewCatName(e.target.value)}
+                                />
+                                {/* Budget Input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    placeholder="Budget Limit (Optional)"
+                                    value={newCatBudget}
+                                    onChange={(e) => setNewCatBudget(e.target.value)}
+                                />
+                            </div>
+                            {/* Color Selector Row */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                {/* Label */}
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Color:</span>
+                                {/* Palette */}
+                                <div className={styles.colorPalette}>
+                                    {COLOR_PRESETS.map(color => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            className={`${styles.colorSwatch} ${newCatColor === color ? styles.colorSwatchActive : ''}`}
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => setNewCatColor(color)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            {/* Action Buttons */}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                {/* Cancel Button */}
+                                <button
+                                    type="button"
+                                    className={styles.secondaryButton}
+                                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                                    onClick={() => {
+                                        setIsAddingCategory(false);
+                                        setNewCatName('');
+                                        setNewCatBudget('');
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                {/* Create Category Button */}
+                                <button
+                                    type="button"
+                                    className={styles.primaryButton}
+                                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                                    onClick={handleAddSingleCategory}
+                                >
+                                    Save Category
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Category and expenses breakdown list */}
                     <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
                         {/* Map categories */}
                         {activeMonthData.categories.map(cat => (
                             <div key={cat.id} className={styles.categoryBlock}>
-                                {/* Category title row */}
+                                {/* Category title and action row */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    {/* Name and dot */}
+                                    {/* Name, dot, and edit/delete actions */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                         {/* Color dot */}
                                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }} />
                                         {/* Name */}
                                         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{cat.name}</span>
+                                        {/* Category actions for non-base months */}
+                                        {!isBaseMonth && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                                                {/* Edit Category Button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.iconButton}
+                                                    title="Edit category"
+                                                    onClick={() => handleStartEditCategory(cat)}
+                                                >
+                                                    ✎
+                                                </button>
+                                                {/* Delete Category Button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.iconButton}
+                                                    title="Delete category"
+                                                    onClick={() => handleDeleteSingleCategory(cat.id)}
+                                                >
+                                                    🗑
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     {/* Category total */}
                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                        {formatCurrency(cat.expenses.reduce((s, e) => s + (e.amount || 0), 0))}
+                                        {formatCurrency((cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}
                                     </span>
                                 </div>
 
+                                {/* Inline Edit Form when editing this category */}
+                                {!isBaseMonth && editingCatId === cat.id && (
+                                    <div className={styles.categoryFormBox} style={{ marginTop: '0.5rem' }}>
+                                        {/* Inputs row */}
+                                        <div className={styles.formGrid}>
+                                            {/* Name Input */}
+                                            <input
+                                                type="text"
+                                                className={styles.input}
+                                                placeholder="Category Name"
+                                                value={editCatName}
+                                                onChange={(e) => setEditCatName(e.target.value)}
+                                            />
+                                            {/* Budget Input */}
+                                            <input
+                                                type="number"
+                                                className={styles.input}
+                                                placeholder="Budget Limit (Optional)"
+                                                value={editCatBudget}
+                                                onChange={(e) => setEditCatBudget(e.target.value)}
+                                            />
+                                        </div>
+                                        {/* Color Selector Row */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {/* Label */}
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Color:</span>
+                                            {/* Palette */}
+                                            <div className={styles.colorPalette}>
+                                                {COLOR_PRESETS.map(color => (
+                                                    <button
+                                                        key={color}
+                                                        type="button"
+                                                        className={`${styles.colorSwatch} ${editCatColor === color ? styles.colorSwatchActive : ''}`}
+                                                        style={{ backgroundColor: color }}
+                                                        onClick={() => setEditCatColor(color)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {/* Action Buttons */}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
+                                            {/* Cancel Button */}
+                                            <button
+                                                type="button"
+                                                className={styles.secondaryButton}
+                                                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                                                onClick={() => setEditingCatId(null)}
+                                            >
+                                                Cancel
+                                            </button>
+                                            {/* Save Button */}
+                                            <button
+                                                type="button"
+                                                className={styles.primaryButton}
+                                                style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
+                                                onClick={() => handleSaveEditCategory(cat.id)}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Category expenses list */}
-                                {cat.expenses.map(exp => (
+                                {(cat.expenses || []).map(exp => (
                                     <div key={exp.id} className={styles.expenseRow}>
                                         {/* Expense title */}
                                         <span style={{ fontSize: '0.82rem' }}>{exp.name}</span>
                                         {/* Amount and delete */}
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                            {/* Amount input */}
-                                            <input
-                                                type="number"
-                                                className={styles.inlineInput}
-                                                value={exp.amount}
-                                                onChange={(e) => handleUpdateSingleExpenseAmount(cat.id, exp.id, e.target.value)}
-                                            />
-                                            {/* Delete button */}
-                                            <button
-                                                type="button"
-                                                className={styles.dangerButton}
-                                                onClick={() => handleDeleteSingleExpense(cat.id, exp.id)}
-                                                title="Delete expense from this month"
-                                            >
-                                                ✕
-                                            </button>
+                                            {/* Amount display or input */}
+                                            {isBaseMonth ? (
+                                                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                                                    {formatCurrency(exp.amount)}
+                                                </span>
+                                            ) : (
+                                                <input
+                                                    type="number"
+                                                    className={styles.inlineInput}
+                                                    value={exp.amount}
+                                                    onChange={(e) => handleUpdateSingleExpenseAmount(cat.id, exp.id, e.target.value)}
+                                                />
+                                            )}
+                                            {/* Delete button only if not base month */}
+                                            {!isBaseMonth && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.dangerButton}
+                                                    onClick={() => handleDeleteSingleExpense(cat.id, exp.id)}
+                                                    title="Delete expense from this month"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
+
+                                {/* Empty state if no expenses in category */}
+                                {(!cat.expenses || cat.expenses.length === 0) && (
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.25rem 0' }}>
+                                        No expenses in this category
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* Mass Selection & Batch Data Change Tool Card */}
+            {/* Multi-Month Data Copy Tool Card */}
             <div className={styles.panelCard}>
                 {/* Header */}
                 <div className={styles.cardHeader}>
                     {/* Title */}
                     <div className={styles.cardTitle}>
-                        {/* Lightning bolt icon */}
-                        <span>⚡</span>
+                        {/* Copy icon */}
+                        <span>📋</span>
                         {/* Text */}
-                        <span>Mass Data Change Tool ({selectedBatchKeys.length} Months Selected)</span>
+                        <span>Month Data Copy Tool</span>
                     </div>
-                    {/* Select All and Deselect All buttons */}
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        {/* Select All */}
-                        <button
-                            type="button"
-                            className={styles.secondaryButton}
-                            onClick={handleSelectAllBatch}
-                        >
-                            Select All
-                        </button>
-                        {/* Deselect All */}
-                        <button
-                            type="button"
-                            className={styles.secondaryButton}
-                            onClick={handleDeselectAllBatch}
-                        >
-                            Clear Selection
-                        </button>
-                    </div>
+                    {/* Target count badge */}
+                    <span style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', borderRadius: '4px', background: 'rgba(33, 150, 243, 0.15)', color: '#64B5F6', border: '1px solid rgba(33, 150, 243, 0.3)' }}>
+                        {selectedBatchKeys.length} Target Months Selected
+                    </span>
                 </div>
 
-                {/* Checkbox bar for months selection */}
-                <div className={styles.checkboxBar}>
-                    {/* Map horizon sequence */}
-                    {horizonSequence.map(item => {
-                        // Check if selected
-                        const isChecked = selectedBatchKeys.includes(item.key);
-                        // Return chip
+                {/* Instructional subtitle */}
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '1rem' }}>
+                    Select a base month to copy from, choose which data fields to replicate, and apply the changes across your chosen target months.
+                </span>
+
+                {/* Step 1: Base Month Selection Container */}
+                <div style={{ marginBottom: '1.25rem', padding: '0.85rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    {/* Step 1 Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        {/* Label */}
+                        <span className={styles.label} style={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                            Step 1: Select Source Base Month (Copy From)
+                        </span>
+                        {/* Selected source label badge */}
+                        <span style={{ fontSize: '0.75rem', color: '#64B5F6', fontWeight: 600 }}>
+                            Source: {horizonSequence.find(i => i.key === copySourceKey)?.label || copySourceKey}
+                        </span>
+                    </div>
+
+                    {/* Source Month Select Dropdown */}
+                    <select
+                        className={styles.select}
+                        value={copySourceKey}
+                        onChange={(e) => setCopySourceKey(e.target.value)}
+                        style={{ width: '100%', marginBottom: '0.5rem' }}
+                    >
+                        {/* Map horizon months for source selection */}
+                        {horizonSequence.map(item => (
+                            <option key={item.key} value={item.key}>
+                                {item.label} {item.key === firstMonthKey ? '(Starting Baseline)' : ''}
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* Source Month Metrics Preview */}
+                    {(() => {
+                        // Find source sequence item
+                        const sItem = horizonSequence.find(i => i.key === copySourceKey);
+                        // Source month index
+                        const sM = sItem ? sItem.month : startMonth;
+                        // Source year
+                        const sY = sItem ? sItem.year : startYear;
+                        // Retrieve source month simulation data
+                        const sData = getSimulatedMonthData(copySourceKey, sM, sY);
+                        // Guard check
+                        if (!sData) return null;
+                        // Calculate total expenses for source month
+                        const sExpTotal = (sData.categories || []).reduce((sum, c) => sum + (c.expenses || []).reduce((s, e) => s + (e.amount || 0), 0), 0);
+                        // Return summary preview row
                         return (
-                            <label key={item.key} className={styles.checkboxChip}>
-                                {/* Input */}
-                                <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() => toggleBatchKey(item.key)}
-                                />
-                                {/* Label */}
-                                <span>{item.label}</span>
-                            </label>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.03)', padding: '0.45rem 0.65rem', borderRadius: '4px' }}>
+                                {/* Income preview */}
+                                <span>💰 Income: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(sData.income || 0)}</strong></span>
+                                {/* Savings contribution preview */}
+                                <span>📥 Savings Deposit: <strong style={{ color: '#b388ff' }}>{formatCurrency(sData.monthlySavingsDeposit || 0)}</strong></span>
+                                {/* Budget limit preview */}
+                                <span>🎯 Spending Budget: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(sData.monthlyBudget || 0)}</strong></span>
+                                {/* Total expenses preview */}
+                                <span>💳 Total Expenses: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(sExpTotal)}</strong></span>
+                                {/* Category count preview */}
+                                <span>📁 Categories: <strong style={{ color: 'var(--text-primary)' }}>{(sData.categories || []).length}</strong></span>
+                            </div>
                         );
-                    })}
+                    })()}
                 </div>
 
-                {/* Batch operation tabs */}
-                <div className={styles.batchTabs}>
-                    {/* Tab 1: Income and Savings */}
-                    <button
-                        type="button"
-                        className={`${styles.batchTabBtn} ${batchTab === 'savings_income' ? styles.batchTabBtnActive : ''}`}
-                        onClick={() => setBatchTab('savings_income')}
-                    >
-                        💰 Income & Savings
-                    </button>
-
-                    {/* Tab 2: Update or Delete Expense */}
-                    <button
-                        type="button"
-                        className={`${styles.batchTabBtn} ${batchTab === 'update_expense' ? styles.batchTabBtnActive : ''}`}
-                        onClick={() => setBatchTab('update_expense')}
-                    >
-                        🔄 Update or Delete Expense (e.g. Gym, Rent)
-                    </button>
-
-                    {/* Tab 3: Add Bill */}
-                    <button
-                        type="button"
-                        className={`${styles.batchTabBtn} ${batchTab === 'add_expense' ? styles.batchTabBtnActive : ''}`}
-                        onClick={() => setBatchTab('add_expense')}
-                    >
-                        ➕ Add Recurring Bill (e.g. Electricity)
-                    </button>
-
-                    {/* Tab 4: Installments */}
-                    <button
-                        type="button"
-                        className={`${styles.batchTabBtn} ${batchTab === 'installments' ? styles.batchTabBtnActive : ''}`}
-                        onClick={() => setBatchTab('installments')}
-                    >
-                        🛋️ Distribute Installments (Financed Purchase)
-                    </button>
-                </div>
-
-                {/* Batch Tab 1: Income & Savings */}
-                {batchTab === 'savings_income' && (
-                    <div>
-                        {/* Instructions */}
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.65rem' }}>
-                            Update your income, monthly savings contribution, or total spending budget across all {selectedBatchKeys.length} selected months simultaneously. Leave any field blank to keep its existing values.
-                        </span>
-                        {/* Form grid */}
-                        <div className={styles.formGrid}>
-                            {/* Income */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>New Monthly Income</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="Leave empty to keep"
-                                    value={batchIncomeInput}
-                                    onChange={(e) => setBatchIncomeInput(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Monthly savings deposit */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>New Monthly Savings Contribution</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="Leave empty to keep"
-                                    value={batchSavingsInput}
-                                    onChange={(e) => setBatchSavingsInput(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Monthly budget */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>New Monthly Spending Budget</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="Leave empty to keep"
-                                    value={batchBudgetInput}
-                                    onChange={(e) => setBatchBudgetInput(e.target.value)}
-                                />
-                            </div>
+                {/* Step 2: Select Target Months (Copy To) */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                    {/* Header container for Step 2 */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        {/* Title container */}
+                        <div>
+                            {/* Step 2 heading */}
+                            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>
+                                {/* Title text */}
+                                Step 2: Select Target Months (Copy To)
+                            </span>
+                            {/* Step 2 subtitle */}
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                {/* Subtitle text */}
+                                Choose the future horizon months that will receive data from the selected source.
+                            </span>
                         </div>
-
-                        {/* Apply button */}
-                        {/* Apply button */}
-                        <button
-                            type="button"
-                            className={styles.primaryButton}
-                            onClick={handleApplyBatchSavingsIncome}
-                        >
-                            {/* Button label */}
-                            Apply to {selectedBatchKeys.length} Selected Months
-                        </button>
+                        {/* Quick selection action buttons */}
+                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                            {/* Select all eligible target months button */}
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                                onClick={handleSelectAllBatch}
+                            >
+                                {/* Button label */}
+                                Select All Future
+                            </button>
+                            {/* Clear target months selection button */}
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                                onClick={handleDeselectAllBatch}
+                            >
+                                {/* Button label */}
+                                Clear Selection
+                            </button>
+                            {/* Selection count badge */}
+                            <span style={{ fontSize: '0.75rem', color: '#64B5F6', fontWeight: 600, marginLeft: '0.25rem' }}>
+                                {/* Count display */}
+                                {selectedBatchKeys.length} selected
+                            </span>
+                        </div>
                     </div>
-                )}
 
-                {/* Batch Tab 2: Update or Delete Expense (Gym, Rent, etc.) */}
-                {batchTab === 'update_expense' && (
-                    <div>
-                        {/* Instructions */}
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.65rem' }}>
-                            Pick an expense (such as your Gym membership or Rent). You can set its value once for all selected months, or remove it entirely (e.g. to stop gym billing after 2 months).
-                        </span>
-                        {/* Form grid */}
-                        <div className={styles.formGrid}>
-                            {/* Target expense select */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Choose Expense</label>
-                                {/* Select control */}
-                                <select
-                                    className={styles.select}
-                                    value={batchTargetExpense}
-                                    onChange={(e) => setBatchTargetExpense(e.target.value)}
+                    {/* Target months selector bar */}
+                    <div className={styles.checkboxBar}>
+                        {/* Iterate over horizon sequence to render target selection chips */}
+                        {horizonSequence.map(item => {
+                            // Flag if item is base starting month
+                            const isBase = item.key === firstMonthKey;
+                            // Flag if item is the selected copy source
+                            const isSource = item.key === copySourceKey;
+                            // Flag if item is selected as target
+                            const isSelected = selectedBatchKeys.includes(item.key);
+
+                            // Render disabled badge for base starting month
+                            if (isBase) {
+                                // Return disabled baseline chip
+                                return (
+                                    <span
+                                        key={item.key}
+                                        className={styles.checkboxChip}
+                                        style={{ opacity: 0.5, cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.02)' }}
+                                        title="Base starting month cannot be overwritten"
+                                    >
+                                        {/* Lock icon and label */}
+                                        🔒 {item.label} (Baseline)
+                                    </span>
+                                );
+                            // End base check
+                            }
+
+                            // Render disabled badge for selected copy source month
+                            if (isSource) {
+                                // Return disabled source chip
+                                return (
+                                    <span
+                                        key={item.key}
+                                        className={styles.checkboxChip}
+                                        style={{ opacity: 0.7, cursor: 'not-allowed', background: 'rgba(33, 150, 243, 0.1)', color: '#64B5F6', border: '1px solid rgba(33, 150, 243, 0.3)' }}
+                                        title="Source month cannot copy into itself"
+                                    >
+                                        {/* Pin icon and label */}
+                                        📌 {item.label} (Source)
+                                    </span>
+                                );
+                            // End source check
+                            }
+
+                            // Return selectable target month checkbox chip
+                            return (
+                                <label
+                                    key={item.key}
+                                    className={styles.checkboxChip}
+                                    style={{
+                                        cursor: 'pointer',
+                                        background: isSelected ? 'rgba(33, 150, 243, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                                        border: isSelected ? '1px solid #2196F3' : '1px solid var(--border-color)',
+                                        color: isSelected ? '#ffffff' : 'var(--text-secondary)'
+                                    }}
                                 >
-                                    {/* Default empty option */}
-                                    <option value="">-- Select an Expense --</option>
-                                    {/* Map distinct names */}
-                                    {distinctExpenseNames.map((name, i) => (
-                                        <option key={i} value={name}>{name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Action selector */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Action</label>
-                                {/* Select */}
-                                <select
-                                    className={styles.select}
-                                    value={batchExpenseAction}
-                                    onChange={(e) => setBatchExpenseAction(e.target.value as any)}
-                                >
-                                    <option value="update_amount">Set New Amount</option>
-                                    <option value="remove">Remove / Cancel from Selected Months</option>
-                                </select>
-                            </div>
-
-                            {/* New Amount input */}
-                            {batchExpenseAction === 'update_amount' && (
-                                <div className={styles.formGroup}>
-                                    {/* Label */}
-                                    <label className={styles.label}>New Amount ($)</label>
-                                    {/* Input */}
+                                    {/* Checkbox input */}
                                     <input
-                                        type="number"
-                                        className={styles.input}
-                                        placeholder="e.g. 8500 for new rent"
-                                        value={batchNewAmount}
-                                        onChange={(e) => setBatchNewAmount(e.target.value)}
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => toggleBatchKey(item.key)}
+                                        style={{ accentColor: '#2196F3', cursor: 'pointer' }}
                                     />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Apply button */}
-                        {/* Apply button */}
-                        <button
-                            type="button"
-                            className={styles.primaryButton}
-                            onClick={handleApplyBatchExpenseAction}
-                        >
-                            {/* Button label */}
-                            {batchExpenseAction === 'remove' ? `Delete '${batchTargetExpense || 'Expense'}' from ${selectedBatchKeys.length} Months` : `Update '${batchTargetExpense || 'Expense'}' in ${selectedBatchKeys.length} Months`}
-                        </button>
+                                    {/* Month label */}
+                                    <span>{item.label}</span>
+                                </label>
+                            );
+                        // End horizon sequence map
+                        })}
                     </div>
-                )}
+                </div>
 
-                {/* Batch Tab 3: Add Recurring Bill */}
-                {batchTab === 'add_expense' && (
-                    <div>
-                        {/* Instructions */}
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.65rem' }}>
-                            Add a new expense or utility (e.g. Electricity, Internet) across all {selectedBatchKeys.length} selected months.
+                {/* Step 3: Select What Data to Copy */}
+                <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    {/* Step 3 header */}
+                    <div style={{ marginBottom: '0.65rem' }}>
+                        {/* Step 3 title */}
+                        <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>
+                            {/* Title text */}
+                            Step 3: Select What Data to Copy
                         </span>
-                        {/* Form grid */}
-                        <div className={styles.formGrid}>
-                            {/* Bill name */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Bill Name</label>
-                                {/* Input */}
-                                <input
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="e.g. Electricity"
-                                    value={batchBillName}
-                                    onChange={(e) => setBatchBillName(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Bill amount */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Monthly Amount ($)</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="e.g. 650"
-                                    value={batchBillAmount}
-                                    onChange={(e) => setBatchBillAmount(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Category selector */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Category</label>
-                                {/* Select */}
-                                <select
-                                    className={styles.select}
-                                    value={batchBillCategoryId}
-                                    onChange={(e) => setBatchBillCategoryId(e.target.value)}
-                                >
-                                    {categories.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Apply button */}
-                        {/* Apply button */}
-                        <button
-                            type="button"
-                            className={styles.primaryButton}
-                            onClick={handleApplyBatchAddBill}
-                        >
-                            {/* Button label */}
-                            Add to {selectedBatchKeys.length} Selected Months
-                        </button>
-                    </div>
-                )}
-
-                {/* Batch Tab 4: Distribute Installments */}
-                {batchTab === 'installments' && (
-                    <div>
-                        {/* Instructions */}
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.65rem' }}>
-                            Distribute financed purchase installments (such as furniture) across consecutive selected months. Payment amount is computed automatically with optional APR.
+                        {/* Step 3 subtitle */}
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            {/* Subtitle text */}
+                            Choose which components of the source month data to replicate across target months.
                         </span>
-                        {/* Form grid */}
-                        <div className={styles.formGrid}>
-                            {/* Item name */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Item Name</label>
-                                {/* Input */}
-                                <input
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="e.g. Living Room Sofa"
-                                    value={instName}
-                                    onChange={(e) => setInstName(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Category selector */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Category</label>
-                                {/* Select */}
-                                <select
-                                    className={styles.select}
-                                    value={instCategoryId}
-                                    onChange={(e) => setInstCategoryId(e.target.value)}
-                                >
-                                    {categories.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Purchase total */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Total Price ($)</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="e.g. 1200"
-                                    value={instTotal}
-                                    onChange={(e) => setInstTotal(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Installments count */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Number of Months</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="e.g. 12"
-                                    value={instTerms}
-                                    onChange={(e) => setInstTerms(e.target.value)}
-                                />
-                            </div>
-
-                            {/* APR */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>APR Interest Rate (%)</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    className={styles.input}
-                                    placeholder="0 for interest free"
-                                    value={instApr}
-                                    onChange={(e) => setInstApr(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Live calculation info */}
-                        {parseFloat(instTotal) > 0 && parseInt(instTerms, 10) > 0 && (
-                            <div style={{ marginBottom: '0.85rem', fontSize: '0.85rem', color: '#64B5F6', fontWeight: 600 }}>
-                                Monthly Charge: {formatCurrency(calculateInstallmentMonthly(parseFloat(instTotal), parseInt(instTerms, 10), parseFloat(instApr) || 0))}/month across {Math.min(selectedBatchKeys.length, parseInt(instTerms, 10))} months.
-                            </div>
-                        )}
-
-                        {/* Apply button */}
-                        {/* Apply button */}
-                        <button
-                            type="button"
-                            className={styles.primaryButton}
-                            onClick={handleApplyBatchInstallment}
-                        >
-                            {/* Button label */}
-                            Distribute across Selected Months
-                        </button>
                     </div>
-                )}
+
+                    {/* Scope options container */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {/* Option 1: Income and Savings */}
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.84rem' }}>
+                            {/* Checkbox input */}
+                            <input
+                                type="checkbox"
+                                checked={copyScopeIncomeSavings}
+                                onChange={(e) => setCopyScopeIncomeSavings(e.target.checked)}
+                                style={{ accentColor: '#2196F3', marginTop: '0.15rem', cursor: 'pointer' }}
+                            />
+                            {/* Label text */}
+                            <span>
+                                {/* Parameter bold label */}
+                                <strong style={{ color: 'var(--text-primary)' }}>💰 Monthly Parameters:</strong>
+                                {/* Space separator */}
+                                {' '}
+                                {/* Description */}
+                                <span style={{ color: 'var(--text-secondary)' }}>
+                                    {/* Explanation */}
+                                    Copies monthly income, monthly savings deposit, and overall spending budget ceiling.
+                                </span>
+                            </span>
+                        </label>
+
+                        {/* Option 2: Categories and Expenses */}
+                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.84rem' }}>
+                            {/* Checkbox input */}
+                            <input
+                                type="checkbox"
+                                checked={copyScopeCategories}
+                                onChange={(e) => setCopyScopeCategories(e.target.checked)}
+                                style={{ accentColor: '#2196F3', marginTop: '0.15rem', cursor: 'pointer' }}
+                            />
+                            {/* Label text */}
+                            <span>
+                                {/* Parameter bold label */}
+                                <strong style={{ color: 'var(--text-primary)' }}>📁 Categories & Itemized Expenses:</strong>
+                                {/* Space separator */}
+                                {' '}
+                                {/* Description */}
+                                <span style={{ color: 'var(--text-secondary)' }}>
+                                    {/* Explanation */}
+                                    Clones all budget categories and itemized expense line items (with fresh unique IDs).
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                {/* Step 4: Execute Copy Action */}
+                <div>
+                    {/* Execute copy button */}
+                    <button
+                        type="button"
+                        className={styles.primaryButton}
+                        onClick={handleExecuteCopyData}
+                        disabled={selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            fontSize: '0.92rem',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            opacity: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 0.5 : 1,
+                            cursor: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 'not-allowed' : 'pointer'
+                        }}
+                    >
+                        {/* Button text */}
+                        📋 Copy Data to {selectedBatchKeys.length} Selected Target Month{selectedBatchKeys.length === 1 ? '' : 's'}
+                    </button>
+                </div>
             </div>
         </div>
     );

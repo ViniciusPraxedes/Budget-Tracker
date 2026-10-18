@@ -437,3 +437,209 @@
     /* Right text alignment */
     text-align: right;
 }
+
+/* Responsive statistics grid for inspected month overview */
+.statsGrid {
+    /* Set CSS grid display */
+    display: grid;
+    /* Responsive columns repeat */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    /* Layout spacing gap */
+    gap: 0.75rem;
+    /* Bottom spacing separation */
+    margin-bottom: 1rem;
+}
+
+/* Individual financial statistic card */
+.statCard {
+    /* Semi-transparent dark background */
+    background: rgba(255, 255, 255, 0.035);
+    /* Subtle border outline */
+    border: 1px solid var(--border-color);
+    /* Smooth rounded corners */
+    border-radius: 8px;
+    /* Inner padding layout */
+    padding: 0.75rem 0.9rem;
+    /* Flexbox display */
+    display: flex;
+    /* Flow in column direction */
+    flex-direction: column;
+    /* Internal element spacing gap */
+    gap: 0.25rem;
+    /* Transition animation */
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Header line inside stat card */
+.statHeader {
+    /* Flexbox layout */
+    display: flex;
+    /* Center align vertically */
+    align-items: center;
+    /* Push label and badge to opposite sides */
+    justify-content: space-between;
+    /* Label font size */
+    font-size: 0.75rem;
+    /* Muted secondary text color */
+    color: var(--text-secondary);
+    /* Semi-bold text weight */
+    font-weight: 600;
+    /* Uppercase styling */
+    text-transform: uppercase;
+    /* Letter spacing */
+    letter-spacing: 0.04em;
+}
+
+/* Primary numerical statistic value */
+.statValue {
+    /* Large prominent font size */
+    font-size: 1.25rem;
+    /* Bold font weight */
+    font-weight: 700;
+    /* Crisp white text color */
+    color: var(--text-primary);
+    /* Compact line height */
+    line-height: 1.2;
+}
+
+/* Secondary explanatory subtext */
+.statSubtext {
+    /* Small secondary font size */
+    font-size: 0.75rem;
+    /* Muted text color */
+    color: var(--text-secondary);
+    /* Flex display */
+    display: flex;
+    /* Center align elements */
+    align-items: center;
+    /* Gap between inline elements */
+    gap: 0.35rem;
+    /* Line height */
+    line-height: 1.3;
+}
+
+/* Compact status badge for metrics */
+.statBadge {
+    /* Small badge font size */
+    font-size: 0.7rem;
+    /* Badge inner padding */
+    padding: 0.15rem 0.45rem;
+    /* Rounded pill corners */
+    border-radius: 4px;
+    /* Semi-bold weight */
+    font-weight: 600;
+}
+
+/* Progress track bar for budget and savings goal */
+.statProgressBar {
+    /* Fixed track height */
+    height: 4px;
+    /* Subtle track background */
+    background: rgba(255, 255, 255, 0.08);
+    /* Rounded pill edges */
+    border-radius: 2px;
+    /* Clip overflowing child bar */
+    overflow: hidden;
+    /* Top margin spacing */
+    margin-top: 0.25rem;
+}
+
+/* Animated filled portion of progress track */
+.statProgressFill {
+    /* Match container height */
+    height: 100%;
+    /* Rounded edges */
+    border-radius: 2px;
+    /* Smooth width change animation */
+    transition: width 0.3s ease;
+}
+
+/* Compact icon button for category edit and delete */
+.iconButton {
+    /* Transparent background */
+    background: transparent;
+    /* Border reset */
+    border: none;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Font size */
+    font-size: 0.85rem;
+    /* Secondary text color */
+    color: var(--text-secondary);
+    /* Inner padding */
+    padding: 0.2rem 0.35rem;
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Transition */
+    transition: all 0.2s ease;
+}
+
+/* Hover state for icon button */
+.iconButton:hover {
+    /* Hover background */
+    background: rgba(255, 255, 255, 0.08);
+    /* Crisp white text */
+    color: var(--text-primary);
+}
+
+/* Inline card box for creating or editing categories */
+.categoryFormBox {
+    /* Dark translucent background */
+    background: rgba(0, 0, 0, 0.25);
+    /* Border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded border */
+    border-radius: 6px;
+    /* Inner padding */
+    padding: 0.75rem;
+    /* Bottom margin */
+    margin-bottom: 0.75rem;
+    /* Flexbox display */
+    display: flex;
+    /* Column flow */
+    flex-direction: column;
+    /* Spacing gap */
+    gap: 0.55rem;
+}
+
+/* Palette container for color selection */
+.colorPalette {
+    /* Flexbox display */
+    display: flex;
+    /* Center align */
+    align-items: center;
+    /* Gap between swatches */
+    gap: 0.4rem;
+    /* Wrap if narrow */
+    flex-wrap: wrap;
+}
+
+/* Color swatch button */
+.colorSwatch {
+    /* Fixed circle width */
+    width: 20px;
+    /* Fixed circle height */
+    height: 20px;
+    /* Full circle border radius */
+    border-radius: 50%;
+    /* Reset border */
+    border: 2px solid transparent;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Transition animation */
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* Hover state for color swatch */
+.colorSwatch:hover {
+    /* Scale up slightly */
+    transform: scale(1.15);
+}
+
+/* Selected active color swatch */
+.colorSwatchActive {
+    /* Highlight outline */
+    border-color: #ffffff;
+    /* Scaled up state */
+    transform: scale(1.2);
+}
