@@ -212,6 +212,12 @@
     gap: 0.65rem;
     /* Enable horizontal scrolling */
     overflow-x: auto;
+    /* Momentum scrolling on iOS devices */
+    -webkit-overflow-scrolling: touch;
+    /* CSS scroll snapping */
+    scroll-snap-type: x mandatory;
+    /* Thin scrollbar styling */
+    scrollbar-width: thin;
     /* Top padding */
     padding-top: 0.25rem;
     /* Bottom padding */
@@ -242,6 +248,8 @@
     transition: all 0.2s ease;
     /* Prevent shrinking */
     flex-shrink: 0;
+    /* Snap alignment */
+    scroll-snap-align: start;
 }
 
 /* Month pill hover state */
@@ -642,4 +650,75 @@
     border-color: #ffffff;
     /* Scaled up state */
     transform: scale(1.2);
+}
+
+/* Media query breakpoint for mobile viewport optimization */
+@media (max-width: 600px) {
+    /* Two-column layout for parameter inputs and range settings */
+    .formGrid {
+        /* Set 2 fluid columns */
+        grid-template-columns: repeat(2, 1fr);
+        /* Tighter layout gap */
+        gap: 0.5rem;
+    }
+
+    /* Two-column grid for inspected month financial metrics */
+    .statsGrid {
+        /* Set 2 equal columns */
+        grid-template-columns: repeat(2, 1fr);
+        /* Compact gap */
+        gap: 0.5rem;
+    }
+
+    /* Compact statistic card padding */
+    .statCard {
+        /* Reduced inner padding */
+        padding: 0.6rem 0.65rem;
+    }
+
+    /* Scaled down metric numerical value */
+    .statValue {
+        /* Responsive font size */
+        font-size: 1.05rem;
+    }
+
+    /* Compact metric header label */
+    .statHeader {
+        /* Smaller font size */
+        font-size: 0.68rem;
+    }
+
+    /* Subtext scaling */
+    .statSubtext {
+        /* Smaller font size */
+        font-size: 0.68rem;
+    }
+
+    /* Tighter checkbox container padding */
+    .checkboxBar {
+        /* Reduced gap */
+        gap: 0.4rem;
+        /* Compact padding */
+        padding: 0.5rem;
+    }
+
+    /* Compact checkbox chips with touch friendly height */
+    .checkboxChip {
+        /* Responsive font size */
+        font-size: 0.78rem;
+        /* Padding for touch */
+        padding: 0.35rem 0.55rem;
+    }
+
+    /* Center aligned primary button */
+    .primaryButton {
+        /* Center content */
+        justify-content: center;
+    }
+
+    /* Center aligned secondary button */
+    .secondaryButton {
+        /* Center content */
+        justify-content: center;
+    }
 }

@@ -386,4 +386,41 @@
     border-color: rgba(59, 130, 246, 0.35);
 }
 
+/* Mobile responsive breakpoint adjustments */
+@media (max-width: 600px) {
+    /* Flexible tab button container */
+    .tabsContainer {
+        /* Flexbox display */
+        display: flex;
+        /* Equal gap */
+        gap: 0.35rem;
+    }
+
+    /* Fluid balanced tab buttons */
+    .tabButton {
+        /* Expand equally to fill width */
+        flex: 1 1 0;
+        /* Center content horizontally */
+        justify-content: center;
+        /* Compact font size */
+        font-size: 0.76rem;
+        /* Compact padding */
+        padding: 0.45rem 0.3rem;
+        /* Center text */
+        text-align: center;
+    }
+
+    /* Single column metrics grid on mobile */
+    .metricsGrid {
+        /* Single column */
+        grid-template-columns: 1fr;
+        /* Tighter gap */
+        gap: 0.75rem;
+        /* Reduced top margin */
+        margin-top: 0.75rem;
+        /* Reduced bottom margin */
+        margin-bottom: 1rem;
+    }
+}
+
 
