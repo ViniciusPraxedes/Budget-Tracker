@@ -66,6 +66,8 @@ interface MockUser {
     defaultYear: number | null;
     // Dictionary mapping month keys to month data
     months: Record<string, MonthData>;
+    // Persisted scenario simulation months dictionary
+    simulationMonths?: Record<string, MonthData>;
     // Configuration options for PDF transactions import parsing mapping
     pdfConfig?: {
         // Maps transaction name keys to target category identifiers
@@ -395,6 +397,16 @@ export async function POST(request: NextRequest) {
                 // Assign month data to user record
                 user.months[key] = mData as MonthData;
             }
+        }
+    // Check if updating simulation scenario data
+    } else if (action === 'update_simulation') {
+        // Retrieve simulation payload from request body
+        const simulationPayload = body.simulation;
+        // Verify payload exists and is an object
+        if (simulationPayload && typeof simulationPayload === 'object') {
+            // Assign simulation months to user record
+            user.simulationMonths = simulationPayload as Record<string, MonthData>;
+            // End payload check
         }
     // Handle invalid action parameter
     } else {

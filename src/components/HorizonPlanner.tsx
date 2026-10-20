@@ -174,6 +174,20 @@ export default function HorizonPlanner() {
                     setRealMonths(data.months);
                     // End data check
                 }
+                // Check if persisted simulation data exists in mock database
+                if (data && data.simulationMonths && Object.keys(data.simulationMonths).length > 0) {
+                    // Set simulation months state from mock database
+                    setSimulationMonths(data.simulationMonths);
+                    // Attempt local cache update
+                    try {
+                        // Write to localStorage
+                        localStorage.setItem(simStorageKey, JSON.stringify(data.simulationMonths));
+                        // End storage try
+                    } catch (e) {
+                        // Ignore local cache error
+                    }
+                    // End simulation check
+                }
                 // Catch errors
             } catch (err) {
                 // Log error
@@ -185,7 +199,7 @@ export default function HorizonPlanner() {
             // Attempt Firestore query
             try {
                 // Lazy load Firestore query methods
-                const { collection, getDocs } = await import('firebase/firestore');
+                const { collection, getDocs, doc, getDoc } = await import('firebase/firestore');
                 // Months collection reference
                 const monthsRef = collection(db, 'users', user.uid, 'months');
                 // Fetch snapshot
@@ -200,6 +214,30 @@ export default function HorizonPlanner() {
                 });
                 // Update real months state
                 setRealMonths(map);
+                // Create document reference for persisted simulation
+                const simDocRef = doc(db, 'users', user.uid, 'simulation', 'active');
+                // Fetch simulation document snapshot
+                const simDocSnap = await getDoc(simDocRef);
+                // Check if simulation snapshot exists
+                if (simDocSnap.exists()) {
+                    // Retrieve snapshot data
+                    const simData = simDocSnap.data();
+                    // Validate simulation payload exists
+                    if (simData && simData.simulationMonths && Object.keys(simData.simulationMonths).length > 0) {
+                        // Update simulation months state from Firestore
+                        setSimulationMonths(simData.simulationMonths as Record<string, MonthData>);
+                        // Attempt local storage cache update
+                        try {
+                            // Write to localStorage
+                            localStorage.setItem(simStorageKey, JSON.stringify(simData.simulationMonths));
+                            // End storage try
+                        } catch (e) {
+                            // Ignore local storage error
+                        }
+                        // End simulation state check
+                    }
+                    // End doc existence check
+                }
                 // Catch error
             } catch (err) {
                 // Log error
@@ -265,7 +303,7 @@ export default function HorizonPlanner() {
         setSelectedBatchKeys(horizonSequence.filter(item => item.key !== firstMonthKey && item.key !== copySourceKey).map(item => item.key));
     }, [horizonSequence, firstMonthKey, copySourceKey]);
 
-    // Helper to persist simulation updates to state and localStorage (isolated sandbox, never touches main database)
+    // Helper to persist simulation updates to state, localStorage, and user database
     const saveSimulationState = (updatedSim: Record<string, MonthData>) => {
         // Update functional state
         setSimulationMonths(prev => {
@@ -280,6 +318,54 @@ export default function HorizonPlanner() {
                 // Log error
                 console.error("Error saving simulation to localStorage:", err);
                 // End catch
+            }
+            // Asynchronously persist simulation to database
+            if (user) {
+                // Check if local test user
+                if (user.uid === 'test-user') {
+                    // Post update to mock-db API
+                    fetch('/api/mock-db', {
+                        // HTTP POST
+                        method: 'POST',
+                        // JSON headers
+                        headers: { 'Content-Type': 'application/json' },
+                        // Request body
+                        body: JSON.stringify({
+                            // User ID
+                            userId: 'test-user',
+                            // Action
+                            action: 'update_simulation',
+                            // Simulation payload
+                            simulation: next,
+                            // End request body
+                        }),
+                        // End fetch options
+                    }).catch(err => {
+                        // Log error
+                        console.error("Error saving simulation to mock DB:", err);
+                        // End catch
+                    });
+                    // End test user branch
+                } else {
+                    // Save to Firestore asynchronously
+                    import('firebase/firestore').then(({ doc, setDoc }) => {
+                        // Create simulation document reference
+                        const simDocRef = doc(db, 'users', user.uid, 'simulation', 'active');
+                        // Write document
+                        setDoc(simDocRef, { simulationMonths: next }, { merge: true }).catch(err => {
+                            // Log error
+                            console.error("Error saving simulation to Firestore:", err);
+                            // End catch
+                        });
+                        // End import then
+                    }).catch(err => {
+                        // Log import error
+                        console.error("Error loading firestore for simulation save:", err);
+                        // End catch
+                    });
+                    // End firestore branch
+                }
+                // End user check
             }
             // Return next state
             return next;
