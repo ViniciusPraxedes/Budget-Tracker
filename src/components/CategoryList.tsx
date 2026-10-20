@@ -106,7 +106,18 @@ const CategoryList: React.FC = () => {
                                 fontWeight: '500'
                             }}
                         >
-                            ⚡ Load Sample Data
+                            {/* Bolt icon wrapper */}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                {/* Lightning SVG icon */}
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Bolt polygon */}
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                                {/* Closing svg */}
+                                </svg>
+                                {/* Button text */}
+                                <span>Load Sample Data</span>
+                            {/* Close wrapper span */}
+                            </span>
                         </button>
                     )}
                     {/* Expand or collapse all category cards button */}
@@ -215,7 +226,18 @@ const CategoryList: React.FC = () => {
                                     fontSize: '0.8rem'
                                 }}
                             >
-                                ✨ Auto Pick
+                                {/* Auto pick wrapper */}
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    {/* Sparkle icon */}
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {/* Sparkle star path */}
+                                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                                    {/* Closing svg */}
+                                    </svg>
+                                    {/* Button text */}
+                                    <span>Auto Pick</span>
+                                {/* End auto pick wrapper */}
+                                </span>
                             </button>
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -310,7 +332,12 @@ const CategoryList: React.FC = () => {
                         border: '1px solid rgba(255, 196, 0, 0.2)',
                         boxShadow: '0 0 20px rgba(255, 196, 0, 0.1)'
                     }}>
-                        <span style={{ fontSize: '2.5rem' }}>📂</span>
+                        {/* Empty state folder vector icon */}
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--firebase-yellow)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Folder outline */}
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        {/* Closing svg */}
+                        </svg>
                     </div>
                     <h3 style={{ margin: '0 0 0.5rem 0', color: 'white' }}>No Categories Yet</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '300px', margin: '0 auto 2rem' }}>

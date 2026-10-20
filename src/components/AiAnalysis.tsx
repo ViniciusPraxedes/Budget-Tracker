@@ -243,8 +243,12 @@ Formatting Rules:
             <p className={styles.cardDesc}>Get AI-powered spending insights & customized financial tips for this month.</p>
             {/* Trigger action button wrapper */}
             <button className={styles.analyzeBtn} onClick={handleAnalyze}>
-                {/* Sparkle label icon */}
-                <span>✨</span>
+                {/* Sparkle SVG icon */}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {/* Sparkle star path */}
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                {/* Closing svg */}
+                </svg>
                 {/* Text title inside button */}
                 <span>Analyze Spending</span>
             </button>

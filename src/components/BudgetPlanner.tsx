@@ -199,8 +199,16 @@ const BudgetPlanner: React.FC = () => {
                             className={`${styles.tabButton} ${activeTab === 'planner' ? styles.tabButtonActive : ''}`}
                             onClick={() => setActiveTab('planner')}
                         >
-                            {/* Target icon symbol */}
-                            <span>🎯</span>
+                            {/* Target SVG icon */}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {/* Outer target ring */}
+                                <circle cx="12" cy="12" r="10" />
+                                {/* Middle target ring */}
+                                <circle cx="12" cy="12" r="6" />
+                                {/* Center target ring */}
+                                <circle cx="12" cy="12" r="2" />
+                            {/* Closing svg */}
+                            </svg>
                             {/* Tab label text */}
                             <span>Current Month Budget & Goals</span>
                         </button>
@@ -210,10 +218,20 @@ const BudgetPlanner: React.FC = () => {
                             className={`${styles.tabButton} ${activeTab === 'horizon' ? styles.tabButtonActive : ''}`}
                             onClick={() => setActiveTab('horizon')}
                         >
-                            {/* Horizon crystal ball icon symbol */}
-                            <span>🔮</span>
+                            {/* Horizon calendar SVG icon */}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {/* Calendar/horizon outline */}
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                {/* Top bar line */}
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                {/* Top bar line left */}
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                {/* Calendar middle divide */}
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            {/* Closing svg */}
+                            </svg>
                             {/* Tab label text */}
-                            <span>Multi-Month Horizon & Mass Editor</span>
+                            <span>Month Simulation</span>
                         </button>
                     </div>
                     {/* Render Horizon Planner widget when horizon tab is active */}
@@ -253,17 +271,31 @@ const BudgetPlanner: React.FC = () => {
                                     <button
                                         onClick={commitMonthlyBudget}
                                         title="Save budget (Enter)"
-                                        style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontWeight: 'bold', color: 'black' }}
+                                        style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', fontWeight: 'bold', color: 'black', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
-                                        ✓
+                                        {/* Checkmark SVG */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Check polyline */}
+                                            <polyline points="20 6 9 17 4 12" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                    {/* Close button */}
                                     </button>
                                     {/* Cancel button discarding the pending edit */}
                                     <button
                                         onClick={cancelMonthlyBudgetEdit}
                                         title="Cancel (Esc)"
-                                        style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                        style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0.3rem 0.6rem', cursor: 'pointer', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                     >
-                                        ✕
+                                        {/* Cross SVG */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Cross line 1 */}
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            {/* Cross line 2 */}
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                    {/* Close button */}
                                     </button>
                                 </div>
                             ) : (
@@ -395,8 +427,22 @@ const BudgetPlanner: React.FC = () => {
                                 {/* Conditional banner rendering based on goal state */}
                                 {isGoalReached ? (
                                     <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: '6px', background: 'rgba(0, 230, 118, 0.15)', color: '#00E676', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {/* Celebration icon symbol */}
-                                        <span>🎉</span>
+                                        {/* Trophy celebration SVG icon */}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Cup body left handle */}
+                                            <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                            {/* Cup body right handle */}
+                                            <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-4" />
+                                            {/* Cup base line */}
+                                            <path d="M4 22h16" />
+                                            {/* Cup stem */}
+                                            <path d="M10 14.66V17c0 .55-.45 1-1 1H7" />
+                                            {/* Cup stem right */}
+                                            <path d="M14 14.66V17c0 .55.45 1 1 1h2" />
+                                            {/* Cup bowl */}
+                                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                                        {/* Closing svg */}
+                                        </svg>
                                         {/* Goal reached message */}
                                         <span>Congratulations! You have reached your savings goal.</span>
                                     </div>

@@ -2067,7 +2067,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
             {/* Numeric badge for step 1 */}
             <span className={`${styles.stepBadge} ${step === 1 ? styles.stepBadgeActive : step > 1 ? styles.stepBadgeCompleted : ''}`}>
               {/* If step 1 completed show checkmark otherwise number */}
-              {step > 1 ? '✓' : '1'}
+              {step > 1 ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : '1'}
             </span>
             {/* Label for step 1 */}
             <span>Load File</span>
@@ -2077,7 +2081,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
             {/* Numeric badge for step 2 */}
             <span className={`${styles.stepBadge} ${step === 2 ? styles.stepBadgeActive : step > 2 ? styles.stepBadgeCompleted : ''}`}>
               {/* If step 2 completed show checkmark otherwise number */}
-              {step > 2 ? '✓' : '2'}
+              {step > 2 ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : '2'}
             </span>
             {/* Label for step 2 */}
             <span>Select</span>
@@ -2217,8 +2225,22 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                     lineHeight: '1.4'
                   }}
                 >
-                  {/* Warning message text */}
-                  ⚠️ {otherMonthsCount} transactions from other months were skipped. Change the active month on the dashboard to import them.
+                  {/* Warning message text container */}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {/* Warning triangle icon */}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      {/* Triangle path */}
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                      {/* Triangle mark line */}
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      {/* Triangle dot */}
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    {/* Closing svg */}
+                    </svg>
+                    {/* Warning message text */}
+                    <span>{otherMonthsCount} transactions from other months were skipped. Change the active month on the dashboard to import them.</span>
+                  {/* End warning message text container */}
+                  </span>
                 </div>
               )}
 
@@ -2661,7 +2683,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                           {/* Show deleted category sentinel option when mapped cat no longer exists */}
                           {isMappedCatDeleted && (
                             // Disabled placeholder option indicating the previously mapped category was deleted
-                            <option value="__DELETED__" disabled style={{ color: '#ef4444' }}>⚠ (Deleted Category)</option>
+                            <option value="__DELETED__" disabled style={{ color: '#ef4444' }}>(Deleted Category)</option>
                           )}
                           {/* Option to create a new category inline */}
                           <option value="CREATE_NEW">+ Create New Category</option>

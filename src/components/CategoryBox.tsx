@@ -169,7 +169,16 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                     onChange={e => setEditedBudget(e.target.value)}
                                     style={{ background: 'var(--background-dark)', border: '1px solid var(--border-color)', color: 'white', padding: '0.5rem', borderRadius: '4px', width: '110px' }}
                                 />
-                                <button onClick={handleCategorySave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 'bold' }}>✓</button>
+                                {/* Save category button */}
+                                <button onClick={handleCategorySave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Save">
+                                    {/* Checkmark icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        {/* Check polyline */}
+                                        <polyline points="20 6 9 17 4 12" />
+                                    {/* Closing svg */}
+                                    </svg>
+                                {/* Close save button */}
+                                </button>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -190,7 +199,18 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                         fontSize: '0.7rem'
                                     }}
                                 >
-                                    ✨ Auto
+                                    {/* Auto color select wrapper */}
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                                        {/* Sparkles icon */}
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Sparkle star path */}
+                                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                        {/* Auto button text */}
+                                        <span>Auto</span>
+                                    {/* End auto color select wrapper */}
+                                    </span>
                                 </button>
                             </div>
 
@@ -386,8 +406,12 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {/* Pencil glyph edit icon character */}
-                                    ✎
+                                    {/* Edit pencil icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {/* Pencil path */}
+                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                    {/* Closing svg */}
+                                    </svg>
                                 </button>
                                 {/* Category deletion warning confirmation trigger button */}
                                 <button
@@ -420,8 +444,14 @@ const CategoryBox: React.FC<CategoryBoxProps> = ({ category, isExpanded, onToggl
                                         alignItems: 'center',
                                     }}
                                 >
-                                    {/* Cross sign exit icon character */}
-                                    ✕
+                                    {/* Cross delete icon */}
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        {/* Cross line 1 */}
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        {/* Cross line 2 */}
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    {/* Closing svg */}
+                                    </svg>
                                 </button>
                             </div>
                         </>

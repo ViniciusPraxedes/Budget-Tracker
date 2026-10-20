@@ -185,9 +185,31 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                 </select>
+                {/* Actions container for save and cancel buttons */}
                 <div style={{ display: 'flex', gap: '0.5rem', flex: '0 0 auto' }}>
-                    <button onClick={handleSave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold', color: 'black' }}>✓</button>
-                    <button onClick={() => setIsEditing(false)} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', color: 'white' }}>✕</button>
+                    {/* Save button trigger */}
+                    <button onClick={handleSave} style={{ background: 'var(--firebase-yellow)', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', fontWeight: 'bold', color: 'black', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Save">
+                        {/* Checkmark icon */}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Check polyline */}
+                            <polyline points="20 6 9 17 4 12" />
+                        {/* Closing svg */}
+                        </svg>
+                    {/* Close save button */}
+                    </button>
+                    {/* Cancel button trigger */}
+                    <button onClick={() => setIsEditing(false)} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Cancel">
+                        {/* Cross cancel icon */}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Cross line 1 */}
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            {/* Cross line 2 */}
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        {/* Closing svg */}
+                        </svg>
+                    {/* Close cancel button */}
+                    </button>
+                {/* Close actions container */}
                 </div>
             </div>
         );
@@ -257,8 +279,22 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                         {cleanName}
                     {/* Close name wrapper span */}
                     </span>
+                    {/* Check if expense is recurring */}
                     {expense.isRecurring && (
-                        <span title="Recurring Expense" style={{ fontSize: '0.8rem', opacity: 0.8, flexShrink: 0 }}>🔁</span>
+                        <span title="Recurring Expense" style={{ opacity: 0.8, flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
+                            {/* Repeat cycle SVG icon */}
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {/* Repeat arrows top */}
+                                <polyline points="17 1 21 5 17 9" />
+                                {/* Repeat top line */}
+                                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                                {/* Repeat arrows bottom */}
+                                <polyline points="7 23 3 19 7 15" />
+                                {/* Repeat bottom line */}
+                                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                            {/* Closing svg */}
+                            </svg>
+                        </span>
                     )}
                 </span>
                 {/* Render the details span container for day and count */}
@@ -323,8 +359,12 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                         // Screenreader tooltip title text
                         title="Edit"
                     >
-                        {/* Pencil glyph edit icon character */}
-                        ✎
+                        {/* Edit pencil SVG icon */}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Pencil body path */}
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                        {/* Closing svg */}
+                        </svg>
                     {/* Close edit button component */}
                     </button>
                     {/* Delete warning confirmation trigger button */}
@@ -360,8 +400,14 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({ categoryId, expense, onUpdate
                         // Screenreader tooltip title text
                         title="Delete"
                     >
-                        {/* Trash bin glyph delete icon character */}
-                        🗑
+                        {/* Trash bin SVG icon */}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            {/* Lid horizontal line */}
+                            <polyline points="3 6 5 6 21 6" />
+                            {/* Bin body path */}
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        {/* Closing svg */}
+                        </svg>
                     {/* Close delete button component */}
                     </button>
                 {/* Close actions button wrapper group */}
