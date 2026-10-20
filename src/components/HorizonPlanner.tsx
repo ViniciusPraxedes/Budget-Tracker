@@ -128,6 +128,14 @@ export default function HorizonPlanner() {
     const [isCopyToolOpen, setIsCopyToolOpen] = useState<boolean>(false);
     // State to toggle copy tool confirmation modal
     const [showCopyConfirm, setShowCopyConfirm] = useState<boolean>(false);
+    // State to track raw input string values for monthly parameters while editing
+    const [editingMonthFields, setEditingMonthFields] = useState<Record<string, string>>({});
+    // State to track raw input string values for itemized expense amounts while editing
+    const [editingExpenseAmounts, setEditingExpenseAmounts] = useState<Record<string, string>>({});
+    // State to track raw input string for start year while editing
+    const [startYearInput, setStartYearInput] = useState<string | null>(null);
+    // State to track raw input string for end year while editing
+    const [endYearInput, setEndYearInput] = useState<string | null>(null);
     // State for tracked expanded category IDs in the breakdown list
     const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
 
@@ -241,6 +249,15 @@ export default function HorizonPlanner() {
     const firstMonthKey = `${startYear}-${startMonth}`;
     // Flag indicating whether active inspector month is the baseline starting month
     const isBaseMonth = activeInspectorKey === firstMonthKey;
+
+    // Reset active transient editing inputs when inspected month changes
+    useEffect(() => {
+        // Clear transient monthly parameter input strings
+        setEditingMonthFields({});
+        // Clear transient itemized expense amount input strings
+        setEditingExpenseAmounts({});
+        // React when inspector key changes
+    }, [activeInspectorKey]);
 
     // Initialize default batch selection to all months in horizon excluding base month and copy source month
     useEffect(() => {
@@ -649,6 +666,16 @@ export default function HorizonPlanner() {
     const handleDeleteSingleExpense = (categoryId: string, expenseId: string) => {
         // Return if active month data not loaded or base month
         if (!activeMonthData || isBaseMonth) return;
+        // Clean up transient input if active
+        setEditingExpenseAmounts(prev => {
+            // Clone map
+            const next = { ...prev };
+            // Delete expense key
+            delete next[expenseId];
+            // Return next map
+            return next;
+            // End updater
+        });
         // Update categories array filtering out target expense
         const newCats = activeMonthData.categories.map(cat => {
             // Check matching category
@@ -1020,8 +1047,27 @@ export default function HorizonPlanner() {
                         <input
                             type="number"
                             className={styles.input}
-                            value={startYear}
-                            onChange={(e) => setStartYear(parseInt(e.target.value, 10) || currentYear)}
+                            value={startYearInput !== null ? startYearInput : startYear}
+                            onChange={(e) => {
+                                // Raw string value
+                                const val = e.target.value;
+                                // Store raw string input
+                                setStartYearInput(val);
+                                // Parse integer year
+                                const parsed = parseInt(val, 10);
+                                // Check if valid year
+                                if (!isNaN(parsed) && parsed > 0) {
+                                    // Update start year state
+                                    setStartYear(parsed);
+                                    // End check
+                                }
+                                // End onChange
+                            }}
+                            onBlur={() => {
+                                // Reset transient input on blur
+                                setStartYearInput(null);
+                                // End onBlur
+                            }}
                         />
                     </div>
 
@@ -1050,8 +1096,27 @@ export default function HorizonPlanner() {
                         <input
                             type="number"
                             className={styles.input}
-                            value={endYear}
-                            onChange={(e) => setEndYear(parseInt(e.target.value, 10) || currentYear)}
+                            value={endYearInput !== null ? endYearInput : endYear}
+                            onChange={(e) => {
+                                // Raw string value
+                                const val = e.target.value;
+                                // Store raw string input
+                                setEndYearInput(val);
+                                // Parse integer year
+                                const parsed = parseInt(val, 10);
+                                // Check if valid year
+                                if (!isNaN(parsed) && parsed > 0) {
+                                    // Update end year state
+                                    setEndYear(parsed);
+                                    // End check
+                                }
+                                // End onChange
+                            }}
+                            onBlur={() => {
+                                // Reset transient input on blur
+                                setEndYearInput(null);
+                                // End onBlur
+                            }}
                         />
                     </div>
                 </div>
@@ -1337,8 +1402,30 @@ export default function HorizonPlanner() {
                                 <input
                                     type="number"
                                     className={styles.input}
-                                    value={activeMonthData.income || ''}
-                                    onChange={(e) => handleUpdateSingleMonthField('income', e.target.value)}
+                                    placeholder="0"
+                                    value={editingMonthFields['income'] !== undefined ? editingMonthFields['income'] : (activeMonthData.income === 0 ? '' : (activeMonthData.income || ''))}
+                                    onChange={(e) => {
+                                        // Raw string value from input
+                                        const val = e.target.value;
+                                        // Update transient editing state
+                                        setEditingMonthFields(prev => ({ ...prev, income: val }));
+                                        // Propagate to simulation update handler
+                                        handleUpdateSingleMonthField('income', val);
+                                        // End onChange
+                                    }}
+                                    onBlur={() => {
+                                        // Clear transient field on blur
+                                        setEditingMonthFields(prev => {
+                                            // Clone map
+                                            const next = { ...prev };
+                                            // Delete key
+                                            delete next.income;
+                                            // Return updated map
+                                            return next;
+                                            // End reducer
+                                        });
+                                        // End onBlur
+                                    }}
                                     disabled={isBaseMonth}
                                     style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 />
@@ -1352,8 +1439,30 @@ export default function HorizonPlanner() {
                                 <input
                                     type="number"
                                     className={styles.input}
-                                    value={activeMonthData.monthlySavingsDeposit || ''}
-                                    onChange={(e) => handleUpdateSingleMonthField('monthlySavingsDeposit', e.target.value)}
+                                    placeholder="0"
+                                    value={editingMonthFields['monthlySavingsDeposit'] !== undefined ? editingMonthFields['monthlySavingsDeposit'] : (activeMonthData.monthlySavingsDeposit === 0 ? '' : (activeMonthData.monthlySavingsDeposit || ''))}
+                                    onChange={(e) => {
+                                        // Raw string value from input
+                                        const val = e.target.value;
+                                        // Update transient editing state
+                                        setEditingMonthFields(prev => ({ ...prev, monthlySavingsDeposit: val }));
+                                        // Propagate to simulation update handler
+                                        handleUpdateSingleMonthField('monthlySavingsDeposit', val);
+                                        // End onChange
+                                    }}
+                                    onBlur={() => {
+                                        // Clear transient field on blur
+                                        setEditingMonthFields(prev => {
+                                            // Clone map
+                                            const next = { ...prev };
+                                            // Delete key
+                                            delete next.monthlySavingsDeposit;
+                                            // Return updated map
+                                            return next;
+                                            // End reducer
+                                        });
+                                        // End onBlur
+                                    }}
                                     disabled={isBaseMonth}
                                     style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 />
@@ -1367,8 +1476,30 @@ export default function HorizonPlanner() {
                                 <input
                                     type="number"
                                     className={styles.input}
-                                    value={activeMonthData.monthlyBudget || ''}
-                                    onChange={(e) => handleUpdateSingleMonthField('monthlyBudget', e.target.value)}
+                                    placeholder="0"
+                                    value={editingMonthFields['monthlyBudget'] !== undefined ? editingMonthFields['monthlyBudget'] : (activeMonthData.monthlyBudget === 0 ? '' : (activeMonthData.monthlyBudget || ''))}
+                                    onChange={(e) => {
+                                        // Raw string value from input
+                                        const val = e.target.value;
+                                        // Update transient editing state
+                                        setEditingMonthFields(prev => ({ ...prev, monthlyBudget: val }));
+                                        // Propagate to simulation update handler
+                                        handleUpdateSingleMonthField('monthlyBudget', val);
+                                        // End onChange
+                                    }}
+                                    onBlur={() => {
+                                        // Clear transient field on blur
+                                        setEditingMonthFields(prev => {
+                                            // Clone map
+                                            const next = { ...prev };
+                                            // Delete key
+                                            delete next.monthlyBudget;
+                                            // Return updated map
+                                            return next;
+                                            // End reducer
+                                        });
+                                        // End onBlur
+                                    }}
                                     disabled={isBaseMonth}
                                     style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                                 />
@@ -1674,8 +1805,30 @@ export default function HorizonPlanner() {
                                                         <input
                                                             type="number"
                                                             className={styles.inlineInput}
-                                                            value={exp.amount}
-                                                            onChange={(e) => handleUpdateSingleExpenseAmount(cat.id, exp.id, e.target.value)}
+                                                            placeholder="0"
+                                                            value={editingExpenseAmounts[exp.id] !== undefined ? editingExpenseAmounts[exp.id] : (exp.amount === 0 ? '' : exp.amount)}
+                                                            onChange={(e) => {
+                                                                // Raw string value from input
+                                                                const val = e.target.value;
+                                                                // Update transient editing state
+                                                                setEditingExpenseAmounts(prev => ({ ...prev, [exp.id]: val }));
+                                                                // Propagate to simulation update handler
+                                                                handleUpdateSingleExpenseAmount(cat.id, exp.id, val);
+                                                                // End onChange
+                                                            }}
+                                                            onBlur={() => {
+                                                                // Clear transient expense string on blur
+                                                                setEditingExpenseAmounts(prev => {
+                                                                    // Clone map
+                                                                    const next = { ...prev };
+                                                                    // Delete key
+                                                                    delete next[exp.id];
+                                                                    // Return updated map
+                                                                    return next;
+                                                                    // End reducer
+                                                                });
+                                                                // End onBlur
+                                                            }}
                                                         />
                                                     )}
                                                     {/* Delete button only if not base month */}
