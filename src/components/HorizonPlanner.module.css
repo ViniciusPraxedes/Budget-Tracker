@@ -652,14 +652,40 @@
     transform: scale(1.2);
 }
 
-/* Media query breakpoint for mobile viewport optimization */
-@media (max-width: 600px) {
+/* Media query breakpoint for tablet and mobile viewport optimization */
+@media (max-width: 768px) {
+    /* Compact container spacing */
+    .container {
+        /* Reduced modular gap */
+        gap: 1rem;
+        /* Reduced top margin */
+        margin-top: 0.75rem;
+    /* Container query end */
+    }
+
+    /* Fluid panel card padding */
+    .panelCard {
+        /* Reclaim horizontal space for mobile */
+        padding: 0.85rem 0.75rem;
+        /* Tighter corner radius */
+        border-radius: 8px;
+    /* Panel card query end */
+    }
+
+    /* Card header layout wrapping */
+    .cardHeader {
+        /* Responsive gap */
+        gap: 0.6rem;
+    /* Card header query end */
+    }
+
     /* Two-column layout for parameter inputs and range settings */
     .formGrid {
         /* Set 2 fluid columns */
         grid-template-columns: repeat(2, 1fr);
         /* Tighter layout gap */
         gap: 0.5rem;
+    /* Form grid query end */
     }
 
     /* Two-column grid for inspected month financial metrics */
@@ -668,30 +694,44 @@
         grid-template-columns: repeat(2, 1fr);
         /* Compact gap */
         gap: 0.5rem;
+    /* Stats grid query end */
     }
 
     /* Compact statistic card padding */
     .statCard {
         /* Reduced inner padding */
         padding: 0.6rem 0.65rem;
+    /* Stat card query end */
     }
 
     /* Scaled down metric numerical value */
     .statValue {
         /* Responsive font size */
         font-size: 1.05rem;
+    /* Stat value query end */
     }
 
     /* Compact metric header label */
     .statHeader {
         /* Smaller font size */
         font-size: 0.68rem;
+    /* Stat header query end */
     }
 
     /* Subtext scaling */
     .statSubtext {
         /* Smaller font size */
         font-size: 0.68rem;
+    /* Stat subtext query end */
+    }
+
+    /* Compact month pill sizing */
+    .monthPill {
+        /* Smaller min-width for mobile scrolling */
+        min-width: 115px;
+        /* Reduced padding */
+        padding: 0.55rem 0.65rem;
+    /* Month pill query end */
     }
 
     /* Tighter checkbox container padding */
@@ -700,6 +740,7 @@
         gap: 0.4rem;
         /* Compact padding */
         padding: 0.5rem;
+    /* Checkbox bar query end */
     }
 
     /* Compact checkbox chips with touch friendly height */
@@ -708,17 +749,89 @@
         font-size: 0.78rem;
         /* Padding for touch */
         padding: 0.35rem 0.55rem;
+    /* Checkbox chip query end */
     }
 
-    /* Center aligned primary button */
+    /* Responsive primary button */
     .primaryButton {
         /* Center content */
         justify-content: center;
+        /* Touch padding */
+        padding: 0.6rem 1rem;
+    /* Primary button query end */
     }
 
-    /* Center aligned secondary button */
+    /* Responsive secondary button */
     .secondaryButton {
         /* Center content */
         justify-content: center;
+    /* Secondary button query end */
     }
+
+    /* Compact inline input */
+    .inlineInput {
+        /* Narrower width */
+        width: 75px;
+        /* Smaller font */
+        font-size: 0.8rem;
+    /* Inline input query end */
+    }
+/* Media query max-width 768px end */
+}
+
+/* Media query breakpoint for small phone screens */
+@media (max-width: 480px) {
+    /* Single column form grid on small screens */
+    .formGrid {
+        /* Stack inputs vertically */
+        grid-template-columns: 1fr;
+        /* Compact gap */
+        gap: 0.5rem;
+    /* Form grid 480 end */
+    }
+
+    /* Compact stat cards grid */
+    .statsGrid {
+        /* Tighter gap */
+        gap: 0.45rem;
+    /* Stats grid 480 end */
+    }
+
+    /* Tighter stat card */
+    .statCard {
+        /* Compact padding */
+        padding: 0.5rem 0.55rem;
+    /* Stat card 480 end */
+    }
+
+    /* Adjusted stat value */
+    .statValue {
+        /* Font size */
+        font-size: 0.95rem;
+    /* Stat value 480 end */
+    }
+
+    /* Compact section title */
+    .cardTitle {
+        /* Scaled font */
+        font-size: 0.92rem;
+    /* Card title 480 end */
+    }
+
+    /* Compact month pill for extra-small screens */
+    .monthPill {
+        /* Narrower width */
+        min-width: 105px;
+        /* Compact padding */
+        padding: 0.5rem 0.6rem;
+    /* Month pill 480 end */
+    }
+
+    /* Full width primary action button in headers */
+    .cardHeader .primaryButton {
+        /* Full width */
+        width: 100%;
+    /* Card header primary button end */
+    }
+/* Media query max-width 480px end */
 }

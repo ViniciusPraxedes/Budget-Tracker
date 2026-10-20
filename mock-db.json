@@ -4646,11 +4646,11 @@
           "month": 8
         },
         "2026-9": {
-          "income": 23000,
-          "monthlyBudget": 18000,
           "month": 9,
-          "monthlySavingsDeposit": 5000,
           "year": 2026,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
           "categories": [
             {
               "id": "ha7g46evm",
@@ -4676,13 +4676,6 @@
                   "isInstallment": false
                 }
               ]
-            },
-            {
-              "id": "gf2nrk50y",
-              "name": "Uncategorized",
-              "color": "#9E9E9E",
-              "order": 1,
-              "expenses": []
             },
             {
               "id": "586djl16k",

@@ -1661,8 +1661,8 @@ export default function HorizonPlanner() {
                                         {/* Category expenses list */}
                                         {(cat.expenses || []).map(exp => (
                                             <div key={exp.id} className={styles.expenseRow}>
-                                                {/* Expense title */}
-                                                <span style={{ fontSize: '0.82rem' }}>{exp.name}</span>
+                                                {/* Expense title with text truncation guard */}
+                                                <span style={{ fontSize: '0.82rem', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.name}</span>
                                                 {/* Amount and delete */}
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                                     {/* Amount display or input */}
@@ -1748,7 +1748,7 @@ export default function HorizonPlanner() {
                     // Collapsible Content Wrapper
                     <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {/* Source and Data Scope Columns Container */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                             {/* Source Month Column */}
                             <div>
                                 {/* Source Header Container */}
