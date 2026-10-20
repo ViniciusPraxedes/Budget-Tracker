@@ -214,27 +214,73 @@ export default function HorizonPlanner() {
                 });
                 // Update real months state
                 setRealMonths(map);
-                // Create document reference for persisted simulation
-                const simDocRef = doc(db, 'users', user.uid, 'simulation', 'active');
-                // Fetch simulation document snapshot
-                const simDocSnap = await getDoc(simDocRef);
-                // Check if simulation snapshot exists
-                if (simDocSnap.exists()) {
+                // Create document reference for user document in Firestore
+                const userDocRef = doc(db, 'users', user.uid);
+                // Fetch user document snapshot
+                const userDocSnap = await getDoc(userDocRef);
+                // Check if user document snapshot exists
+                if (userDocSnap.exists()) {
                     // Retrieve snapshot data
-                    const simData = simDocSnap.data();
-                    // Validate simulation payload exists
-                    if (simData && simData.simulationMonths && Object.keys(simData.simulationMonths).length > 0) {
+                    const userData = userDocSnap.data();
+                    // Extract raw simulation payload from snapshot
+                    let simData = userData?.simulationMonths;
+                    // Check if stored simulation payload is a stringified JSON string
+                    if (typeof simData === 'string') {
+                        // Attempt JSON parsing of simulation string
+                        try {
+                            // Parse JSON string into simulation months dictionary
+                            simData = JSON.parse(simData);
+                            // End string parse try
+                        } catch (e) {
+                            // Log error when JSON parsing fails
+                            console.error("Error parsing simulation string:", e);
+                            // End catch
+                        }
+                        // End string check
+                    }
+                    // Validate simulation payload exists and contains keys
+                    if (simData && typeof simData === 'object' && Object.keys(simData).length > 0) {
                         // Update simulation months state from Firestore
-                        setSimulationMonths(simData.simulationMonths as Record<string, MonthData>);
+                        setSimulationMonths(simData as Record<string, MonthData>);
                         // Attempt local storage cache update
                         try {
                             // Write to localStorage
-                            localStorage.setItem(simStorageKey, JSON.stringify(simData.simulationMonths));
+                            localStorage.setItem(simStorageKey, JSON.stringify(simData));
                             // End storage try
                         } catch (e) {
                             // Ignore local storage error
+                            console.error("Local storage error:", e);
+                            // End storage catch
                         }
                         // End simulation state check
+                    } else {
+                        // Attempt fallback to local storage cache if Firestore has no simulation yet
+                        try {
+                            // Read local cache using user's key or fallback test-user key
+                            const cachedRaw = localStorage.getItem(simStorageKey) || localStorage.getItem('budget_tracker_simulation_test-user');
+                            // If local cache has data
+                            if (cachedRaw) {
+                                // Parse local cache
+                                const parsedCached = JSON.parse(cachedRaw);
+                                // If valid object with keys
+                                if (parsedCached && typeof parsedCached === 'object' && Object.keys(parsedCached).length > 0) {
+                                    // Set simulation months state immediately from local fallback
+                                    setSimulationMonths(parsedCached as Record<string, MonthData>);
+                                    // Lazy load setDoc
+                                    const { setDoc } = await import('firebase/firestore');
+                                    // Automatically push local simulation to production Firestore
+                                    await setDoc(userDocRef, { simulationMonths: parsedCached }, { merge: true });
+                                    // End push check
+                                }
+                                // End cached check
+                            }
+                            // Catch push error
+                        } catch (pushErr) {
+                            // Log push error
+                            console.error("Error auto-uploading local simulation to Firestore:", pushErr);
+                            // End catch
+                        }
+                        // End fallback else
                     }
                     // End doc existence check
                 }
@@ -349,14 +395,14 @@ export default function HorizonPlanner() {
                 } else {
                     // Save to Firestore asynchronously
                     import('firebase/firestore').then(({ doc, setDoc }) => {
-                        // Create simulation document reference
-                        const simDocRef = doc(db, 'users', user.uid, 'simulation', 'active');
-                        // Write document
-                        setDoc(simDocRef, { simulationMonths: next }, { merge: true }).catch(err => {
-                            // Log error
-                            console.error("Error saving simulation to Firestore:", err);
-                            // End catch
-                        });
+                    // Create user document reference in Firestore
+                    const userDocRef = doc(db, 'users', user.uid);
+                    // Write simulation months directly to user profile document
+                    setDoc(userDocRef, { simulationMonths: next }, { merge: true }).catch(err => {
+                        // Log error
+                        console.error("Error saving simulation to Firestore:", err);
+                        // End catch
+                    });
                         // End import then
                     }).catch(err => {
                         // Log import error

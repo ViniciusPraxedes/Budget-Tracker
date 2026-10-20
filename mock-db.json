@@ -5106,6 +5106,3284 @@
             }
           ]
         }
+      },
+      "simulationMonths": {
+        "2026-10": {
+          "month": 10,
+          "year": 2026,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "wihwrmwdl",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "d6z144iew",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "df6oddrvg",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "lfl4z2bnr",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "siezkak0e",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "ka3rkbq7g",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nup69uma4",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ujhsai4jh",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mlxssvxxu",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ddmvhno28",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "inq9ofabk",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rhue5f6i9",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "9p6x0i379",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "649jaflp9",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "qd22vsqzf",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5zs5dgln0",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "efh1ltbn1",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fr1jgre8d",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nhia626z0",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "76r448q6c",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "qztm8idlq",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "lfiqkq7bf",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "b4yzv0dvu",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "dstz77nkr",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cg2x8d422",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "idlxhg2xa",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ylto23751",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "m6vbukqxz",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mqsznh0ad",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "m24i2w7nt",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "bfrme4jvr",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4xo541okw",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "a6ht27042",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1v75uutrf",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jimwns0qk",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "poi9sz4ri",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4kthhqqgb",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1cofbc3g0",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1vyq9eclt",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "bcvf8hm7h",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "t7lrtxdkh",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mbkq6wxvw",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7y2kh0dlv",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rfpmlrjau",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "yehi53nud",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "18javjnvl",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5f67o58ga",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xpjmz8y0k",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mota3iwpd",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7wozh3e4p",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        },
+        "2026-9": {
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "dgik4e5mi",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ittdefg9e",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "dzafj391q",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "06ze0fp53",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4cfhi9bvs",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "ygral69sg",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "01n0z8oxt",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "dcwn8ky8g",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "9ia251vxr",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "aq8o5av35",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "uekr3ez62",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "2xqgwb2vg",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "i5oym8ygz",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "62kis2rmx",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "w3xa4qmrk",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jj948ghlq",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6zwp4rghj",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "t1od7w1il",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6u63324jn",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "tvk9rnwg9",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ubdow4x1a",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hzn659gg4",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pa8y3jq8t",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "gf6jgbuwc",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xvh18dl9w",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "h15n277bb",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0icd43ci1",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "kloqot87o",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "2czyamn3p",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5d54ibolb",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "c5eppifge",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "05tauupgm",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "leadtvink",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "vb2c1o5s2",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mvw1aulj8",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "6k05zwfg2",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "duzyim9f0",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "aslbr5wcp",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7mlxcrf6s",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "prvucrrsz",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "93tvorxlw",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cg9swq2ty",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "12jblcxsy",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "gs4qjppii",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "qpr1xyesc",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xqdhg3zjz",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "kuuetarfc",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "g07r4bsrr",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cnclr89y5",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "np6un79v8",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ],
+          "month": 9,
+          "year": 2026
+        },
+        "2026-11": {
+          "month": 11,
+          "year": 2026,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "e9jdw77ff",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "qppn2s8bt",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "n4swlz4o1",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "iab5rxyzk",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fis84wz2x",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "e0qjyp1bf",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "71w89m9dn",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "o5ewk4ich",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6ia4iy9qy",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3ca788jnu",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mjgwlrvd4",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hyub78zop",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "ld9btqmjo",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fp19r84xs",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "yagcs7nlk",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ceni78yez",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nma5j8fxn",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "x2040vrnj",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "18jde2ztj",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "88ppcm5pi",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "o2ljrqcde",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "v5rrgnxe9",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "9ad9e07ba",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "79ty3ufnc",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cgf901x1v",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zx3k6pzd1",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0evfcws1w",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "wf481c31x",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zatf1dw90",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ud8tsmukh",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "m9pf3449e",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fv2n57qlh",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "v8uhqija7",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "h2fa504co",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7s4k07uqt",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "w2l0td5r9",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hmfs1c7xg",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zivlyw9nx",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "88bosxbzi",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "704kcouu6",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "kia8eh1y9",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "yg8ykpf0z",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8338pwinw",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "i6lj5mr62",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5lcg3xl9t",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "c7i7qk6uh",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6yidu8gyz",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cug0z3ozr",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "lp9r44htr",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "edrdj2i94",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        },
+        "2027-0": {
+          "month": 0,
+          "year": 2027,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "c620gkc7g",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "l3twj7ia9",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "go3h3qnlo",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "gptmexax2",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "des7opvqh",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "cp5faujja",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "x0sh7jioz",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "sdzvr8j42",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cgondp64i",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fkzohpk9g",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "gthu082z5",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nnd6lphhc",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "vn7ujd71e",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "j2okddujn",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3os2ri0mx",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hpy7ix82l",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "9ee3yizm4",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pzwtmhku1",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xza3gykym",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "lcrka0f02",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "qzq5rzbi2",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "wd2640u7b",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "a44sp8to9",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ye4fz0d1s",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "d2qt7jxfh",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rjnasjbwh",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "w04t1ruyo",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "i65cq5khp",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "w4h9bvbf0",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "lpyh8yzub",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1k9avsalw",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ly3m87prz",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "tokwgtnkh",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jiqmcy6zx",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8783u56f6",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "h3jcv0e46",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "oy99gyfuv",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "14dun3jpz",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pmayeqmf9",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zlpb7280y",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1oa9wl144",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "okcze3dte",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jzimvqsqz",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hfq9m8lsa",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nkizfxexo",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xsfo45m8g",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "no9xxpbbr",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0dvxybcqq",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jl8vfb99b",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8rwkq9r1g",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        },
+        "2027-1": {
+          "month": 1,
+          "year": 2027,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "5w7vtwai8",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4j9g4j0h1",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "39h6dlu68",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "droeenc8k",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rrhjzxzkp",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "3yv6k6qmy",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6jry23wim",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "b8zma4ur3",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jim0w7hcu",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pq5i4319q",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ib8lc95a1",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6xnhnun15",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "qvjkkuwxh",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "csi545rtc",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7d8a945hz",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pffkxmj9t",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8j6vq6uab",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "iw8pdfmlh",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "s45bh7bs7",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "j6iqfrtzo",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "uc1vwg55k",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xzksdxye4",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6slhr2abt",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zytw043lc",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "q4eaekw99",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "o0xt2prvv",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xxeuq6fgt",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1mtq8ddl2",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "d5tta3yi5",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3zkw24og3",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5w1aq73cn",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "xut8q58ht",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pnub5inms",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "kdswp3tt2",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3dgpba7j2",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "w6o8y1t4x",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4kqf0hm41",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "l12ctm2wb",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8o69k12gc",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nqeikjz5k",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mrovlqhjv",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1wjghprut",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "m2a9562fn",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "2fn3n8vz2",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "4gqo5ohmq",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mauhhlxfy",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "93o3m2hmc",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "uyqovxwcp",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cs78g4y03",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "njobvilmt",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        },
+        "2027-2": {
+          "month": 2,
+          "year": 2027,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "zst3jcmep",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "6xkhv0tc8",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "g31qlzdrq",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "ss5hpr3ti",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ckaslfzdg",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "2j2km1aqk",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "i41g1o2p9",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "z8nd6w0fz",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nayzxzlm8",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "n7lbv8rlt",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3eay2a9lv",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7w9lfkiwd",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "k506xdmke",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "wl2qlvbem",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "oz4ozdf9r",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7byfb1ps9",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0q6vidkws",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "fqlfo16zs",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ac5kmx0vp",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pr4pwvyjv",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mogullsue",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "f94zyo45j",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ki9jpg8oz",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rcjfgf1kj",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ds4q7st2x",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "98p0l0uho",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "sl8eq9k5b",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "eq7hfkd3s",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7fae1hnkm",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "lxoh7gryn",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "35orcvwyo",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "23ymmuxeb",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "yjbwaq1d8",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "w0lifi64g",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8xi661mmh",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "mw5laocsi",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "k4k7b1qgk",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "y7gsjoc7t",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "bkcue2h09",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0tp8d6v12",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rklkc5gxn",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ik0777hnl",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "n5w9ehv2w",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "c0itmjmpn",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3ea8lfq4m",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "pz4zel0ug",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "te36y476v",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "nitn55e7b",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "coklzotov",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "s9izut94w",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        },
+        "2027-3": {
+          "month": 3,
+          "year": 2027,
+          "income": 23000,
+          "monthlySavingsDeposit": 5000,
+          "monthlyBudget": 18000,
+          "categories": [
+            {
+              "id": "ha7g46evm",
+              "name": "Health and Beauty",
+              "color": "#00E676",
+              "order": 0,
+              "budget": 500,
+              "expenses": [
+                {
+                  "id": "rhm564b0z",
+                  "name": "NORMAL M@LND",
+                  "amount": 289,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "djlaunrw4",
+                  "name": "Kronans Apot",
+                  "amount": 280.56,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "gf2nrk50y",
+              "name": "Uncategorized",
+              "color": "#9E9E9E",
+              "order": 1,
+              "expenses": []
+            },
+            {
+              "id": "586djl16k",
+              "name": "Rent",
+              "color": "#DD2C00",
+              "order": 2,
+              "budget": 6500,
+              "expenses": [
+                {
+                  "id": "rbqbzb2g6",
+                  "name": "Rent",
+                  "amount": 6500,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "485xgd29b",
+              "name": "Unexpected ",
+              "color": "#FF4081",
+              "order": 3,
+              "expenses": [
+                {
+                  "id": "9ae7fy1v2",
+                  "name": "PRIS NYCKELK",
+                  "amount": 45,
+                  "paymentDay": 29,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "uo1adp0r6",
+                  "name": "HOMEQ TECHNO",
+                  "amount": 349,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "vehee00dx",
+              "name": "Fun",
+              "color": "#7C4DFF",
+              "order": 4,
+              "budget": 2000,
+              "expenses": [
+                {
+                  "id": "ulys8d38n",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "rwki1ns1y",
+                  "name": "Billetto Swish Billet",
+                  "amount": 378,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "7tw9cpniq",
+                  "name": "Ivans Pilsne",
+                  "amount": 110,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "r1tjwfj9n",
+                  "name": "AMAZON.SE* N",
+                  "amount": 447.36,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "1ci7u464y",
+                  "name": "Gothenburg S Swish Gothen",
+                  "amount": 35,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3uc1lcfso",
+                  "name": "+ Swish skicka",
+                  "amount": 75,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "gw41wxle2",
+                  "name": "K*Bolt",
+                  "amount": 139,
+                  "paymentDay": 13,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "kggjj4kn6",
+              "name": "Food",
+              "color": "#FFC400",
+              "order": 5,
+              "budget": 5000,
+              "expenses": [
+                {
+                  "id": "b6iwxd40k",
+                  "name": "HEMKOP MOLND",
+                  "amount": 167.79,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "8sq1xhpeq",
+                  "name": "-Eleven",
+                  "amount": 30,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "prtj4n79a",
+                  "name": "BROGATANS SE",
+                  "amount": 44,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "2qzach8co",
+                  "name": "-Eleven",
+                  "amount": 20,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "y1xk8vxop",
+                  "name": "BROGATANS SE",
+                  "amount": 37,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "g6pbwx0f3",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 28,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "10rtyknt3",
+                  "name": "HEMKOP MOLND",
+                  "amount": 25,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "erh7fglx0",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 25,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "5jon8xxxx",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "h7pudr8vd",
+                  "name": "ICA KVANTUM",
+                  "amount": 175.16,
+                  "paymentDay": 5,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "j7d43xijk",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 1,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "f1i19ylu6",
+                  "name": "FOOD&CO",
+                  "amount": 125,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hoidmspss",
+                  "name": "COOP SKOVDE",
+                  "amount": 49,
+                  "paymentDay": 30,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "cdrqr7ks9",
+                  "name": "Hono",
+                  "amount": 148,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0ypzy517b",
+                  "name": "HEMKOP MOLND",
+                  "amount": 20.95,
+                  "paymentDay": 12,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "v7gz1pzr3",
+                  "name": "HEMKOP MOLND",
+                  "amount": 59.02,
+                  "paymentDay": 9,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "t5hjc8x2e",
+                  "name": "COOP SKOVDE",
+                  "amount": 19.5,
+                  "paymentDay": 7,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "mrakofp8n",
+                  "name": "FOOD&CO",
+                  "amount": 23,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "y4619y9ks",
+                  "name": "San Marino",
+                  "amount": 130,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "s80dayi9d",
+                  "name": "HEMKOP MOLND",
+                  "amount": 110.52,
+                  "paymentDay": 6,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "zb4wev9oa",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 815,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "bul31632b",
+                  "name": "Klarna Swish Klarna",
+                  "amount": 700,
+                  "paymentDay": 16,
+                  "isRecurring": false,
+                  "isInstallment": false
+                },
+                {
+                  "id": "k8rafu2bl",
+                  "name": "HEMKOP MOLND",
+                  "amount": 126.99,
+                  "paymentDay": 14,
+                  "isRecurring": false,
+                  "isInstallment": false
+                }
+              ]
+            },
+            {
+              "id": "j19gf56qj",
+              "name": "Fixed",
+              "color": "#2979FF",
+              "order": 6,
+              "expenses": [
+                {
+                  "id": "kz8qvj78x",
+                  "name": "HBO Max (1 transaction)",
+                  "amount": 89,
+                  "paymentDay": 8,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "v4uwkqze2",
+                  "name": "Amazon Prime (1 transaction)",
+                  "amount": 69,
+                  "paymentDay": 1,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "p9c390dlj",
+                  "name": "PAYPAL *DISN",
+                  "amount": 129.17,
+                  "paymentDay": 13,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "i2hqxa1d2",
+                  "name": "Netflix",
+                  "amount": 117,
+                  "paymentDay": 16,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "k446igba0",
+                  "name": "You Tube Premium  (1 transaction)",
+                  "amount": 169,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "odux8952p",
+                  "name": "Gamepass",
+                  "amount": 115,
+                  "paymentDay": 15,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "uzat11xgl",
+                  "name": "Klarna",
+                  "amount": 832,
+                  "paymentDay": 17,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "hwzks5sra",
+                  "name": "FRISKTANDV (1 transaction)",
+                  "amount": 65,
+                  "paymentDay": 29,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "ttftk69g5",
+                  "name": "UNIONEN (1 transaction)",
+                  "amount": 235,
+                  "paymentDay": 2,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "91qzw1e49",
+                  "name": "CAPIO PRIM#R (1 transaction)",
+                  "amount": 50,
+                  "paymentDay": 30,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "0depv9woe",
+                  "name": "CSN (1 transaction)",
+                  "amount": 842,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "3tsgzsig0",
+                  "name": "Avier Unione (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 26,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "os9mk6r6s",
+                  "name": "nordicwell (1 transaction)",
+                  "amount": 479,
+                  "paymentDay": 25,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "jt8b40azi",
+                  "name": "Västtrafik T Swish Västtr (1 transaction)",
+                  "amount": 445,
+                  "paymentDay": 24,
+                  "isRecurring": true,
+                  "isInstallment": false
+                },
+                {
+                  "id": "gnhramacm",
+                  "name": "Vimla (1 transaction)",
+                  "amount": 160,
+                  "paymentDay": 28,
+                  "isRecurring": true,
+                  "isInstallment": false
+                }
+              ]
+            }
+          ]
+        }
       }
     }
   }
