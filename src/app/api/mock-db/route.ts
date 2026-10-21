@@ -68,6 +68,18 @@ interface MockUser {
     months: Record<string, MonthData>;
     // Persisted scenario simulation months dictionary
     simulationMonths?: Record<string, MonthData>;
+    // Persisted scenario simulation range configuration
+    simulationRange?: {
+        // Simulation range starting month index
+        startMonth: number;
+        // Simulation range starting year number
+        startYear: number;
+        // Simulation range ending month index
+        endMonth: number;
+        // Simulation range ending year number
+        endYear: number;
+    // Closing simulationRange type definition
+    };
     // Configuration options for PDF transactions import parsing mapping
     pdfConfig?: {
         // Maps transaction name keys to target category identifiers
@@ -407,6 +419,14 @@ export async function POST(request: NextRequest) {
             // Assign simulation months to user record
             user.simulationMonths = simulationPayload as Record<string, MonthData>;
             // End payload check
+        }
+        // Retrieve simulation range from request body
+        const rangePayload = body.simulationRange;
+        // Verify range payload exists and is an object
+        if (rangePayload && typeof rangePayload === 'object') {
+            // Assign simulation range configuration to user record
+            user.simulationRange = rangePayload;
+            // End simulation range check
         }
     // Handle invalid action parameter
     } else {

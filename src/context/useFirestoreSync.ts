@@ -5,8 +5,8 @@ import { MonthData, Category } from '../types';
 import { User } from 'firebase/auth';
 import { useToast } from './ToastContext';
 
-// Helper function to recursively strip undefined properties from Firestore payloads
-const sanitizeForFirestore = <T>(obj: T): T => {
+// Export helper function to recursively strip undefined properties from Firestore payloads
+export const sanitizeForFirestore = <T>(obj: T): T => {
     // Return primitive null or undefined values directly
     if (obj === undefined || obj === null) return obj;
     // Check if element is not a JavaScript object

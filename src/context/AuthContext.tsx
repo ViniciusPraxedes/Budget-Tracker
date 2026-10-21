@@ -42,8 +42,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setLoading(false);
                     // End savedMockUser check
                 } else {
-                    // Check if hostname matches localhost or local IP addresses
-                    const isLocal = isClient && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'));
+                    // Check if hostname matches localhost, standard loopback, or private subnet ranges
+                    const isLocal = isClient && (
+                        // Check localhost name
+                        window.location.hostname === 'localhost' ||
+                        // Check standard loopback IPv4
+                        window.location.hostname === '127.0.0.1' ||
+                        // Check standard 192.168 class C subnet
+                        window.location.hostname.startsWith('192.168.') ||
+                        // Check 10.x.x.x class A private subnet
+                        window.location.hostname.startsWith('10.') ||
+                        // Check 172.x.x.x class B private subnet
+                        window.location.hostname.startsWith('172.') ||
+                        // Check mDNS local domain
+                        window.location.hostname.endsWith('.local')
+                    // End of isLocal evaluation
+                    );
                     // Check if local run mode is enabled
                     if (isLocal) {
                         // Initialize default test user properties

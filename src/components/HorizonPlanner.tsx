@@ -12,6 +12,10 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 // Import Firestore database connection reference
 import { db } from '../firebase';
+// Import Firestore SDK document, snapshot, collection, and query utilities
+import { doc, onSnapshot, setDoc, getDocs, collection } from 'firebase/firestore';
+// Import Firestore payload sanitizer
+import { sanitizeForFirestore } from '../context/useFirestoreSync';
 // Import domain model interfaces
 import { Category, Expense, MonthData } from '../types';
 // Import component CSS module styles
@@ -86,6 +90,8 @@ export default function HorizonPlanner() {
     const [realMonths, setRealMonths] = useState<Record<string, MonthData>>({});
     // Local simulation storage key
     const simStorageKey = `budget_tracker_simulation_${user?.uid || 'guest'}`;
+    // Local simulation range storage key
+    const simRangeStorageKey = `budget_tracker_simulation_range_${user?.uid || 'guest'}`;
     // State for sandbox simulation months
     const [simulationMonths, setSimulationMonths] = useState<Record<string, MonthData>>({});
     // Selected month key in the in-widget browser inspector
@@ -156,155 +162,274 @@ export default function HorizonPlanner() {
         return getHorizonSequence(startMonth, startYear, endMonth, endYear);
     }, [startMonth, startYear, endMonth, endYear]);
 
-    // Fetch existing real months data from mock DB or Firestore on mount as read-only baseline
-    const reloadMonthsData = async () => {
+    // Helper to persist simulation range updates across local storage and database
+    const saveSimulationRange = (newRange: { startMonth: number; startYear: number; endMonth: number; endYear: number }) => {
+        // Attempt local storage persistence
+        try {
+            // Write JSON stringified range to localStorage
+            localStorage.setItem(simRangeStorageKey, JSON.stringify(newRange));
+            // Catch storage error
+        } catch (e) {
+            // Log local error
+            console.error("Error saving range to localStorage:", e);
+            // End catch
+        }
+        // Check if user session exists
+        if (user) {
+            // Check if test-user session
+            if (user.uid === 'test-user') {
+                // Post updated range to mock database
+                fetch('/api/mock-db', {
+                    // POST request
+                    method: 'POST',
+                    // JSON headers
+                    headers: { 'Content-Type': 'application/json' },
+                    // Request body
+                    body: JSON.stringify({
+                        // User ID
+                        userId: 'test-user',
+                        // Action
+                        action: 'update_simulation',
+                        // Simulation payload
+                        simulation: simulationMonths,
+                        // Simulation range payload
+                        simulationRange: newRange,
+                        // End request body
+                    }),
+                    // End fetch options
+                }).catch(err => {
+                    // Log error
+                    console.error("Error saving range to mock DB:", err);
+                    // End catch
+                });
+                // End test user branch
+            } else {
+                // Firestore user document reference
+                const userDocRef = doc(db, 'users', user.uid);
+                // Persist range to Firestore user profile document
+                setDoc(userDocRef, { simulationRange: newRange }, { merge: true }).catch(err => {
+                    // Log error
+                    console.error("Error saving range to Firestore:", err);
+                    // End catch
+                });
+                // End Firestore branch
+            }
+            // End user session check
+        }
+        // End saveSimulationRange definition
+    };
+
+    // Real-time synchronization of months baseline and simulation across devices
+    useEffect(() => {
         // Guard if no user session
         if (!user) return;
         // Test user environment
         if (user.uid === 'test-user') {
-            // Attempt API call
-            try {
-                // Call mock DB API
-                const res = await fetch('/api/mock-db?userId=test-user', { cache: 'no-store' });
-                // Parse JSON
-                const data = await res.json();
-                // Store real months
-                if (data && data.months) {
-                    // Update real months state
-                    setRealMonths(data.months);
-                    // End data check
-                }
-                // Check if persisted simulation data exists in mock database
-                if (data && data.simulationMonths && Object.keys(data.simulationMonths).length > 0) {
-                    // Set simulation months state from mock database
-                    setSimulationMonths(data.simulationMonths);
-                    // Attempt local cache update
-                    try {
-                        // Write to localStorage
-                        localStorage.setItem(simStorageKey, JSON.stringify(data.simulationMonths));
-                        // End storage try
-                    } catch (e) {
-                        // Ignore local cache error
+            // Function to load mock database data
+            const loadMockData = async () => {
+                // Attempt API call
+                try {
+                    // Call mock DB API
+                    const res = await fetch('/api/mock-db?userId=test-user', { cache: 'no-store' });
+                    // Parse JSON
+                    const data = await res.json();
+                    // Store real months
+                    if (data && data.months) {
+                        // Update real months state
+                        setRealMonths(data.months);
+                        // End data check
                     }
-                    // End simulation check
-                }
-                // Catch errors
-            } catch (err) {
-                // Log error
-                console.error("Error loading mock database months:", err);
-                // End catch
-            }
-            // Firestore user environment
-        } else {
-            // Attempt Firestore query
-            try {
-                // Lazy load Firestore query methods
-                const { collection, getDocs, doc, getDoc } = await import('firebase/firestore');
-                // Months collection reference
-                const monthsRef = collection(db, 'users', user.uid, 'months');
-                // Fetch snapshot
-                const snap = await getDocs(monthsRef);
-                // Map documents
-                const map: Record<string, MonthData> = {};
-                // Iterate documents
-                snap.forEach(d => {
-                    // Assign data
-                    map[d.id] = d.data() as MonthData;
-                    // End iteration
-                });
-                // Update real months state
-                setRealMonths(map);
-                // Create document reference for user document in Firestore
-                const userDocRef = doc(db, 'users', user.uid);
-                // Fetch user document snapshot
-                const userDocSnap = await getDoc(userDocRef);
-                // Check if user document snapshot exists
-                if (userDocSnap.exists()) {
-                    // Retrieve snapshot data
-                    const userData = userDocSnap.data();
-                    // Extract raw simulation payload from snapshot
-                    let simData = userData?.simulationMonths;
-                    // Check if stored simulation payload is a stringified JSON string
-                    if (typeof simData === 'string') {
-                        // Attempt JSON parsing of simulation string
-                        try {
-                            // Parse JSON string into simulation months dictionary
-                            simData = JSON.parse(simData);
-                            // End string parse try
-                        } catch (e) {
-                            // Log error when JSON parsing fails
-                            console.error("Error parsing simulation string:", e);
-                            // End catch
-                        }
-                        // End string check
-                    }
-                    // Validate simulation payload exists and contains keys
-                    if (simData && typeof simData === 'object' && Object.keys(simData).length > 0) {
-                        // Update simulation months state from Firestore
-                        setSimulationMonths(simData as Record<string, MonthData>);
-                        // Attempt local storage cache update
+                    // Check if persisted simulation data exists in mock database
+                    if (data && data.simulationMonths && Object.keys(data.simulationMonths).length > 0) {
+                        // Set simulation months state from mock database
+                        setSimulationMonths(data.simulationMonths);
+                        // Attempt local cache update
                         try {
                             // Write to localStorage
-                            localStorage.setItem(simStorageKey, JSON.stringify(simData));
+                            localStorage.setItem(simStorageKey, JSON.stringify(data.simulationMonths));
                             // End storage try
                         } catch (e) {
-                            // Ignore local storage error
-                            console.error("Local storage error:", e);
-                            // End storage catch
+                            // Ignore local cache error
                         }
-                        // End simulation state check
+                        // End simulation check
                     } else {
-                        // Attempt fallback to local storage cache if Firestore has no simulation yet
+                        // Check local storage fallback
                         try {
-                            // Read local cache using user's key or fallback test-user key
-                            const cachedRaw = localStorage.getItem(simStorageKey) || localStorage.getItem('budget_tracker_simulation_test-user');
+                            // Read fallback from local storage
+                            const cachedRaw = localStorage.getItem(simStorageKey);
                             // If local cache has data
                             if (cachedRaw) {
                                 // Parse local cache
-                                const parsedCached = JSON.parse(cachedRaw);
-                                // If valid object with keys
-                                if (parsedCached && typeof parsedCached === 'object' && Object.keys(parsedCached).length > 0) {
-                                    // Set simulation months state immediately from local fallback
-                                    setSimulationMonths(parsedCached as Record<string, MonthData>);
-                                    // Lazy load setDoc
-                                    const { setDoc } = await import('firebase/firestore');
-                                    // Automatically push local simulation to production Firestore
-                                    await setDoc(userDocRef, { simulationMonths: parsedCached }, { merge: true });
-                                    // End push check
+                                const parsed = JSON.parse(cachedRaw);
+                                // If valid object
+                                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                                    // Set state
+                                    setSimulationMonths(parsed);
+                                    // Post to mock DB
+                                    fetch('/api/mock-db', {
+                                        // POST method
+                                        method: 'POST',
+                                        // Headers
+                                        headers: { 'Content-Type': 'application/json' },
+                                        // Body
+                                        body: JSON.stringify({ userId: 'test-user', action: 'update_simulation', simulation: parsed }),
+                                    // End fetch
+                                    }).catch(e => console.error("Error auto-uploading to mock-db:", e));
                                 }
-                                // End cached check
                             }
-                            // Catch push error
-                        } catch (pushErr) {
-                            // Log push error
-                            console.error("Error auto-uploading local simulation to Firestore:", pushErr);
-                            // End catch
+                        } catch (e) {
+                            // Ignore error
                         }
-                        // End fallback else
                     }
-                    // End doc existence check
+                    // Check if simulation range is configured in mock database
+                    if (data && data.simulationRange) {
+                        // Check startMonth
+                        if (typeof data.simulationRange.startMonth === 'number') setStartMonth(data.simulationRange.startMonth);
+                        // Check startYear
+                        if (typeof data.simulationRange.startYear === 'number') setStartYear(data.simulationRange.startYear);
+                        // Check endMonth
+                        if (typeof data.simulationRange.endMonth === 'number') setEndMonth(data.simulationRange.endMonth);
+                        // Check endYear
+                        if (typeof data.simulationRange.endYear === 'number') setEndYear(data.simulationRange.endYear);
+                        // End range check
+                    }
+                // Catch errors
+                } catch (err) {
+                    // Log error
+                    console.error("Error loading mock database months:", err);
+                    // End catch
                 }
-                // Catch error
-            } catch (err) {
-                // Log error
-                console.error("Error loading Firestore months:", err);
-                // End catch
-            }
-            // End environment check
+            };
+            // Initial call
+            loadMockData();
+            // Re-sync on window focus
+            window.addEventListener('focus', loadMockData);
+            // Cleanup focus listener
+            return () => {
+                // Remove window listener
+                window.removeEventListener('focus', loadMockData);
+            };
+        // Firestore user environment
+        } else {
+            // Months collection reference for real months baseline
+            const monthsRef = collection(db, 'users', user.uid, 'months');
+            // Query baseline months once
+            getDocs(monthsRef).then(snap => {
+                // Map dictionary
+                const map: Record<string, MonthData> = {};
+                // Iterate snapshot documents
+                snap.forEach(d => {
+                    // Assign month data
+                    map[d.id] = d.data() as MonthData;
+                });
+                // Update real months state
+                setRealMonths(map);
+            }).catch(err => {
+                // Log query error
+                console.error("Error loading Firestore months baseline:", err);
+            });
+            // User document reference for real-time simulation syncing
+            const userDocRef = doc(db, 'users', user.uid);
+            // Subscribe to real-time changes on user profile document
+            const unsubscribe = onSnapshot(userDocRef, (userDocSnap) => {
+                // Return if document doesn't exist
+                if (!userDocSnap.exists()) return;
+                // Retrieve snapshot data
+                const userData = userDocSnap.data();
+                // Extract raw simulation payload from snapshot
+                let simData = userData?.simulationMonths;
+                // Check if stored simulation payload is a stringified JSON string
+                if (typeof simData === 'string') {
+                    // Attempt JSON parsing of simulation string
+                    try {
+                        // Parse JSON string into simulation months dictionary
+                        simData = JSON.parse(simData);
+                        // End string parse try
+                    } catch (e) {
+                        // Log error when JSON parsing fails
+                        console.error("Error parsing simulation string:", e);
+                        // End catch
+                    }
+                    // End string check
+                }
+                // Validate simulation payload exists and contains keys
+                if (simData && typeof simData === 'object' && Object.keys(simData).length > 0) {
+                    // Update simulation months state from Firestore
+                    setSimulationMonths(simData as Record<string, MonthData>);
+                    // Attempt local storage cache update
+                    try {
+                        // Write to localStorage
+                        localStorage.setItem(simStorageKey, JSON.stringify(simData));
+                        // End storage try
+                    } catch (e) {
+                        // Ignore local storage error
+                    }
+                    // End simulation state check
+                } else {
+                    // Attempt fallback to local storage cache if Firestore has no simulation yet
+                    try {
+                        // Read local cache using user's key or fallback test-user key
+                        const cachedRaw = localStorage.getItem(simStorageKey) || localStorage.getItem('budget_tracker_simulation_test-user');
+                        // If local cache has data
+                        if (cachedRaw) {
+                            // Parse local cache
+                            const parsedCached = JSON.parse(cachedRaw);
+                            // If valid object with keys
+                            if (parsedCached && typeof parsedCached === 'object' && Object.keys(parsedCached).length > 0) {
+                                // Set simulation months state immediately from local fallback
+                                setSimulationMonths(parsedCached as Record<string, MonthData>);
+                                // Automatically push sanitized local simulation to production Firestore
+                                setDoc(userDocRef, { simulationMonths: sanitizeForFirestore(parsedCached) }, { merge: true }).catch(err => {
+                                    // Log error
+                                    console.error("Error auto-uploading local simulation to Firestore:", err);
+                                });
+                                // End push check
+                            }
+                            // End cached check
+                        }
+                        // Catch push error
+                    } catch (pushErr) {
+                        // Log push error
+                        console.error("Error auto-uploading local simulation to Firestore:", pushErr);
+                        // End catch
+                    }
+                    // End fallback else
+                }
+                // Check if simulation range configuration exists in Firestore
+                if (userData?.simulationRange) {
+                    // Retrieve range object
+                    const r = userData.simulationRange;
+                    // Check startMonth
+                    if (typeof r.startMonth === 'number') setStartMonth(r.startMonth);
+                    // Check startYear
+                    if (typeof r.startYear === 'number') setStartYear(r.startYear);
+                    // Check endMonth
+                    if (typeof r.endMonth === 'number') setEndMonth(r.endMonth);
+                    // Check endYear
+                    if (typeof r.endYear === 'number') setEndYear(r.endYear);
+                    // Attempt caching range to localStorage
+                    try {
+                        // Store serialized range
+                        localStorage.setItem(simRangeStorageKey, JSON.stringify(r));
+                    } catch (e) {
+                        // Ignore storage error
+                    }
+                }
+            }, (snapshotErr) => {
+                // Log snapshot listener error
+                console.error("Firestore onSnapshot error for simulation:", snapshotErr);
+            });
+            // Cleanup onSnapshot subscription on unmount or user change
+            return () => {
+                // Unsubscribe listener
+                unsubscribe();
+            };
         }
-        // End reloadMonthsData definition
-    };
+    }, [user, simStorageKey, simRangeStorageKey]);
 
-    // Load initial real months data
+    // Load simulation and range from localStorage on mount or storage key change
     useEffect(() => {
-        // Trigger load
-        reloadMonthsData();
-        // Re-run if user changes
-    }, [user]);
-
-    // Load simulation from localStorage on mount
-    useEffect(() => {
-        // Attempt localStorage read
+        // Attempt localStorage read for simulation months
         try {
             // Read stored JSON string
             const raw = localStorage.getItem(simStorageKey);
@@ -326,8 +451,36 @@ export default function HorizonPlanner() {
             console.error("Error reading simulation from localStorage:", e);
             // End catch
         }
+        // Attempt localStorage read for simulation range
+        try {
+            // Read stored range string
+            const rawRange = localStorage.getItem(simRangeStorageKey);
+            // If range string exists
+            if (rawRange) {
+                // Parse JSON range payload
+                const parsedRange = JSON.parse(rawRange);
+                // Validate parsed range object
+                if (parsedRange && typeof parsedRange === 'object') {
+                    // Check startMonth property
+                    if (typeof parsedRange.startMonth === 'number') setStartMonth(parsedRange.startMonth);
+                    // Check startYear property
+                    if (typeof parsedRange.startYear === 'number') setStartYear(parsedRange.startYear);
+                    // Check endMonth property
+                    if (typeof parsedRange.endMonth === 'number') setEndMonth(parsedRange.endMonth);
+                    // Check endYear property
+                    if (typeof parsedRange.endYear === 'number') setEndYear(parsedRange.endYear);
+                    // End range validation
+                }
+                // End rawRange check
+            }
+            // Catch range parse errors
+        } catch (e) {
+            // Log error
+            console.error("Error reading simulation range from localStorage:", e);
+            // End catch
+        }
         // Re-run if storage key changes
-    }, [simStorageKey]);
+    }, [simStorageKey, simRangeStorageKey]);
 
     // Key representing the first month of the configured prediction range
     const firstMonthKey = `${startYear}-${startMonth}`;
@@ -367,6 +520,8 @@ export default function HorizonPlanner() {
             }
             // Asynchronously persist simulation to database
             if (user) {
+                // Current simulation range configuration
+                const currentRange = { startMonth, startYear, endMonth, endYear };
                 // Check if local test user
                 if (user.uid === 'test-user') {
                     // Post update to mock-db API
@@ -383,6 +538,8 @@ export default function HorizonPlanner() {
                             action: 'update_simulation',
                             // Simulation payload
                             simulation: next,
+                            // Simulation range payload
+                            simulationRange: currentRange,
                             // End request body
                         }),
                         // End fetch options
@@ -393,20 +550,14 @@ export default function HorizonPlanner() {
                     });
                     // End test user branch
                 } else {
-                    // Save to Firestore asynchronously
-                    import('firebase/firestore').then(({ doc, setDoc }) => {
                     // Create user document reference in Firestore
                     const userDocRef = doc(db, 'users', user.uid);
-                    // Write simulation months directly to user profile document
-                    setDoc(userDocRef, { simulationMonths: next }, { merge: true }).catch(err => {
+                    // Sanitize simulation payload recursively to remove all undefined properties
+                    const sanitizedNext = sanitizeForFirestore(next);
+                    // Write sanitized simulation months and range directly to user profile document
+                    setDoc(userDocRef, { simulationMonths: sanitizedNext, simulationRange: currentRange }, { merge: true }).catch(err => {
                         // Log error
                         console.error("Error saving simulation to Firestore:", err);
-                        // End catch
-                    });
-                        // End import then
-                    }).catch(err => {
-                        // Log import error
-                        console.error("Error loading firestore for simulation save:", err);
                         // End catch
                     });
                     // End firestore branch
@@ -1162,7 +1313,15 @@ export default function HorizonPlanner() {
                         <select
                             className={styles.select}
                             value={startMonth}
-                            onChange={(e) => setStartMonth(parseInt(e.target.value, 10))}
+                            onChange={(e) => {
+                                // Parse integer month value from select event
+                                const val = parseInt(e.target.value, 10);
+                                // Update start month state
+                                setStartMonth(val);
+                                // Persist updated range configuration
+                                saveSimulationRange({ startMonth: val, startYear, endMonth, endYear });
+                                // End of start month onChange
+                            }}
                         >
                             {/* Map month names */}
                             {MONTH_NAMES.map((name, i) => (
@@ -1191,6 +1350,8 @@ export default function HorizonPlanner() {
                                 if (!isNaN(parsed) && parsed > 0) {
                                     // Update start year state
                                     setStartYear(parsed);
+                                    // Persist updated range configuration
+                                    saveSimulationRange({ startMonth, startYear: parsed, endMonth, endYear });
                                     // End check
                                 }
                                 // End onChange
@@ -1211,7 +1372,15 @@ export default function HorizonPlanner() {
                         <select
                             className={styles.select}
                             value={endMonth}
-                            onChange={(e) => setEndMonth(parseInt(e.target.value, 10))}
+                            onChange={(e) => {
+                                // Parse integer month value from select event
+                                const val = parseInt(e.target.value, 10);
+                                // Update end month state
+                                setEndMonth(val);
+                                // Persist updated range configuration
+                                saveSimulationRange({ startMonth, startYear, endMonth: val, endYear });
+                                // End of end month onChange
+                            }}
                         >
                             {/* Map month names */}
                             {MONTH_NAMES.map((name, i) => (
@@ -1240,6 +1409,8 @@ export default function HorizonPlanner() {
                                 if (!isNaN(parsed) && parsed > 0) {
                                     // Update end year state
                                     setEndYear(parsed);
+                                    // Persist updated range configuration
+                                    saveSimulationRange({ startMonth, startYear, endMonth, endYear: parsed });
                                     // End check
                                 }
                                 // End onChange
