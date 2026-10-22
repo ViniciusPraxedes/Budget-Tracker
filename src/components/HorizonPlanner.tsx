@@ -69,7 +69,7 @@ function getHorizonSequence(startM: number, startY: number, endM: number, endY: 
 // Declare HorizonPlanner component
 export default function HorizonPlanner() {
     // Retrieve budget variables from state hook
-    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget, totalSavings, savingsGoal } = useBudget();
+    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget, totalSavings, savingsGoal, updateTotalSavings } = useBudget();
     // Retrieve currency formatter from localization hook
     const { formatCurrency } = useLocalization();
     // Retrieve current user session from auth context
@@ -142,6 +142,8 @@ export default function HorizonPlanner() {
     const [startYearInput, setStartYearInput] = useState<string | null>(null);
     // State to track raw input string for end year while editing
     const [endYearInput, setEndYearInput] = useState<string | null>(null);
+    // State to track raw input string for starting total savings while editing
+    const [startTotalSavingsInput, setStartTotalSavingsInput] = useState<string | null>(null);
     // State for tracked expanded category IDs in the breakdown list
     const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
 
@@ -647,6 +649,8 @@ export default function HorizonPlanner() {
                 monthlyBudget: rangeBaseline.monthlyBudget,
                 // Categories
                 categories: rangeBaseline.categories || [],
+                // Total savings baseline
+                totalSavings: totalSavings,
                 // End of start month object
             };
             // End of start month check
@@ -798,6 +802,35 @@ export default function HorizonPlanner() {
         // Re-evaluate when inspector key or data records change
     }, [activeInspectorKey, activeMonthItem, simulationMonths, rangeBaseline, firstMonthKey]);
 
+    // Precompute projected cumulative total savings for each month in horizon sequence
+    const timelineSavingsMap = useMemo(() => {
+        // Savings accumulator map
+        const map: Record<string, number> = {};
+        // Running savings total starting at current savings
+        let runningTotal = totalSavings || 0;
+        // Iterate horizon sequence
+        horizonSequence.forEach((item, index) => {
+            // Retrieve month simulation data
+            const mData = getSimulatedMonthData(item.key, item.month, item.year);
+            // Check if month has explicit total savings override
+            if (mData.totalSavings !== undefined) {
+                // Adopt explicit total savings override
+                runningTotal = mData.totalSavings;
+            // Otherwise if beyond base starting month, accumulate monthly savings deposit
+            } else if (index > 0) {
+                // Increment running total by monthly savings deposit
+                runningTotal += (mData.monthlySavingsDeposit || 0);
+                // End index check
+            }
+            // Store projected savings for this month
+            map[item.key] = runningTotal;
+            // End iteration
+        });
+        // Return map
+        return map;
+        // Recompute when sequence, baseline, total savings, or simulations change
+    }, [horizonSequence, totalSavings, simulationMonths, rangeBaseline, firstMonthKey]);
+
     // Compute metrics for inspected month
     const inspectedMetrics = useMemo(() => {
         // Total expenses across all categories
@@ -834,8 +867,8 @@ export default function HorizonPlanner() {
             }
             // End index check
         }
-        // Calculate projected total savings in bank
-        const projectedTotalSavings = (totalSavings || 0) + cumulativeDeposits;
+        // Calculate projected total savings in bank from timeline map
+        const projectedTotalSavings = timelineSavingsMap[activeInspectorKey] !== undefined ? timelineSavingsMap[activeInspectorKey] : (totalSavings || 0) + cumulativeDeposits;
         // Calculate progress percentage towards savings goal
         const goalPercent = (savingsGoal || 0) > 0 ? Math.round((projectedTotalSavings / (savingsGoal || 1)) * 100) : 0;
         // Return metrics
@@ -866,39 +899,55 @@ export default function HorizonPlanner() {
             savingsGoalPercentage: goalPercent,
             // End of metrics object
         };
-        // Re-evaluate when active month data, sequence, or baseline changes
-    }, [activeMonthData, horizonSequence, activeInspectorKey, totalSavings, savingsGoal, simulationMonths, rangeBaseline, firstMonthKey]);
+        // Re-evaluate when active month data, sequence, timeline map, or baseline changes
+    }, [activeMonthData, horizonSequence, activeInspectorKey, totalSavings, savingsGoal, simulationMonths, rangeBaseline, firstMonthKey, timelineSavingsMap]);
 
-    // Precompute projected cumulative total savings for each month in horizon sequence
-    const timelineSavingsMap = useMemo(() => {
-        // Savings accumulator map
-        const map: Record<string, number> = {};
-        // Running savings total starting at current savings
-        let runningTotal = totalSavings || 0;
-        // Iterate horizon sequence
-        horizonSequence.forEach((item, index) => {
-            // Retrieve month simulation data
-            const mData = getSimulatedMonthData(item.key, item.month, item.year);
-            // If beyond base starting month, add monthly savings deposit
-            if (index > 0) {
-                // Increment running total by monthly savings deposit
-                runningTotal += (mData.monthlySavingsDeposit || 0);
-                // End index check
+    // Handler to update an inspected month's core metric (income, savings deposit, budget, or total savings)
+    const handleUpdateSingleMonthField = (field: 'income' | 'monthlySavingsDeposit' | 'monthlyBudget' | 'totalSavings', valueStr: string) => {
+        // Return if active month data not loaded
+        if (!activeMonthData) return;
+        // Check if updating total savings
+        if (field === 'totalSavings') {
+            // Check if active month is the baseline month
+            if (isBaseMonth) {
+                // Parse float value from string
+                const val = parseFloat(valueStr) || 0;
+                // Update global total savings in context
+                updateTotalSavings(val);
+                // Return early
+                return;
+                // End base month check
             }
-            // Store projected savings for this month
-            map[item.key] = runningTotal;
-            // End iteration
-        });
-        // Return map
-        return map;
-        // Recompute when sequence, baseline, total savings, or simulations change
-    }, [horizonSequence, totalSavings, simulationMonths, rangeBaseline, firstMonthKey]);
-
-
-    // Handler to update an inspected month's core metric (income, savings deposit, or budget)
-    const handleUpdateSingleMonthField = (field: 'income' | 'monthlySavingsDeposit' | 'monthlyBudget', valueStr: string) => {
-        // Return if active month data not loaded or base month
-        if (!activeMonthData || isBaseMonth) return;
+            // Check if string is empty to clear override
+            if (valueStr.trim() === '') {
+                // Shallow clone active month data
+                const updatedMonth: MonthData = { ...activeMonthData };
+                // Delete total savings override
+                delete updatedMonth.totalSavings;
+                // Persist updated simulation month
+                saveSimulationState({ [activeInspectorKey]: updatedMonth });
+                // Return early
+                return;
+                // End empty string check
+            }
+            // Parse numeric float value
+            const val = parseFloat(valueStr) || 0;
+            // Updated month object with total savings override
+            const updatedMonth: MonthData = {
+                // Spread existing month data
+                ...activeMonthData,
+                // Set total savings override
+                totalSavings: val,
+                // End of updated month object
+            };
+            // Persist updated simulation month
+            saveSimulationState({ [activeInspectorKey]: updatedMonth });
+            // Return early
+            return;
+            // End total savings check
+        }
+        // Return if base month for other fields
+        if (isBaseMonth) return;
         // Parse float value
         const val = parseFloat(valueStr) || 0;
         // Updated month object
@@ -1422,6 +1471,39 @@ export default function HorizonPlanner() {
                             }}
                         />
                     </div>
+
+                    {/* Starting total savings */}
+                    <div className={styles.formGroup}>
+                        {/* Label */}
+                        <label className={styles.label}>Starting Total Savings</label>
+                        {/* Input */}
+                        <input
+                            type="number"
+                            className={styles.input}
+                            placeholder="0"
+                            value={startTotalSavingsInput !== null ? startTotalSavingsInput : (totalSavings === 0 ? '' : totalSavings)}
+                            onChange={(e) => {
+                                // Raw string value from input
+                                const val = e.target.value;
+                                // Store raw string input in state
+                                setStartTotalSavingsInput(val);
+                                // Parse float amount
+                                const parsed = parseFloat(val);
+                                // Check if parsed number is valid
+                                if (!isNaN(parsed)) {
+                                    // Update total savings in budget context
+                                    updateTotalSavings(parsed);
+                                // End valid number check
+                                }
+                                // End onChange
+                            }}
+                            onBlur={() => {
+                                // Reset transient starting savings input on blur
+                                setStartTotalSavingsInput(null);
+                                // End onBlur
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -1633,19 +1715,34 @@ export default function HorizonPlanner() {
                                     {/* Label text */}
                                     <span>Total Savings</span>
                                 </span>
-                                {/* Check if target savings goal is set */}
-                                {savingsGoal && savingsGoal > 0 ? (
-                                    <span
-                                        className={styles.statBadge}
-                                        style={{
-                                            background: inspectedMetrics.savingsGoalPercentage >= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(124, 77, 255, 0.15)',
-                                            color: inspectedMetrics.savingsGoalPercentage >= 100 ? '#00E676' : '#b388ff'
-                                        }}
-                                    >
-                                        {/* Savings goal progress percentage text */}
-                                        {inspectedMetrics.savingsGoalPercentage}% goal
-                                    </span>
-                                ) : null}
+                                {/* Status badges container */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    {/* Manual simulation override indicator badge */}
+                                    {!isBaseMonth && activeMonthData.totalSavings !== undefined && (
+                                        <span
+                                            className={styles.statBadge}
+                                            style={{
+                                                background: 'rgba(179, 136, 255, 0.15)',
+                                                color: '#b388ff'
+                                            }}
+                                        >
+                                            Custom
+                                        </span>
+                                    )}
+                                    {/* Check if target savings goal is set */}
+                                    {savingsGoal && savingsGoal > 0 ? (
+                                        <span
+                                            className={styles.statBadge}
+                                            style={{
+                                                background: inspectedMetrics.savingsGoalPercentage >= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(124, 77, 255, 0.15)',
+                                                color: inspectedMetrics.savingsGoalPercentage >= 100 ? '#00E676' : '#b388ff'
+                                            }}
+                                        >
+                                            {/* Savings goal progress percentage text */}
+                                            {inspectedMetrics.savingsGoalPercentage}% goal
+                                        </span>
+                                    ) : null}
+                                </div>
                             </div>
                             {/* Value display */}
                             <div className={styles.statValue}>
@@ -1805,6 +1902,41 @@ export default function HorizonPlanner() {
                                     }}
                                     disabled={isBaseMonth}
                                     style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                                />
+                            </div>
+
+                            {/* Total savings parameter */}
+                            <div className={styles.formGroup}>
+                                {/* Label */}
+                                <label className={styles.label}>Total Savings</label>
+                                {/* Input */}
+                                <input
+                                    type="number"
+                                    className={styles.input}
+                                    placeholder={isBaseMonth ? "0" : `Projected: ${Math.round(inspectedMetrics.projectedTotalSavings)}`}
+                                    value={editingMonthFields['totalSavings'] !== undefined ? editingMonthFields['totalSavings'] : (isBaseMonth ? (totalSavings === 0 ? '' : totalSavings) : (activeMonthData.totalSavings !== undefined ? activeMonthData.totalSavings : ''))}
+                                    onChange={(e) => {
+                                        // Raw string value from input
+                                        const val = e.target.value;
+                                        // Update transient editing state
+                                        setEditingMonthFields(prev => ({ ...prev, totalSavings: val }));
+                                        // Propagate to simulation update handler
+                                        handleUpdateSingleMonthField('totalSavings', val);
+                                        // End onChange
+                                    }}
+                                    onBlur={() => {
+                                        // Clear transient field on blur
+                                        setEditingMonthFields(prev => {
+                                            // Clone map
+                                            const next = { ...prev };
+                                            // Delete key
+                                            delete next.totalSavings;
+                                            // Return updated map
+                                            return next;
+                                            // End reducer
+                                        });
+                                        // End onBlur
+                                    }}
                                 />
                             </div>
                         </div>

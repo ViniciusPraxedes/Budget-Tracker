@@ -55,8 +55,12 @@ export interface MonthData {
     year: number;
     income: number;
     categories: Category[];
+    // Monthly savings deposit
     monthlySavingsDeposit?: number;
+    // Monthly budget limit
     monthlyBudget?: number;
+    // Total accumulated savings override
+    totalSavings?: number;
 }
 
 export interface BudgetContextType {
