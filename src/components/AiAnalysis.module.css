@@ -193,16 +193,16 @@
 
 /* Header section within the modal */
 .modalHeader {
-  /* Use flexbox display rules */
+  /* Use flexbox column layout */
   display: flex;
-  /* Align items to outer edges */
-  justify-content: space-between;
-  /* Center children vertically */
-  align-items: center;
+  /* Stack rows vertically */
+  flex-direction: column;
+  /* Gap between top row and sub bar */
+  gap: 0.65rem;
   /* Bottom border divider line */
   border-bottom: 1px solid var(--border-color);
   /* Bottom padding offset spacing */
-  padding-bottom: 1rem;
+  padding-bottom: 0.85rem;
 /* Close modalHeader styles */
 }
 
@@ -538,14 +538,45 @@
   flex: 1;
 }
 
-/* Header actions container holding copy, regenerate and close buttons */
-.headerActions {
-  /* Use flex display */
+/* Top row inside modal header containing title and permanent close button */
+.headerTopRow {
+  /* Use flexbox layout */
   display: flex;
+  /* Align title to left and close button to right */
+  justify-content: space-between;
+  /* Align items to center */
+  align-items: center;
+  /* Width fills container */
+  width: 100%;
+/* Close headerTopRow */
+}
+
+/* Secondary toolbar row below title for navigation and actions */
+.headerSubBar {
+  /* Use flexbox layout */
+  display: flex;
+  /* Distribute left button and right actions */
+  justify-content: space-between;
   /* Center items vertically */
   align-items: center;
-  /* Gap spacing between actions */
-  gap: 0.5rem;
+  /* Width fills container */
+  width: 100%;
+  /* Padding top */
+  padding-top: 0.4rem;
+  /* Border top subtle separator */
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+/* Close headerSubBar */
+}
+
+/* Right-aligned action buttons cluster */
+.headerActionsRight {
+  /* Display flex layout */
+  display: flex;
+  /* Center items */
+  align-items: center;
+  /* Gap between copy and regenerate buttons */
+  gap: 0.45rem;
+/* Close headerActionsRight */
 }
 
 /* Header action icon button styling */
@@ -985,4 +1016,173 @@
   /* Margin zero */
   margin: 0;
 }
+
+/* Responsive mobile layout rules for viewports up to 768px */
+@media (max-width: 768px) {
+  /* Modal outer overlay padding reduction */
+  .modalOverlay {
+    /* Provide small breathing room margin */
+    padding: 0.5rem;
+  /* Close modalOverlay */
+  }
+
+  /* Modal content container mobile scaling */
+  .modalContent {
+    /* Full width scaling */
+    width: 100%;
+    /* Max height respecting mobile browser address bar */
+    max-height: 92dvh;
+    /* Compact internal padding */
+    padding: 1.15rem 1rem;
+    /* Reduce vertical gap */
+    gap: 1rem;
+    /* Border radius adjustment */
+    border-radius: 12px;
+  /* Close modalContent */
+  }
+
+  /* Modal header mobile configuration */
+  .modalHeader {
+    /* Gap between top row and sub bar */
+    gap: 0.5rem;
+    /* Bottom padding */
+    padding-bottom: 0.65rem;
+  /* Close modalHeader */
+  }
+
+  /* Header top row */
+  .headerTopRow {
+    /* Display flex */
+    display: flex;
+    /* Space between */
+    justify-content: space-between;
+    /* Center align */
+    align-items: center;
+    /* Width full */
+    width: 100%;
+  /* Close headerTopRow */
+  }
+
+  /* Header sub bar mobile scaling */
+  .headerSubBar {
+    /* Display flex */
+    display: flex;
+    /* Space between */
+    justify-content: space-between;
+    /* Center align */
+    align-items: center;
+    /* Width full */
+    width: 100%;
+  /* Close headerSubBar */
+  }
+
+  /* Header action buttons right group */
+  .headerActionsRight {
+    /* Spacing between action chips */
+    gap: 0.35rem;
+  /* Close headerActionsRight */
+  }
+
+  /* Small icon button scaling */
+  .iconBtn {
+    /* Smaller padding on mobile */
+    padding: 0.3rem 0.5rem;
+    /* Smaller font size */
+    font-size: 0.75rem;
+  /* Close iconBtn */
+  }
+
+  /* Analysis scroll body mobile configuration */
+  .analysisBody {
+    /* Enable momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Padding right adjustment */
+    padding-right: 0.25rem;
+  /* Close analysisBody */
+  }
+
+  /* Insight selector grid single column layout */
+  .insightGrid {
+    /* Force single column */
+    grid-template-columns: 1fr;
+    /* Reduce gap */
+    gap: 0.65rem;
+  /* Close insightGrid */
+  }
+
+  /* Compact insight card padding */
+  .insightCard {
+    /* Compact padding */
+    padding: 0.85rem;
+    /* Spacing between icon and title */
+    gap: 0.45rem;
+  /* Close insightCard */
+  }
+
+  /* Compact icon wrapper */
+  .insightCardIcon {
+    /* Width */
+    width: 32px;
+    /* Height */
+    height: 32px;
+  /* Close insightCardIcon */
+  }
+
+  /* Action recommendation button chip mobile wrapping */
+  .actionChip {
+    /* Allow text to wrap cleanly */
+    white-space: normal;
+    /* Left align multiline text */
+    text-align: left;
+    /* Full width constraint */
+    max-width: 100%;
+    /* Mobile font scale */
+    font-size: 0.8rem;
+    /* Mobile padding */
+    padding: 0.45rem 0.75rem;
+  /* Close actionChip */
+  }
+
+  /* Chat speech bubble mobile sizing */
+  .chatMsgUser {
+    /* Expand max width */
+    max-width: 92%;
+    /* Font size */
+    font-size: 0.84rem;
+  /* Close chatMsgUser */
+  }
+
+  /* Assistant speech bubble mobile sizing */
+  .chatMsgAssistant {
+    /* Expand max width */
+    max-width: 96%;
+    /* Font size */
+    font-size: 0.84rem;
+    /* Compact padding */
+    padding: 0.65rem 0.85rem;
+  /* Close chatMsgAssistant */
+  }
+
+  /* Chat input field flex containment */
+  .chatInput {
+    /* Prevent flex child overflow */
+    min-width: 0;
+    /* Font size */
+    font-size: 0.82rem;
+    /* Padding */
+    padding: 0.55rem 0.75rem;
+  /* Close chatInput */
+  }
+
+  /* Chat send button mobile sizing */
+  .chatSendBtn {
+    /* Compact padding */
+    padding: 0.55rem 0.8rem;
+    /* Font size */
+    font-size: 0.82rem;
+  /* Close chatSendBtn */
+  }
+/* Close max-width 768px media query */
+}
+
 

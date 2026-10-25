@@ -106,7 +106,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
     // Track isOpen state dependency
     }, [isOpen]);
 
-    // List of insight options presented to user
+    // List of insight options presented to user in English
     const insightOptions: InsightOption[] = [
         // Comprehensive review
         {
@@ -212,12 +212,12 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             const budgetPct = cat.budget && cat.budget > 0 ? (total / cat.budget) * 100 : null;
             // Build a budget status label for this category
             const budgetStatus = budgetPct === null
-                ? 'Ingen budget satt'
-                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% använt${budgetPct > 100 ? ' - ÖVER BUDGET' : ''})`;
+                ? 'No budget set'
+                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% used${budgetPct > 100 ? ' - OVER BUDGET' : ''})`;
             // Format expenses in the category as list
-            const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Återkommande)' : ''}`).join('\n');
+            const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Recurring)' : ''}`).join('\n');
             // Return formatted string for this category
-            return `Kategori: ${cat.name} (ID: ${cat.id})\nTotala utgifter: ${formatCurrency(total)}\n${budgetStatus}\nUtgifter:\n${expensesList}`;
+            return `Category: ${cat.name} (ID: ${cat.id})\nTotal Spending: ${formatCurrency(total)}\n${budgetStatus}\nExpenses:\n${expensesList}`;
         // Join all category summaries with double newlines
         }).join('\n\n');
 
@@ -245,7 +245,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                     // Calculate previous month total expenses
                     const pExpTotal = (pData.categories || []).reduce((sum: number, c: any) => sum + (c.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0), 0);
                     // Find previous month top spending category
-                    let pTopName = 'Ingen';
+                    let pTopName = 'None';
                     // Find previous month top category amount
                     let pTopAmount = 0;
                     // Loop through previous categories
@@ -295,7 +295,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                         // Calculate total expenses
                         const mExpTotal = (mockData.month.categories || []).reduce((sum: number, c: any) => sum + (c.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0), 0);
                         // Find top category
-                        let mTopName = 'Ingen';
+                        let mTopName = 'None';
                         // Find top amount
                         let mTopAmount = 0;
                         // Loop categories
@@ -538,13 +538,13 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             // Set copied confirmation flag
             setCopied(true);
             // Display toast confirmation
-            addToast('Analys kopierad till urklipp!', 'success');
+            addToast('Analysis copied to clipboard!', 'success');
             // Reset copied feedback after two seconds
             setTimeout(() => setCopied(false), 2000);
         // Catch clipboard permission errors
         } catch {
             // Notify user of clipboard write failure
-            addToast('Kunde inte kopiera till urklipp.', 'error');
+            addToast('Failed to copy to clipboard.', 'error');
         // Close catch block
         }
     // Close handleCopyAnalysis function
@@ -569,14 +569,14 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             if (targetCat) {
                 // Update category budget limit
                 updateCategory(targetCat.id, targetCat.name, targetCat.color, amount);
-                // Dispatch success toast notification
-                addToast(`Uppdaterade budget för ${targetCat.name} till ${formatCurrency(amount)}!`, 'success');
+                // Dispatch success toast notification in English
+                addToast(`Updated ${targetCat.name} budget to ${formatCurrency(amount)}!`, 'success');
             // Else fallback to first category
             } else if (categories[0]) {
                 // Update first category budget
                 updateCategory(categories[0].id, categories[0].name, categories[0].color, amount);
-                // Dispatch success toast notification
-                addToast(`Uppdaterade budget för ${categories[0].name} till ${formatCurrency(amount)}!`, 'success');
+                // Dispatch success toast notification in English
+                addToast(`Updated ${categories[0].name} budget to ${formatCurrency(amount)}!`, 'success');
             // Close if-else
             }
         // Handle monthly savings deposit adjustment
@@ -587,8 +587,8 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             if (isNaN(amount) || amount < 0) return;
             // Update monthly savings deposit setting
             setMonthlySavingsDeposit(amount);
-            // Dispatch success toast notification
-            addToast(`Uppdaterade månadssparande till ${formatCurrency(amount)}!`, 'success');
+            // Dispatch success toast notification in English
+            addToast(`Updated monthly savings deposit to ${formatCurrency(amount)}!`, 'success');
         // Handle overall monthly budget adjustment
         } else if (actionType === 'SET_MONTHLY_BUDGET') {
             // Parse monthly budget amount
@@ -597,8 +597,8 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             if (isNaN(amount) || amount < 0) return;
             // Update monthly budget setting
             setMonthlyBudget(amount);
-            // Dispatch success toast notification
-            addToast(`Uppdaterade total månadsbudget till ${formatCurrency(amount)}!`, 'success');
+            // Dispatch success toast notification in English
+            addToast(`Updated overall monthly budget to ${formatCurrency(amount)}!`, 'success');
         // Close action routing
         }
 
@@ -698,8 +698,8 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             }
         // Catch follow-up errors
         } catch (err: any) {
-            // Append error message to chat
-            setChatMessages(prev => [...prev, { role: 'assistant', content: 'Kunde inte generera svar på den frågan. Försök gärna igen.' }]);
+            // Append error message to chat in English
+            setChatMessages(prev => [...prev, { role: 'assistant', content: 'Could not generate advice for that question. Please try again.' }]);
         // Finalize follow-up streaming
         } finally {
             // Clear follow-up streaming flag
@@ -786,7 +786,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             {/* Icon indicator */}
                             <span>{isApplied ? '✓' : '⚡'}</span>
                             {/* Action label */}
-                            <span>{isApplied ? `${action.label} (Tillämpad)` : action.label}</span>
+                            <span>{isApplied ? `${action.label} (Applied)` : action.label}</span>
                         {/* Close button */}
                         </button>
                     {/* Close container */}
@@ -854,10 +854,10 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                 {/* Title heading label */}
                 <h3 className={styles.cardTitle}>AI Financial Assistant</h3>
             </div>
-            {/* Card text description */}
+            {/* Card text description in English */}
             <p className={styles.cardDesc}>
                 {/* Descriptive card copy */}
-                {horizonData ? 'Få skräddarsydda insikter för din horisont och simulering.' : 'Välj insiktsfokus, få prognoser i kr och interagera med din AI-assistent.'}
+                {horizonData ? 'Analyze multi-month horizon scenario & trajectory in kr.' : 'Select an insight focus, get forecasts in kr, and interact with your AI assistant.'}
             </p>
             {/* Trigger action button wrapper */}
             <button
@@ -874,7 +874,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                 {/* Closing svg */}
                 </svg>
                 {/* Text title inside button */}
-                <span>{customTriggerLabel || (horizonData ? 'Analysera Horisont med AI' : 'Starta AI-Analys')}</span>
+                <span>{customTriggerLabel || (horizonData ? 'Analyze Horizon with AI' : 'Start AI Analysis')}</span>
             </button>
 
             {/* Check if modal overlay needs rendering */}
@@ -885,88 +885,99 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                     <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                         {/* Header bar within modal */}
                         <div className={styles.modalHeader}>
-                            {/* Title heading style */}
-                            <h2 className={styles.cardTitle}>
-                                {/* Header title text */}
-                                {selectedInsightType
-                                    ? (insightOptions.find(o => o.id === selectedInsightType)?.title || 'AI Spending Analysis')
-                                    : 'Välj Typ av AI-Insikt'}
-                            </h2>
+                            {/* Top row with Title on the left and Close Button pinned on the right */}
+                            <div className={styles.headerTopRow}>
+                                {/* Title heading style */}
+                                <h2 className={styles.cardTitle}>
+                                    {/* Header title text */}
+                                    {selectedInsightType
+                                        ? (insightOptions.find(o => o.id === selectedInsightType)?.title || 'AI Spending Analysis')
+                                        : 'Select Insight Focus'}
+                                {/* Close heading */}
+                                </h2>
 
-                            {/* Header action buttons container */}
-                            <div className={styles.headerActions}>
-                                {/* Change Focus button when an insight type is active */}
-                                {selectedInsightType && (
+                                {/* Close button permanently pinned to the top right corner */}
+                                <button className={styles.closeBtn} onClick={() => setIsOpen(false)} title="Close Dialog">
+                                    {/* Close character entity */}
+                                    &times;
+                                {/* Close button */}
+                                </button>
+                            {/* Close headerTopRow */}
+                            </div>
+
+                            {/* Sub toolbar row displayed when an insight is active */}
+                            {selectedInsightType && (
+                                <div className={styles.headerSubBar}>
+                                    {/* Change Focus back button */}
                                     <button
                                         type="button"
                                         className={styles.iconBtn}
                                         onClick={handleResetInsightType}
-                                        title="Byt Insiktsfokus"
+                                        title="Change Insight Focus"
                                     >
                                         {/* Back arrow SVG icon */}
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Polyline chevron */}
                                             <polyline points="15 18 9 12 15 6" />
+                                        {/* Close svg */}
                                         </svg>
                                         {/* Button text */}
-                                        <span>Byt Fokus</span>
+                                        <span>Change Focus</span>
                                     {/* Close button */}
                                     </button>
-                                )}
 
-                                {/* Copy to clipboard button */}
-                                {selectedInsightType && analysis && (
-                                    <button
-                                        type="button"
-                                        className={styles.iconBtn}
-                                        onClick={handleCopyAnalysis}
-                                        title="Kopiera text"
-                                    >
-                                        {/* Copy SVG icon */}
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {/* Rect outline */}
-                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                            {/* Back rect path */}
-                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                        {/* Closing svg */}
-                                        </svg>
-                                        {/* Button text label */}
-                                        <span>{copied ? 'Kopierad!' : 'Kopiera'}</span>
-                                    {/* Close button */}
-                                    </button>
-                                )}
+                                    {/* Right aligned actions cluster */}
+                                    <div className={styles.headerActionsRight}>
+                                        {/* Copy to clipboard button */}
+                                        {analysis && (
+                                            <button
+                                                type="button"
+                                                className={styles.iconBtn}
+                                                onClick={handleCopyAnalysis}
+                                                title="Copy Analysis Markdown"
+                                            >
+                                                {/* Copy SVG icon */}
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    {/* Rect outline */}
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                                    {/* Back rect path */}
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                                {/* Closing svg */}
+                                                </svg>
+                                                {/* Button text label */}
+                                                <span>{copied ? 'Copied!' : 'Copy'}</span>
+                                            {/* Close button */}
+                                            </button>
+                                        )}
 
-                                {/* Regenerate fresh report button */}
-                                {selectedInsightType && (
-                                    <button
-                                        type="button"
-                                        className={styles.iconBtn}
-                                        onClick={() => executeAnalysis(selectedInsightType, true)}
-                                        title="Generera ny analys"
-                                        disabled={loading || isStreaming}
-                                    >
-                                        {/* Refresh SVG icon */}
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            {/* Refresh circular polyline */}
-                                            <polyline points="23 4 23 10 17 10" />
-                                            {/* Refresh bottom polyline */}
-                                            <polyline points="1 20 1 14 7 14" />
-                                            {/* Path arcs */}
-                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                                        {/* Closing svg */}
-                                        </svg>
-                                        {/* Button label */}
-                                        <span>Uppdatera</span>
-                                    {/* Close button */}
-                                    </button>
-                                )}
-
-                                {/* Close button modal trigger */}
-                                <button className={styles.closeBtn} onClick={() => setIsOpen(false)} title="Stäng fönster">
-                                    {/* Close character entity */}
-                                    &times;
-                                </button>
-                            {/* Close header actions wrapper */}
-                            </div>
+                                        {/* Regenerate fresh report button */}
+                                        <button
+                                            type="button"
+                                            className={styles.iconBtn}
+                                            onClick={() => executeAnalysis(selectedInsightType, true)}
+                                            title="Regenerate Fresh Analysis"
+                                            disabled={loading || isStreaming}
+                                        >
+                                            {/* Refresh SVG icon */}
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                {/* Refresh circular polyline */}
+                                                <polyline points="23 4 23 10 17 10" />
+                                                {/* Refresh bottom polyline */}
+                                                <polyline points="1 20 1 14 7 14" />
+                                                {/* Path arcs */}
+                                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                            {/* Closing svg */}
+                                            </svg>
+                                            {/* Button label */}
+                                            <span>Regenerate</span>
+                                        {/* Close button */}
+                                        </button>
+                                    {/* Close headerActionsRight */}
+                                    </div>
+                                {/* Close headerSubBar */}
+                                </div>
+                            )}
+                        {/* Close modalHeader */}
                         </div>
 
                         {/* Analysis results or insight selector body wrapper */}
@@ -974,11 +985,11 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             {/* Render Pre-Analysis Insight Selector Screen when no type is selected */}
                             {!selectedInsightType && (
                                 <div className={styles.selectorContainer}>
-                                    {/* Selector title and subtitle */}
+                                    {/* Selector title and subtitle in English */}
                                     <div>
-                                        <h3 className={styles.selectorHeading}>Vad vill du att AI:n ska fokusera på?</h3>
+                                        <h3 className={styles.selectorHeading}>What would you like the AI to focus on?</h3>
                                         <p className={styles.selectorSub}>
-                                            Välj den analysvinkel som bäst passar din situation. Alla belopp beräknas i svenska kronor ({currency === 'SEK' ? 'kr' : currency}).
+                                            Choose an analytical perspective to evaluate. All financial values are calculated in Swedish kronor ({currency === 'SEK' ? 'kr' : currency}).
                                         </p>
                                     </div>
 
@@ -1011,8 +1022,8 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                 <div className={styles.loadingContainer}>
                                     {/* Spinner animation circle */}
                                     <div className={styles.spinner} />
-                                    {/* Pulsating load text label */}
-                                    <span className={styles.loadingText}>Analyserar budget och finansiell historik i kr...</span>
+                                    {/* Pulsating load text label in English */}
+                                    <span className={styles.loadingText}>Analyzing budget and historical telemetry in {currency === 'SEK' ? 'kr' : currency}...</span>
                                 </div>
                             )}
 
@@ -1044,7 +1055,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             {/* Interactive conversational follow-up section */}
                             {selectedInsightType && !loading && !error && analysis && (
                                 <div className={styles.chatSection}>
-                                    {/* Chat title heading */}
+                                    {/* Chat title heading in English */}
                                     <h4 className={styles.chatTitle}>
                                         {/* Chat bubble icon */}
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1053,7 +1064,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                         {/* Closing svg */}
                                         </svg>
                                         {/* Title text */}
-                                        <span>Ställ en Följdfråga till AI:n</span>
+                                        <span>Ask a Follow-Up Question</span>
                                     {/* Close title */}
                                     </h4>
 
@@ -1077,13 +1088,13 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
 
                                     {/* Chat input form */}
                                     <form className={styles.chatInputRow} onSubmit={handleSendFollowUp}>
-                                        {/* Question text input */}
+                                        {/* Question text input in English */}
                                         <input
                                             type="text"
                                             className={styles.chatInput}
                                             value={followUpInput}
                                             onChange={(e) => setFollowUpInput(e.target.value)}
-                                            placeholder="Fråga t.ex. 'Hur sparar jag 1 500 kr på mat?'..."
+                                            placeholder="Ask e.g. 'How can I trim 1 500 kr from dining?'..."
                                             disabled={isStreamingFollowUp}
                                         />
                                         {/* Send question button */}
@@ -1101,7 +1112,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                             {/* Closing svg */}
                                             </svg>
                                             {/* Send button text */}
-                                            <span>Skicka</span>
+                                            <span>Send</span>
                                         {/* Close button */}
                                         </button>
                                     {/* Close form */}
