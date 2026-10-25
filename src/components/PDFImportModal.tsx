@@ -86,6 +86,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'selected' | 'unselected' | 'unmapped' | 'received' | 'sent'>('all');
   // Manage visibility state to hide already imported duplicate transactions
   const [hideAlreadyImported, setHideAlreadyImported] = useState(false);
+  // Manage visibility state to show only already imported duplicate transactions
+  const [showOnlyAlreadyImported, setShowOnlyAlreadyImported] = useState(false);
   // Manage settings configurations step 3 sort order
   const [step3SortOrder, setStep3SortOrder] = useState<'asc' | 'desc'>('asc');
   // State for new inline mapping name text input field
@@ -122,12 +124,6 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     }
   }, [pdfConfig, updatePDFConfig]);
 
-  // Trigger hook to verify and create Uncategorized category on mount
-  React.useEffect(() => {
-    if (!categories.some((cat) => cat.name === 'Uncategorized')) {
-      addMissingCategories([{ name: 'Uncategorized', color: '#9E9E9E' }]);
-    }
-  }, [categories, addMissingCategories]);
 
   // Helper function to parse base merchant name and expected transaction count from a grouped expense description
   const parseGroupedExpenseName = (name: string) => {
@@ -1570,9 +1566,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
       });
     });
 
-    // Find Uncategorized category ID
-    const uncategorizedCat = categories.find((c) => c.name === 'Uncategorized');
-    const fallbackCatId = uncategorizedCat?.id || categories[0]?.id || '';
+    // Find Uncategorized category ID if it exists
+    const uncategorizedCat = categories.find((c) => c.name.toLowerCase() === 'uncategorized');
+    // Set fallback category identifier to uncategorized category ID or placeholder tag
+    const fallbackCatId = uncategorizedCat?.id || 'uncategorized';
     
     // Map transactions into formatted batch expense items
     const expensesPayload = processedTransactions.map((tx) => {
@@ -1892,6 +1889,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     // Exclude duplicate transactions if hide already imported toggle is active
     if (hideAlreadyImported && tx.isDuplicate) {
       // Exclude already imported duplicate transaction
+      return false;
+    }
+    // Exclude non-duplicate transactions if show only already imported toggle is active
+    if (showOnlyAlreadyImported && !tx.isDuplicate) {
+      // Exclude non-duplicate transaction
       return false;
     }
     // Allow all transaction dates
@@ -2276,7 +2278,17 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   {/* Toggle Hide Already Imported button */}
                   <button
                     type="button"
-                    onClick={() => setHideAlreadyImported((prev) => !prev)}
+                    onClick={() => {
+                      // Toggle hide duplicate transactions
+                      setHideAlreadyImported((prev) => {
+                        // Compute next toggle boolean
+                        const next = !prev;
+                        // Clear show only duplicate transactions if active
+                        if (next) setShowOnlyAlreadyImported(false);
+                        // Return next state
+                        return next;
+                      });
+                    }}
                     className={styles.btnSecondary}
                     style={{
                       minHeight: '32px',
@@ -2291,20 +2303,54 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                           }
                         : {}),
                     }}
-                    title={hideAlreadyImported ? 'Show already imported transactions' : 'Hide already imported transactions'}
+                    title={hideAlreadyImported ? 'Show all transactions' : 'Hide already imported transactions'}
                   >
-                    {/* Hide or Show Already Imported label with duplicate count */}
-                    {hideAlreadyImported ? 'Show Already Imported' : 'Hide Already Imported'}{duplicateCount > 0 ? ` (${duplicateCount})` : ''}
+                    {/* Hide Already Imported label with duplicate count */}
+                    {'Hide Already Imported'}{duplicateCount > 0 ? ` (${duplicateCount})` : ''}
                   {/* End toggle hide button */}
+                  </button>
+                  {/* Toggle Show Only Already Imported button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Toggle show only duplicate transactions
+                      setShowOnlyAlreadyImported((prev) => {
+                        // Compute next toggle boolean
+                        const next = !prev;
+                        // Clear hide duplicate transactions if active
+                        if (next) setHideAlreadyImported(false);
+                        // Return next state
+                        return next;
+                      });
+                    }}
+                    className={styles.btnSecondary}
+                    style={{
+                      minHeight: '32px',
+                      padding: '0.25rem 0.75rem',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      ...(showOnlyAlreadyImported
+                        ? {
+                            backgroundColor: 'rgba(255, 152, 0, 0.15)',
+                            borderColor: '#ffa726',
+                            color: '#ffa726',
+                          }
+                        : {}),
+                    }}
+                    title={showOnlyAlreadyImported ? 'Show all transactions' : 'Show only already imported transactions'}
+                  >
+                    {/* Show Only Already Imported label with duplicate count */}
+                    {'Only Already Imported'}{duplicateCount > 0 ? ` (${duplicateCount})` : ''}
+                  {/* End toggle show only button */}
                   </button>
                   {/* Toggle Select All checkboxes button trigger */}
                   <button
                     // Click handler callback to toggle checkbox select all state
                     onClick={() => {
-                      // Extract non-duplicate filtered transactions
-                      const nonDuplicates = filteredTransactions.filter((tx) => !tx.isDuplicate);
-                      // Verify if all non-duplicate transactions are currently selected
-                      const allSelected = nonDuplicates.length > 0 && nonDuplicates.every((tx) => tx.selected);
+                      // Extract selectable filtered transactions
+                      const targetTxs = showOnlyAlreadyImported ? filteredTransactions : filteredTransactions.filter((tx) => !tx.isDuplicate);
+                      // Verify if all selectable transactions are currently selected
+                      const allSelected = targetTxs.length > 0 && targetTxs.every((tx) => tx.selected);
                       // Map transactions to toggle checked state on filtered matches
                       setTransactions(
                         // Map over each transaction to toggle selected state
@@ -2313,8 +2359,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                           const isFiltered = filteredTransactions.some((ft) => ft.id === tx.id);
                           // Check if transaction is filtered
                           if (isFiltered) {
-                            // Check if transaction is duplicate
-                            if (tx.isDuplicate) {
+                            // Check if transaction is duplicate and not in showOnlyAlreadyImported mode
+                            if (tx.isDuplicate && !showOnlyAlreadyImported) {
                               // Force duplicate transaction to remain deselected
                               return { ...tx, selected: false };
                             }
@@ -2332,7 +2378,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                     style={{ minHeight: '32px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
                   >
                     {/* Conditional labels */}
-                    {filteredTransactions.filter((tx) => !tx.isDuplicate).length > 0 && filteredTransactions.filter((tx) => !tx.isDuplicate).every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
+                    {(showOnlyAlreadyImported ? filteredTransactions : filteredTransactions.filter((tx) => !tx.isDuplicate)).length > 0 && (showOnlyAlreadyImported ? filteredTransactions : filteredTransactions.filter((tx) => !tx.isDuplicate)).every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
                   {/* End toggle select all button */}
                   </button>
                 {/* End action buttons wrapper */}

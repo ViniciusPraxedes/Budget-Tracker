@@ -845,6 +845,23 @@ export default function HorizonPlanner() {
         // Re-evaluate when inspector key or data records change
     }, [activeInspectorKey, activeMonthItem, simulationMonths, rangeBaseline, firstMonthKey]);
 
+    // Synchronize quick-add category selector with valid categories in inspected month
+    useEffect(() => {
+        // Guard if categories are loaded and non-empty
+        if (activeMonthData?.categories && activeMonthData.categories.length > 0) {
+            // Check if selected category ID exists in active month's categories
+            const isCatValid = activeMonthData.categories.some(cat => cat.id === singleExpCatId);
+            // Fallback to first available category if missing or empty
+            if (!isCatValid) {
+                // Update selected category ID to first category of active month
+                setSingleExpCatId(activeMonthData.categories[0].id);
+                // End fallback condition
+            }
+            // End categories guard
+        }
+        // React when inspector month or active month categories change
+    }, [activeInspectorKey, activeMonthData?.categories, singleExpCatId]);
+
     // Precompute projected cumulative total savings for each month in horizon sequence
     const timelineSavingsMap = useMemo(() => {
         // Savings accumulator map
@@ -1100,8 +1117,6 @@ export default function HorizonPlanner() {
         const amt = parseFloat(singleExpAmount);
         // Guard positive amount
         if (isNaN(amt) || amt <= 0) return;
-        // Fallback category ID
-        const targetCatId = singleExpCatId || activeMonthData.categories[0]?.id;
         // Create new expense object
         const newExp: Expense = {
             // Unique ID
@@ -1116,18 +1131,52 @@ export default function HorizonPlanner() {
             isRecurring: true,
             // End of expense definition
         };
-        // Update categories array appending new expense
-        const newCats = activeMonthData.categories.map(cat => {
-            // Check matching category
-            if (cat.id === targetCatId) {
-                // Return category with new expense appended
-                return { ...cat, expenses: [...cat.expenses, newExp] };
-                // End of match
-            }
-            // Return unchanged category
-            return cat;
-            // End of map
-        });
+        // Resolve target category ID from valid category or first available category
+        const targetCatId = activeMonthData.categories.some(cat => cat.id === singleExpCatId)
+            // Use selected category ID if found
+            ? singleExpCatId
+            // Fallback to first category ID
+            : activeMonthData.categories[0]?.id;
+        // Declare updated categories array
+        let newCats: Category[] = [];
+        // Check if no category was found or available
+        if (!targetCatId) {
+            // Generated category ID
+            const fallbackCatId = `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+            // Create default category
+            const defaultCat: Category = {
+                // Category ID
+                id: fallbackCatId,
+                // Category name
+                name: 'General',
+                // Category color
+                color: '#4CAF50',
+                // Category expenses
+                expenses: [newExp],
+                // End category object
+            };
+            // Set categories array with default category
+            newCats = [defaultCat];
+            // Automatically expand the created category
+            setExpandedCategoryIds(prev => [...prev, fallbackCatId]);
+            // End no category check
+        } else {
+            // Update categories array appending new expense
+            newCats = activeMonthData.categories.map(cat => {
+                // Check matching category
+                if (cat.id === targetCatId) {
+                    // Return category with new expense appended
+                    return { ...cat, expenses: [...cat.expenses, newExp] };
+                    // End of match
+                }
+                // Return unchanged category
+                return cat;
+                // End of map
+            });
+            // Automatically expand target category if collapsed
+            setExpandedCategoryIds(prev => prev.includes(targetCatId) ? prev : [...prev, targetCatId]);
+            // End else
+        }
         // Updated month
         const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
         // Save to simulation state
@@ -1136,6 +1185,8 @@ export default function HorizonPlanner() {
         setSingleExpName('');
         // Reset amount
         setSingleExpAmount('');
+        // Show success notification
+        addToast(`Added "${newExp.name}" to simulation`, 'success');
         // End of handleAddSingleExpense definition
     };
 
@@ -1173,6 +1224,8 @@ export default function HorizonPlanner() {
         setNewCatName('');
         // Reset budget
         setNewCatBudget('');
+        // Update quick add category to newly created category
+        setSingleExpCatId(newCategory.id);
         // Close form
         setIsAddingCategory(false);
         // Show success notification
@@ -2029,7 +2082,7 @@ export default function HorizonPlanner() {
                                 {/* Category selector */}
                                 <select
                                     className={styles.select}
-                                    value={singleExpCatId}
+                                    value={activeMonthData.categories.some(c => c.id === singleExpCatId) ? singleExpCatId : (activeMonthData.categories[0]?.id || '')}
                                     onChange={(e) => setSingleExpCatId(e.target.value)}
                                 >
                                     {activeMonthData.categories.map(c => (

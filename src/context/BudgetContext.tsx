@@ -632,32 +632,75 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Function to add multiple expenses at once (batch import)
     const addExpenses = (newExpensesList: { categoryId: string, expense: Omit<Expense, 'id'> }[]) => {
-        // Map categories array to inject corresponding batched items
-        const newCategories = categories.map((cat) => {
-            // Create a mutable copy of existing expenses for this category
+        // Find existing Uncategorized category if present
+        const existingUncategorized = categories.find((cat) => cat.name.toLowerCase() === 'uncategorized');
+        // Filter incoming expenses that are unmapped or marked uncategorized
+        const uncategorizedItems = newExpensesList.filter((item) => {
+            // Check if item explicitly targets uncategorized or a non-existent category
+            return item.categoryId === 'uncategorized' || !categories.some((cat) => cat.id === item.categoryId);
+        });
+        // Map over existing categories to populate their imported expenses
+        let newCategories = categories.map((cat) => {
+            // Clone existing expenses array for this category
             const updatedExpenses = [...cat.expenses];
-            // Filter incoming list matching current category ID index
+            // Filter incoming expenses matching this category ID
             const catExpensesToAdd = newExpensesList.filter((item) => item.categoryId === cat.id);
-            // Loop through each expense details object to insert or update
+            // If this is the existing Uncategorized category, also add any uncategorized items
+            if (existingUncategorized && cat.id === existingUncategorized.id) {
+                // Loop through uncategorized items to merge into existing category
+                for (const item of uncategorizedItems) {
+                    // Avoid duplicating item if already present by direct ID match
+                    if (item.categoryId !== cat.id) {
+                        // Append uncategorized item to the addition list
+                        catExpensesToAdd.push(item);
+                    }
+                }
+            }
+            // Loop through each expense to generate an ID and append
             for (const item of catExpensesToAdd) {
-                // Add new expense details block unconditionally for batch import
+                // Add new expense details block
                 updatedExpenses.push({
                     // Spread payload details
                     ...item.expense,
                     // Generate random unique identifier string
                     id: Math.random().toString(36).substr(2, 9)
-                // End of new expense object
+                // Close expense object
                 });
             }
-            // Return updated category containing modified expenses
+            // Return updated category object
             return {
                 // Spread category fields
                 ...cat,
                 // Assign updated expenses array
                 expenses: updatedExpenses
-            // End of returned category object
+            // Close returned category object
             };
         });
+        // If there are uncategorized items and no Uncategorized category exists, create it on-demand
+        if (uncategorizedItems.length > 0 && !existingUncategorized) {
+            // Construct new Uncategorized category holding the unmapped expenses
+            const newUncategorizedCategory: Category = {
+                // Generate random unique identifier string
+                id: Math.random().toString(36).substr(2, 9),
+                // Assign Uncategorized name
+                name: 'Uncategorized',
+                // Assign standard gray color preset
+                color: '#9E9E9E',
+                // Populate with newly imported uncategorized expenses
+                expenses: uncategorizedItems.map((item) => ({
+                    // Spread payload details
+                    ...item.expense,
+                    // Generate random unique identifier string
+                    id: Math.random().toString(36).substr(2, 9)
+                // Close mapped expense object
+                })),
+                // Place at the end of the category ordering
+                order: categories.length,
+            // Close category object definition
+            };
+            // Append newly created category to the categories array
+            newCategories = [...newCategories, newUncategorizedCategory];
+        }
         // Update database with batch category changes
         updateFirestoreWrapper(income, newCategories);
     };
