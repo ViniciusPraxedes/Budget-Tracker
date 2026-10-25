@@ -25,8 +25,10 @@ const BudgetPlanner: React.FC = () => {
     // Declare state for active tab selection inside budget planner
     const [activeTab, setActiveTab] = useState<'planner' | 'horizon'>('planner');
 
+    // Total sum of all individual category budgets
+    const totalCategoryBudgets = categories.reduce((s, c) => s + (c.budget || 0), 0);
     // Total effective budget threshold calculation preserving zero
-    const effectiveTotalBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((s, c) => s + (c.budget || 0), 0);
+    const effectiveTotalBudget = monthlyBudget !== undefined ? monthlyBudget : totalCategoryBudgets;
     // Declare state for inline monthly budget editing mode
     const [isEditingMonthlyBudget, setIsEditingMonthlyBudget] = useState(false);
     // Declare state for temporary monthly budget input string
@@ -352,6 +354,22 @@ const BudgetPlanner: React.FC = () => {
                             <span className={styles.metricSubtext}>
                                 {/* Display label indicating whether custom budget is set */}
                                 {monthlyBudget !== undefined ? 'Custom budget set' : 'Category budgets sum'}
+                            </span>
+                        </div>
+
+                        {/* Metric card: Total of all Category Budgets */}
+                        <div className={styles.metricCard}>
+                            {/* Metric label string */}
+                            <span className={styles.metricLabel}>
+                                Category Budgets Total
+                            </span>
+                            {/* Formatted sum of all category budgets */}
+                            <span className={styles.metricValue} style={{ color: '#29B6F6' }}>
+                                {formatCurrency(totalCategoryBudgets)}
+                            </span>
+                            {/* Metric subtext string */}
+                            <span className={styles.metricSubtext}>
+                                Sum of all category budgets
                             </span>
                         </div>
 
