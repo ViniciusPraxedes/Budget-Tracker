@@ -7,14 +7,56 @@ export async function POST(req: NextRequest) {
     try {
         // Parse JSON payload from incoming request body
         const body = await req.json();
-        // Destructure financial profile, chat history, and follow-up flags
-        const { financialProfile, chatHistory = [], isFollowUp = false, userQuestion = '' } = body;
+        // Destructure financial profile, chat history, follow-up flags, currency, locale, and insightType
+        const {
+            // Financial metrics profile
+            financialProfile,
+            // Conversation history array
+            chatHistory = [],
+            // Follow up query boolean flag
+            isFollowUp = false,
+            // User query question string
+            userQuestion = '',
+            // Active currency symbol/code (default SEK)
+            currency = 'SEK',
+            // Active user locale (default sv-SE)
+            locale = 'sv-SE',
+            // Selected insight focus type
+            insightType = 'comprehensive'
+        // Close destructuring
+        } = body;
 
         // Retrieve server-side API key prioritizing private key over public variable
         const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
         // Check if API key is present and looks like a valid Google AI Studio key starting with AIza
         const hasValidKey = apiKey && apiKey.startsWith('AIza') && apiKey.length > 20;
+
+        // Determine currency symbol label
+        const currencyUnit = currency === 'SEK' ? 'kr' : currency;
+
+        // Helper currency formatter for text injection
+        const formatAmount = (val: number) => {
+            // Try standard international number formatting
+            try {
+                // Return formatted localized currency
+                return new Intl.NumberFormat(locale || 'sv-SE', {
+                    // Currency style
+                    style: 'currency',
+                    // Currency code
+                    currency: currency || 'SEK',
+                    // No decimals for cleaner display
+                    maximumFractionDigits: 0
+                // Format value
+                }).format(val);
+            // Fallback to simple suffix if Intl errors
+            } catch {
+                // Return rounded value with currency unit
+                return `${Math.round(val)} ${currencyUnit}`;
+            // Close catch
+            }
+        // Close formatAmount helper
+        };
 
         // Attempt live Gemini streaming if key appears valid
         if (hasValidKey) {
@@ -37,7 +79,7 @@ export async function POST(req: NextRequest) {
                     // Close mapping
                     }));
 
-                    // Add current user question to contents list
+                    // Add current user question to contents list with currency rule reminder
                     contentsPayload = [
                         // Spread previous message turns
                         ...historyParts,
@@ -46,12 +88,12 @@ export async function POST(req: NextRequest) {
                             // User role declaration
                             role: 'user',
                             // Parts array
-                            parts: [{ text: `User Question: "${userQuestion}"\nAnswer with direct, practical advice based on their numbers.` }]
+                            parts: [{ text: `User Question: "${userQuestion}"\nImportant: The user's active currency is Swedish kronor (${currencyUnit}). ALWAYS format monetary values in ${currencyUnit} (e.g. 1 500 ${currencyUnit}). Never use USD or "$". Provide concise, direct financial advice.` }]
                         // Close object
                         }
                     // Close array
                     ];
-                // Else handle initial analysis prompt
+                // Else handle initial analysis prompt based on selected insight type
                 } else {
                     // Extract fields from profile
                     const {
@@ -72,26 +114,59 @@ export async function POST(req: NextRequest) {
 
                     // Build historical context note if previous month is provided
                     const previousMonthContext = previousMonth
-                        ? `- Prior Month (${previousMonth.month + 1}/${previousMonth.year}): Expenses $${previousMonth.totalExpenses.toFixed(2)}, Income $${previousMonth.income.toFixed(2)}, Net Savings $${previousMonth.savings.toFixed(2)}. Top Category: ${previousMonth.topCategoryName} ($${previousMonth.topCategoryAmount.toFixed(2)}).\n`
+                        ? `- Prior Month (${previousMonth.month + 1}/${previousMonth.year}): Expenses ${formatAmount(previousMonth.totalExpenses)}, Income ${formatAmount(previousMonth.income)}, Net Savings ${formatAmount(previousMonth.savings)}. Top Category: ${previousMonth.topCategoryName} (${formatAmount(previousMonth.topCategoryAmount)}).\n`
                         : '';
 
                     // Build horizon context note if simulated horizon data is attached
                     const horizonContext = horizonData
-                        ? `- Multi-Month Horizon Simulation: Target is ${horizonData.targetLabel} across ${horizonData.horizonSequenceCount} months. Projected Cumulative Savings: $${horizonData.projectedTotalSavings.toFixed(2)} toward goal of $${horizonData.savingsGoal.toFixed(2)}.\n`
+                        ? `- Multi-Month Horizon Simulation: Target is ${horizonData.targetLabel} across ${horizonData.horizonSequenceCount} months. Projected Cumulative Savings: ${formatAmount(horizonData.projectedTotalSavings)} toward goal of ${formatAmount(horizonData.savingsGoal)}.\n`
                         : '';
+
+                    // Focus prompt guidance based on chosen insight type
+                    let focusGuidance = '';
+                    // Check if insight type is cost cutting
+                    if (insightType === 'cost_cutting') {
+                        // Focus on budget cuts
+                        focusGuidance = `FOCUS: Cost-cutting, discretionary expense reduction, and over-budget category diagnosis. Prioritize identifying non-essential outlays that can be cut immediately.`;
+                    // Check if insight type is savings goal
+                    } else if (insightType === 'savings_goal') {
+                        // Focus on savings goal timeline
+                        focusGuidance = `FOCUS: Long-term savings trajectory, net savings velocity, and timeline to achieve their savings goal of ${formatAmount(savingsGoal)}. Emphasize emergency reserve adequacy.`;
+                    // Check if insight type is subscriptions
+                    } else if (insightType === 'subscriptions') {
+                        // Focus on recurring expenses
+                        focusGuidance = `FOCUS: Recurring bills, subscriptions, and fixed overhead audit. Highlight subscription fatigue, unused services, and yearly savings from cancellations.`;
+                    // Check if insight type is horizon
+                    } else if (insightType === 'horizon') {
+                        // Focus on multi month simulation
+                        focusGuidance = `FOCUS: Multi-month simulation feasibility, projected cash-flow runway, and milestones to reach target by ${horizonData?.targetLabel || 'target'}.`;
+                    // Else comprehensive
+                    } else {
+                        // General holistic review
+                        focusGuidance = `FOCUS: Comprehensive financial health check evaluating income vs. expenses, category budget adherence, and savings momentum.`;
+                    // Close if-else
+                    }
 
                     // Construct comprehensive prompt
                     const promptText = `You are an expert personal finance advisor.
 Analyze the user's spending data and budget information for ${currentMonth + 1}/${currentYear} and provide actionable financial tips.
 
+CRITICAL CURRENCY INSTRUCTION:
+- The user's active currency is Swedish kronor (${currencyUnit}).
+- ALWAYS format and display all currency numbers in ${currencyUnit} (e.g., "12 500 ${currencyUnit}" or "500 ${currencyUnit}").
+- NEVER use USD, US dollars, or the "$" dollar sign under ANY circumstance.
+
+Analytical Focus:
+${focusGuidance}
+
 Financial Profile:
-- Monthly Income: $${Number(income || 0).toFixed(2)}
-- Monthly Expenses: $${Number(totalExpenses || 0).toFixed(2)}
-- Overall Monthly Budget: $${Number(effectiveMonthlyBudget || 0).toFixed(2)}
-- Net Monthly Savings: $${Number(savings || 0).toFixed(2)} (${Number(savingsRate || 0).toFixed(1)}% of income)
-- Cumulative Total Savings: $${Number(totalSavings || 0).toFixed(2)}
-- Long-Term Savings Goal: $${Number(savingsGoal || 0).toFixed(2)}
-- Recurring Bills/Subscriptions: $${Number(recurringTotal || 0).toFixed(2)}
+- Monthly Income: ${formatAmount(income || 0)}
+- Monthly Expenses: ${formatAmount(totalExpenses || 0)}
+- Overall Monthly Budget: ${formatAmount(effectiveMonthlyBudget || 0)}
+- Net Monthly Savings: ${formatAmount(savings || 0)} (${Number(savingsRate || 0).toFixed(1)}% of income)
+- Cumulative Total Savings: ${formatAmount(totalSavings || 0)}
+- Long-Term Savings Goal: ${formatAmount(savingsGoal || 0)}
+- Recurring Bills/Subscriptions: ${formatAmount(recurringTotal || 0)}
 ${previousMonthContext}${horizonContext}
 Category Breakdown:
 ${categoriesSummary || 'No category breakdown available.'}
@@ -102,12 +177,12 @@ Formatting Rules:
 ### 2. Key Insights
 ### 3. Actionable Recommendations
 - Do NOT use level-4 headers (####) and do NOT output raw '---' lines.
-- In Section 1, summarize income vs expense, monthly savings rate, and goal progress trajectory.
+- In Section 1, summarize income vs expense, monthly savings rate, and goal progress trajectory using ${currencyUnit}.
 - In Section 2, highlight over-budget categories and major spending drivers.
-- In Section 3, provide 3 to 4 clear recommendations. Where you suggest budgeting or setting savings, append structured action tags so the user can apply them with one click:
-  - To suggest a category budget: [[ACTION:SET_CATEGORY_BUDGET|CATEGORY_ID|SUGGESTED_AMOUNT|Set Category Name budget to $Amount]]
-  - To suggest a savings deposit: [[ACTION:SET_SAVINGS_DEPOSIT|AMOUNT|Set monthly savings deposit to $Amount]]
-  - To suggest total monthly budget: [[ACTION:SET_MONTHLY_BUDGET|AMOUNT|Set overall monthly budget to $Amount]]`;
+- In Section 3, provide 3 to 4 clear recommendations. Where you suggest budgeting or setting savings, append structured action tags formatted in ${currencyUnit} so the user can apply them with one click:
+  - To suggest a category budget: [[ACTION:SET_CATEGORY_BUDGET|CATEGORY_ID|SUGGESTED_AMOUNT|Set Category Name budget to SuggestedAmount ${currencyUnit}]]
+  - To suggest a savings deposit: [[ACTION:SET_SAVINGS_DEPOSIT|AMOUNT|Set monthly savings deposit to SuggestedAmount ${currencyUnit}]]
+  - To suggest total monthly budget: [[ACTION:SET_MONTHLY_BUDGET|AMOUNT|Set overall monthly budget to SuggestedAmount ${currencyUnit}]]`;
 
                     // Assign single prompt payload
                     contentsPayload = [{
@@ -213,8 +288,8 @@ Formatting Rules:
         // Close if hasValidKey
         }
 
-        // Generate dynamic analysis using internal financial engine
-        const fallbackText = generateDynamicAnalysis(financialProfile, isFollowUp, userQuestion, chatHistory);
+        // Generate dynamic analysis using internal financial engine with Swedish kronor localization
+        const fallbackText = generateDynamicAnalysis(financialProfile, isFollowUp, userQuestion, chatHistory, currency, locale, insightType);
 
         // Stream fallback text to maintain identical real-time UI typing experience
         const encoder = new TextEncoder();
@@ -260,7 +335,7 @@ Formatting Rules:
 // Close POST handler
 }
 
-// Helper engine to produce dynamic, high-fidelity financial insights and conversational responses
+// Helper engine to produce dynamic localized financial insights and conversational responses in Swedish kronor
 function generateDynamicAnalysis(
     // Financial profile object parameter
     profile: any,
@@ -269,8 +344,40 @@ function generateDynamicAnalysis(
     // User question parameter
     question: string,
     // Conversation history parameter
-    _history: any[]
+    _history: any[],
+    // Currency code
+    currency: string,
+    // Locale code
+    locale: string,
+    // Selected insight focus
+    insightType: string
 ): string {
+    // Determine currency unit string
+    const unit = currency === 'SEK' ? 'kr' : currency;
+
+    // Localized currency formatter
+    const fmt = (val: number) => {
+        // Try Intl formatting
+        try {
+            // Return formatted currency string
+            return new Intl.NumberFormat(locale || 'sv-SE', {
+                // Style currency
+                style: 'currency',
+                // Currency code
+                currency: currency || 'SEK',
+                // No fraction digits
+                maximumFractionDigits: 0
+            // Format number
+            }).format(val);
+        // Fallback to simple number plus unit
+        } catch {
+            // Return rounded value
+            return `${Math.round(val)} ${unit}`;
+        // Close catch
+        }
+    // Close fmt
+    };
+
     // Check if this is a follow-up conversation question
     if (isFollowUp && question) {
         // Normalize question to lower case for keyword routing
@@ -287,31 +394,31 @@ function generateDynamicAnalysis(
         const currentSavings = Number(profile?.totalSavings || 0);
 
         // Handle dining and groceries cut inquiries
-        if (q.includes('food') || q.includes('dining') || q.includes('groceries') || q.includes('eat')) {
+        if (q.includes('food') || q.includes('dining') || q.includes('groceries') || q.includes('eat') || q.includes('mat')) {
             // Return targeted food advice
-            return `### Food & Dining Strategy\nBased on your current spending, food and groceries are often the most flexible area for immediate savings:\n\n1. **Meal Planning:** Batch cooking 2 meals per week typically yields a **15% to 25% reduction** in recurring grocery bills.\n2. **Dining Out Cap:** Try instituting a strict weekly dining cap rather than an open monthly limit.\n3. **Quick Action:** If you reduce monthly dining expenses by just **$150**, that adds an extra **$1,800/year** directly to your savings pool.`;
+            return `### Mat & Restaurang Strategi\nBaserat på dina aktuella kostnader är mat och restaurangbesök ett av de enklaste områdena för snabba besparingar:\n\n1. **Veckoplanering:** Att laga matlådor 2 gånger i veckan minskar vanligtvis matkostnaderna med **15% till 25%**.\n2. **Utemat-budget:** Sätt ett strikt tak per vecka för restaurang och fika istället för en öppen månadspott.\n3. **Besparingspotential:** Om du minskar utemat med **${fmt(1500)}/månad**, ger det **${fmt(18000)} extra per år** rakt in i ditt sparande.`;
         // Handle savings goal timelines
-        } else if (q.includes('goal') || q.includes('reach') || q.includes('timeline') || q.includes('how long')) {
+        } else if (q.includes('goal') || q.includes('reach') || q.includes('timeline') || q.includes('how long') || q.includes('mål') || q.includes('spar')) {
             // Remaining goal gap
             const gap = Math.max(0, goal - currentSavings);
             // Months remaining calculation
             const months = netSavings > 0 ? Math.ceil(gap / netSavings) : null;
             // Return goal projection advice
-            return `### Savings Goal Projection\n- Current Savings: **$${currentSavings.toFixed(2)}**\n- Target Goal: **$${goal.toFixed(2)}**\n- Remaining Gap: **$${gap.toFixed(2)}**\n\n${
+            return `### Sparmålsprognos\n- Nuvarande sparande: **${fmt(currentSavings)}**\n- Sparmål: **${fmt(goal)}**\n- Kvar till målet: **${fmt(gap)}**\n\n${
                 months
-                    ? `At your current net savings rate of **$${netSavings.toFixed(2)}/month**, you are on track to reach your goal in approximately **${months} month${months === 1 ? '' : 's'}**.\n\nIncreasing your monthly savings deposit by just **$100** would accelerate your target by **${Math.max(1, Math.round(months * 0.15))} months**!`
-                    : `Currently, your monthly net cash flow is $${netSavings.toFixed(2)}. To build toward your goal, focus on setting category budget limits to free up at least 15% of your income.`
+                    ? `Med ditt nuvarande sparande på **${fmt(netSavings)}/månad** beräknas du nå ditt mål om cirka **${months} månad${months === 1 ? '' : 'er'}**.\n\nOm du ökar ditt månadssparande med **${fmt(1000)}** kortar du tiden med ytterligare **${Math.max(1, Math.round(months * 0.15))} månader**!`
+                    : `För närvarande är ditt månatliga kassaflöde ${fmt(netSavings)}. För att nå målet rekommenderas att sätta tydliga kategoribudgetar för att frigöra minst 15% av inkomsten.`
             }`;
         // Handle subscription or recurring inquiries
-        } else if (q.includes('subscription') || q.includes('recurring') || q.includes('bill')) {
+        } else if (q.includes('subscription') || q.includes('recurring') || q.includes('bill') || q.includes('abonnemang') || q.includes('räkning')) {
             // Recurring bills total
             const recurring = Number(profile?.recurringTotal || 0);
             // Return subscription advice
-            return `### Recurring Bills Audit\nYour current recurring commitments total **$${recurring.toFixed(2)}/month** (${income > 0 ? ((recurring / income) * 100).toFixed(1) : 0}% of income).\n\n1. **Audit Infrequently Used Services:** Review streaming and software services used less than twice a week.\n2. **Annual vs. Monthly Discounts:** Consolidating unavoidable recurring bills to annual billing often saves 15–20%.\n3. **Action:** Eliminating even two $15 subscriptions immediately frees up **$360/year**.`;
+            return `### Granskning av Fasta Avgifter\nDina fasta och återkommande utgifter uppgår till **${fmt(recurring)}/månad** (${income > 0 ? ((recurring / income) * 100).toFixed(1) : 0}% av inkomsten).\n\n1. **Rensa oanvända tjänster:** Gå igenom streamingtjänster och appar som används mer sällan än en gång i veckan.\n2. **Årsbetalning:** Att byta månadsprenumerationer till årsabonnemang ger ofta 15–20% rabatt.\n3. **Åtgärd:** Att säga upp två abonnemang på 150 ${unit} sparar direkt **${fmt(3600)} per år**.`;
         // General default follow-up answer
         } else {
             // Return general financial answer
-            return `### Financial Advisory Insight\nRegarding **"${question}"**:\n\nWith your monthly income of **$${income.toFixed(2)}** and current expenses of **$${totalExpenses.toFixed(2)}**, your net margin is **$${netSavings.toFixed(2)}/month**.\n\n- **Focus on High-Impact Levers:** Fixed expenses (rent/mortgage, utilities) have low variance, so prioritize capping variable lifestyle categories.\n- **Automation:** Automate transfers to your savings pool on payday to remove decision friction.`;
+            return `### Finansiell Insikt\nAngående **"${question}"**:\n\nMed en månadsinkomst på **${fmt(income)}** och utgifter på **${fmt(totalExpenses)}** har du en marginal på **${fmt(netSavings)}/månad**.\n\n- **Fokusera på rörliga kostnader:** Fasta kostnader är svårare att justera snabbt, så sätt budgettak på de rörliga kategorierna.\n- **Automatisera sparandet:** För över ditt sparande direkt på lönedagen för att säkerställa att du når dina sparmål.`;
         // Close if-else chain
         }
     // Close follow-up branch
@@ -372,22 +479,22 @@ function generateDynamicAnalysis(
     let momText = '';
     // Check if previous month comparison is available
     if (prev && prev.totalExpenses > 0) {
-        // Calculate dollar difference
+        // Calculate difference
         const diff = totalExpenses - prev.totalExpenses;
         // Calculate percentage difference
         const pct = (diff / prev.totalExpenses) * 100;
         // Check if spending increased
         if (diff > 0) {
             // Format increase text
-            momText = ` Spending is up **$${diff.toFixed(2)} (+${pct.toFixed(1)}%)** compared to last month ($${prev.totalExpenses.toFixed(2)}).`;
+            momText = ` Utgifterna har ökat med **${fmt(diff)} (+${pct.toFixed(1)}%)** jämfört med förra månaden (${fmt(prev.totalExpenses)}).`;
         // Check if spending decreased
         } else if (diff < 0) {
             // Format decrease text
-            momText = ` Spending dropped **$${Math.abs(diff).toFixed(2)} (${pct.toFixed(1)}%)** compared to last month ($${prev.totalExpenses.toFixed(2)}). Great discipline!`;
+            momText = ` Utgifterna minskade med **${fmt(Math.abs(diff))} (${pct.toFixed(1)}%)** jämfört med förra månaden (${fmt(prev.totalExpenses)}). Mycket bra!`;
         // Else spending identical
         } else {
             // Format unchanged text
-            momText = ` Spending matches your previous month exactly at $${totalExpenses.toFixed(2)}.`;
+            momText = ` Utgifterna är exakt desamma som förra månaden (${fmt(totalExpenses)}).`;
         // Close if-else
         }
     // Close if prev
@@ -402,7 +509,7 @@ function generateDynamicAnalysis(
         // Calculate months
         const months = Math.ceil(gap / netSavings);
         // Format projection string
-        goalProjection = ` At this net pace, you will reach your **$${savingsGoal.toFixed(2)}** goal in **${months} month${months === 1 ? '' : 's'}**.`;
+        goalProjection = ` I denna takt når du ditt mål på **${fmt(savingsGoal)}** om cirka **${months} månad${months === 1 ? '' : 'er'}**.`;
     // Close if savingsGoal
     }
 
@@ -411,7 +518,7 @@ function generateDynamicAnalysis(
     // Check if horizon data exists
     if (horizon && horizon.projectedTotalSavings) {
         // Format simulation summary sentence
-        horizonNote = `\n- **Horizon Outlook:** Multi-month simulation projects your cumulative savings reaching **$${horizon.projectedTotalSavings.toFixed(2)}** by **${horizon.targetLabel}**.`;
+        horizonNote = `\n- **Horisontprognos:** Simuleringen visar ett beräknat ackumulerat sparande på **${fmt(horizon.projectedTotalSavings)}** till **${horizon.targetLabel}**.`;
     // Close if horizon
     }
 
@@ -419,40 +526,95 @@ function generateDynamicAnalysis(
     const actionCat = overBudgetCats[0] || topCat;
     // Calculate suggested budget value for target category
     const suggestedCatBudget = actionCat
-        ? Math.round(Math.max(50, (actionCat.spent || actionCat.budget || 100) * 0.9))
-        : 300;
+        ? Math.round(Math.max(500, (actionCat.spent || actionCat.budget || 2000) * 0.9))
+        : 3000;
     // Suggested monthly savings deposit value
-    const suggestedDeposit = Math.round(Math.max(50, income * 0.2));
+    const suggestedDeposit = Math.round(Math.max(500, income * 0.2));
+    // Suggested overall budget
+    const suggestedBudget = Math.round(Math.max(1000, totalExpenses * 0.95));
 
-    // Construct full formatted analysis document
-    return `### 1. Spending Overview
-- **Net Cash Flow:** Income of **$${income.toFixed(2)}** vs Total Expenses of **$${totalExpenses.toFixed(2)}** yields a net surplus of **$${netSavings.toFixed(2)}** (${savingsRate.toFixed(1)}% savings rate).${momText}
-- **Budget Health:** ${
-        budget > 0
-            ? `Your overall monthly budget limit is **$${budget.toFixed(2)}** (${totalExpenses > budget ? 'Over limit by $' + (totalExpenses - budget).toFixed(2) : '$' + (budget - totalExpenses).toFixed(2) + ' remaining buffer'}).`
-            : 'No overall monthly budget ceiling is set. Setting an explicit threshold anchors monthly discipline.'
+    // Specific section generation based on insightType
+    if (insightType === 'cost_cutting') {
+        return `### 1. Spending Overview
+- **Kassautflöde:** Totala utgifter uppgår till **${fmt(totalExpenses)}** mot en inkomst på **${fmt(income)}** (${fmt(netSavings)} i överskott).${momText}
+- **Budgetstatus:** ${budget > 0 ? `Total budget är satt till **${fmt(budget)}** (${totalExpenses > budget ? 'Över med ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' i marginal'}).` : 'Inget totalt budgettak är satt.'}
+
+### 2. Key Insights
+${overBudgetCats.length > 0
+    ? overBudgetCats.map((c: any) => `- **Varning - Över Budget:** Kategori **${c.name}** har kostat **${fmt(c.spent || 0)}** mot taket på ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} över budget).`).join('\n')
+    : '- **Budgetdisciplin:** Inga kategorier överskrider för närvarande sina budgetgränser.'}
+${topCat ? `- **Största Kostnadspost:** **${topCat.name}** står för **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% av dina utgifter).` : ''}
+
+### 3. Actionable Recommendations
+1. **Sänk ${actionCat ? actionCat.name : 'rörliga kostnader'}:** Sätt en månatlig gräns på ${fmt(suggestedCatBudget)} för att spara direkt.
+   [[ACTION:SET_CATEGORY_BUDGET|${actionCat ? actionCat.id : 'default'}|${suggestedCatBudget}|Sätt ${actionCat ? actionCat.name : 'Kategori'} budget till ${fmt(suggestedCatBudget)}]]
+2. **Sätt Total Budget:** Begränsa månadens totala utgifter till ${fmt(suggestedBudget)}.
+   [[ACTION:SET_MONTHLY_BUDGET|${suggestedBudget}|Sätt Total Månadsbudget till ${fmt(suggestedBudget)}]]
+3. **Minska Impulsköp:** Inför en 48-timmars betänketid för alla inköp över ${fmt(500)}.`;
     }
-- **Savings Momentum:** You hold **$${totalSavings.toFixed(2)}** in cumulative reserves.${goalProjection}${horizonNote}
+
+    if (insightType === 'savings_goal') {
+        return `### 1. Spending Overview
+- **Sparkvot:** Du sparar för närvarande **${savingsRate.toFixed(1)}%** av din inkomst (${fmt(netSavings)}/månad). En hälsosam sparkvot ligger på minst 20%.
+- **Reserver:** Du har totalt **${fmt(totalSavings)}** i sparande.${goalProjection}
+
+### 2. Key Insights
+- **Buffertstatus:** Tre månaders nödbuffert motsvarar **${fmt(totalExpenses * 3)}**. ${totalSavings >= totalExpenses * 3 ? 'Din buffert är fullt säkrad!' : `Du behöver ytterligare ${fmt(Math.max(0, (totalExpenses * 3) - totalSavings))} för full 3-månaders buffert.`}
+${horizonNote}
+
+### 3. Actionable Recommendations
+1. **Automatisera Sparandet:** Sätt en automatisk överföring på minst 20% av din inkomst varje lönedag.
+   [[ACTION:SET_SAVINGS_DEPOSIT|${suggestedDeposit}|Sätt Månadssparande till ${fmt(suggestedDeposit)}]]
+2. **Accelerera Målet:** Genom att öka månadssparandet med ${fmt(1000)} når du ditt sparmål betydligt snabbare.
+3. **Optimera Bufferten:** Håll 3 månaders utgifter på ett lättillgängligt räntekonto.`;
+    }
+
+    if (insightType === 'subscriptions') {
+        return `### 1. Spending Overview
+- **Fasta & Återkommande Avgifter:** Totalt **${fmt(recurringTotal)}/månad** (${income > 0 ? ((recurringTotal / income) * 100).toFixed(1) : 0}% av din inkomst).
+- **Årskostnad för Abonnemang:** Detta motsvarar **${fmt(recurringTotal * 12)} per år**.
+
+### 2. Key Insights
+- **Abonnemangsfokus:** Återkommande utgifter dras automatiskt och glöms lätt bort.
+- **Optimeringspotential:** Genom att säga upp tjänster som används sällan frigör du direkt månatligt kassaflöde till sparande.
+
+### 3. Actionable Recommendations
+1. **Granska Autogiron & Kortdragningar:** Avsluta eller pausa prenumerationer du inte nyttjat de senaste 30 dagarna.
+2. **Flytta Sparade Pengar:** För över varje sparad hundralapp direkt till ditt månadssparande.
+   [[ACTION:SET_SAVINGS_DEPOSIT|${suggestedDeposit}|Sätt Månadssparande till ${fmt(suggestedDeposit)}]]
+3. **Förhandla Fasta Avtal:** Se över elavtal, hemförsäkring och bredband årligen.`;
+    }
+
+    // Default: Comprehensive health check
+    return `### 1. Spending Overview
+- **Kassaflöde:** Inkomst på **${fmt(income)}** mot Totala Utgifter på **${fmt(totalExpenses)}** ger ett nettoöverskott på **${fmt(netSavings)}** (${savingsRate.toFixed(1)}% sparkvot).${momText}
+- **Budgethälsa:** ${
+        budget > 0
+            ? `Ditt månatliga budgettak är **${fmt(budget)}** (${totalExpenses > budget ? 'Över budget med ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' kvar i buffert'}).`
+            : 'Inget övergripande budgettak är satt. Att sätta en gräns skapar trygghet i vardagen.'
+    }
+- **Sparande & Mål:** Du har **${fmt(totalSavings)}** i samlade reserver.${goalProjection}${horizonNote}
 
 ### 2. Key Insights
 ${
     overBudgetCats.length > 0
-        ? overBudgetCats.map((c: any) => `- **Alert - Over Budget:** **${c.name}** spent **$${(c.spent || 0).toFixed(2)}** against a limit of $${c.budget.toFixed(2)} ($${((c.spent || 0) - c.budget).toFixed(2)} over).`).join('\n')
-        : '- **Budget Adherence:** None of your categories currently exceed their designated budget caps.'
+        ? overBudgetCats.map((c: any) => `- **Över Budget:** **${c.name}** har kostat **${fmt(c.spent || 0)}** mot budget på ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} över).`).join('\n')
+        : '- **Budgetefterlevnad:** Inga kategorier överskrider för närvarande sina satta budgetramar.'
 }
 ${
     topCat
-        ? `- **Primary Cost Driver:** **${topCat.name}** accounts for your largest monthly outlay at **$${topCatSpent.toFixed(2)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% of total expenses).`
+        ? `- **Största Utgift:** **${topCat.name}** är månadens största kostnad på **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% av totala utgifter).`
         : ''
 }
-- **Recurring Commitments:** Subscriptions and recurring bills account for **$${recurringTotal.toFixed(2)}/month** (${income > 0 ? ((recurringTotal / income) * 100).toFixed(1) : 0}% of net income).
+- **Fasta Räkningar:** Återkommande räkningar och abonnemang uppgår till **${fmt(recurringTotal)}/månad** (${income > 0 ? ((recurringTotal / income) * 100).toFixed(1) : 0}% av inkomsten).
 
 ### 3. Actionable Recommendations
-1. **Target Highest Cost Driver:** Restrict discretionary spending in **${actionCat ? actionCat.name : 'variable categories'}** by 10% to capture immediate cash savings.
-   [[ACTION:SET_CATEGORY_BUDGET|${actionCat ? actionCat.id : 'default'}|${suggestedCatBudget}|Set ${actionCat ? actionCat.name : 'Category'} Budget to $${suggestedCatBudget}]]
-2. **Automate Target Savings:** Commit to depositing at least 20% of your net income on payday into savings.
-   [[ACTION:SET_SAVINGS_DEPOSIT|${suggestedDeposit}|Set Monthly Savings Deposit to $${suggestedDeposit}]]
-3. **Audit Recurring Outflows:** Review your active subscriptions for services used less than weekly; cancelling just one service often reclaims $15–$25 monthly.
-4. **Build Safety Buffer:** Ensure your cumulative savings target covers 3 to 6 months of baseline living costs ($${(totalExpenses * 3).toFixed(2)}–$${(totalExpenses * 6).toFixed(2)}).`;
+1. **Hantera Största Utgiften:** Begränsa utgifter i **${actionCat ? actionCat.name : 'rörliga kategorier'}** till ${fmt(suggestedCatBudget)}.
+   [[ACTION:SET_CATEGORY_BUDGET|${actionCat ? actionCat.id : 'default'}|${suggestedCatBudget}|Sätt ${actionCat ? actionCat.name : 'Kategori'} budget till ${fmt(suggestedCatBudget)}]]
+2. **Automatisera Sparande:** Sikta på att spara minst 20% av inkomsten direkt på lönedagen.
+   [[ACTION:SET_SAVINGS_DEPOSIT|${suggestedDeposit}|Sätt Månadssparande till ${fmt(suggestedDeposit)}]]
+3. **Sätt Total Budget:** Etablera en fast budgetram på ${fmt(suggestedBudget)} för att trygga kassaflödet.
+   [[ACTION:SET_MONTHLY_BUDGET|${suggestedBudget}|Sätt Total Månadsbudget till ${fmt(suggestedBudget)}]]
+4. **Trygghetsbuffert:** Bygg en buffert som motsvarar 3 till 6 månaders basutgifter (${fmt(totalExpenses * 3)}–${fmt(totalExpenses * 6)}).`;
 // Close generateDynamicAnalysis function
 }

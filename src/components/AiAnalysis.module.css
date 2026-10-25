@@ -845,3 +845,144 @@
   /* Not-allowed cursor */
   cursor: not-allowed;
 }
+
+/* Insight selection screen container */
+.selectorContainer {
+  /* Display flex layout */
+  display: flex;
+  /* Flex direction column */
+  flex-direction: column;
+  /* Gap between heading and grid */
+  gap: 1.25rem;
+  /* Padding top and bottom */
+  padding: 0.5rem 0;
+}
+
+/* Selector header title */
+.selectorHeading {
+  /* Font size scale */
+  font-size: 1.15rem;
+  /* Font weight semi-bold */
+  font-weight: 600;
+  /* Text color primary */
+  color: var(--text-primary);
+  /* Reset outer margin */
+  margin: 0 0 0.35rem 0;
+}
+
+/* Selector subtitle description */
+.selectorSub {
+  /* Secondary text color */
+  color: var(--text-secondary);
+  /* Font size */
+  font-size: 0.88rem;
+  /* Reset outer margin */
+  margin: 0;
+  /* Line height spacing */
+  line-height: 1.4;
+}
+
+/* Responsive grid for insight option cards */
+.insightGrid {
+  /* Display grid layout */
+  display: grid;
+  /* Auto fit column template */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* Gap spacing between cards */
+  gap: 0.9rem;
+}
+
+/* Interactive insight option card */
+.insightCard {
+  /* Translucent dark background */
+  background: rgba(255, 255, 255, 0.04);
+  /* Border with subtle outline */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Rounded corner boundaries */
+  border-radius: 12px;
+  /* Internal padding */
+  padding: 1.1rem;
+  /* Display flex */
+  display: flex;
+  /* Flex direction column */
+  flex-direction: column;
+  /* Align items to flex start */
+  align-items: flex-start;
+  /* Gap between elements */
+  gap: 0.55rem;
+  /* Cursor pointer */
+  cursor: pointer;
+  /* Text align left */
+  text-align: left;
+  /* Smooth transition animations */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Reset button default styles */
+  appearance: none;
+  /* Webkit appearance reset */
+  -webkit-appearance: none;
+}
+
+/* Insight card hover state */
+.insightCard:hover {
+  /* Elevate background opacity */
+  background: rgba(168, 85, 247, 0.08);
+  /* Highlight border with accent */
+  border-color: rgba(168, 85, 247, 0.4);
+  /* Translate card slightly upwards */
+  transform: translateY(-2px);
+  /* Subtle glowing box shadow */
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15);
+}
+
+/* Insight card active press state */
+.insightCard:active {
+  /* Scale down slightly */
+  transform: scale(0.98);
+}
+
+/* Insight card icon circle wrapper */
+.insightCardIcon {
+  /* Width dimensions */
+  width: 38px;
+  /* Height dimensions */
+  height: 38px;
+  /* Rounded circle */
+  border-radius: 50%;
+  /* Gradient background */
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.25));
+  /* Flex display */
+  display: flex;
+  /* Center horizontally */
+  justify-content: center;
+  /* Center vertically */
+  align-items: center;
+  /* Text/SVG color */
+  color: #c084fc;
+  /* Flex shrink zero */
+  flex-shrink: 0;
+}
+
+/* Insight card title typography */
+.insightCardTitle {
+  /* Font size scale */
+  font-size: 0.95rem;
+  /* Font weight semi-bold */
+  font-weight: 600;
+  /* Primary text color */
+  color: var(--text-primary);
+  /* Margin zero */
+  margin: 0;
+}
+
+/* Insight card description typography */
+.insightCardDesc {
+  /* Secondary text color */
+  color: var(--text-secondary);
+  /* Font size scale */
+  font-size: 0.8rem;
+  /* Line height spacing */
+  line-height: 1.4;
+  /* Margin zero */
+  margin: 0;
+}
+

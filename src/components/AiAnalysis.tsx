@@ -38,12 +38,25 @@ export interface AiAnalysisProps {
 // Close props interface
 }
 
+// Available insight types definitions
+interface InsightOption {
+    // Unique identifier key for the insight
+    id: 'comprehensive' | 'cost_cutting' | 'savings_goal' | 'subscriptions' | 'horizon';
+    // Human readable title label
+    title: string;
+    // Descriptive summary of the analysis focus
+    desc: string;
+    // SVG icon path render function
+    icon: React.ReactNode;
+// Close interface
+}
+
 // Declare enhanced AI spending analysis React component
 export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalysisProps = {}) {
     // Retrieve budget variables and mutators from budget context
     const { income, categories, totalExpenses, savings, totalSavings, savingsGoal, currentMonth, currentYear, monthlyBudget, setMonthlyBudget, setMonthlySavingsDeposit, updateCategory } = useBudget();
-    // Retrieve currency formatter from localization hook
-    const { formatCurrency } = useLocalization();
+    // Retrieve currency formatter, currency code, and locale from localization hook
+    const { formatCurrency, currency, locale } = useLocalization();
     // Retrieve current user session from auth context
     const { user } = useAuth();
     // Retrieve toast notification dispatcher
@@ -51,6 +64,8 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
 
     // Declare state for modal open status
     const [isOpen, setIsOpen] = useState(false);
+    // Declare state for chosen insight type (null indicates showing the selector screen)
+    const [selectedInsightType, setSelectedInsightType] = useState<string | null>(null);
     // Declare state for initial analysis network loading status
     const [loading, setLoading] = useState(false);
     // Declare state for active streaming status
@@ -69,9 +84,6 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
     const [followUpInput, setFollowUpInput] = useState('');
     // Declare state for follow-up streaming status
     const [isStreamingFollowUp, setIsStreamingFollowUp] = useState(false);
-
-    // Compute session cache key for current year and month
-    const cacheKey = `ai_analysis_cache_${user?.uid || 'guest'}_${currentYear}_${currentMonth}${horizonData ? '_horizon' : ''}`;
 
     // Lock background scrolling on mobile and desktop when modal is active
     useEffect(() => {
@@ -94,6 +106,95 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
     // Track isOpen state dependency
     }, [isOpen]);
 
+    // List of insight options presented to user
+    const insightOptions: InsightOption[] = [
+        // Comprehensive review
+        {
+            // ID
+            id: 'comprehensive',
+            // Title
+            title: 'Comprehensive Health Check',
+            // Description
+            desc: 'Complete overview of income, spending, budget compliance & overall savings momentum.',
+            // Icon
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            )
+        // Close option
+        },
+        // Cost cutting focus
+        {
+            // ID
+            id: 'cost_cutting',
+            // Title
+            title: 'Cost-Cutting & Over-Budget Audit',
+            // Description
+            desc: 'Deep dive into over-budget categories, highest cost drivers, and variable spending cuts.',
+            // Icon
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                    <polyline points="17 18 23 18 23 12" />
+                </svg>
+            )
+        // Close option
+        },
+        // Savings & Goal focus
+        {
+            // ID
+            id: 'savings_goal',
+            // Title
+            title: 'Savings & Goal Trajectory',
+            // Description
+            desc: 'Analyzes your net savings rate, emergency buffer, and projected timeline to reach your goal.',
+            // Icon
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+            )
+        // Close option
+        },
+        // Subscriptions focus
+        {
+            // ID
+            id: 'subscriptions',
+            // Title
+            title: 'Subscriptions & Fixed Bills',
+            // Description
+            desc: 'Audit recurring bills, highlight subscription fatigue, and calculate yearly cost recovery.',
+            // Icon
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+            )
+        // Close option
+        },
+        // Horizon Simulation focus (only if horizonData present)
+        ...(horizonData ? [{
+            // ID
+            id: 'horizon' as const,
+            // Title
+            title: 'Horizon Simulation Forecast',
+            // Description
+            desc: `Evaluates multi-month cash flow trajectory and milestones toward ${horizonData.targetLabel}.`,
+            // Icon
+            icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+            )
+        // Close option
+        }] : [])
+    // Close array
+    ];
+
     // Construct unified financial profile object
     const buildFinancialProfile = async () => {
         // Calculate effective overall monthly budget target preserving zero
@@ -111,12 +212,12 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             const budgetPct = cat.budget && cat.budget > 0 ? (total / cat.budget) * 100 : null;
             // Build a budget status label for this category
             const budgetStatus = budgetPct === null
-                ? 'No budget set'
-                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% used${budgetPct > 100 ? ' - OVER BUDGET' : ''})`;
+                ? 'Ingen budget satt'
+                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% använt${budgetPct > 100 ? ' - ÖVER BUDGET' : ''})`;
             // Format expenses in the category as list
-            const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Recurring)' : ''}`).join('\n');
+            const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Återkommande)' : ''}`).join('\n');
             // Return formatted string for this category
-            return `Category: ${cat.name} (ID: ${cat.id})\nTotal Spending: ${formatCurrency(total)}\n${budgetStatus}\nExpenses:\n${expensesList}`;
+            return `Kategori: ${cat.name} (ID: ${cat.id})\nTotala utgifter: ${formatCurrency(total)}\n${budgetStatus}\nUtgifter:\n${expensesList}`;
         // Join all category summaries with double newlines
         }).join('\n\n');
 
@@ -144,7 +245,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                     // Calculate previous month total expenses
                     const pExpTotal = (pData.categories || []).reduce((sum: number, c: any) => sum + (c.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0), 0);
                     // Find previous month top spending category
-                    let pTopName = 'None';
+                    let pTopName = 'Ingen';
                     // Find previous month top category amount
                     let pTopAmount = 0;
                     // Loop through previous categories
@@ -194,7 +295,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                         // Calculate total expenses
                         const mExpTotal = (mockData.month.categories || []).reduce((sum: number, c: any) => sum + (c.expenses || []).reduce((s: number, e: any) => s + (e.amount || 0), 0), 0);
                         // Find top category
-                        let mTopName = 'None';
+                        let mTopName = 'Ingen';
                         // Find top amount
                         let mTopAmount = 0;
                         // Loop categories
@@ -277,17 +378,42 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
     // Close buildFinancialProfile function
     };
 
-    // Handle triggering analysis from button click or refresh
-    const handleAnalyze = async (forceRefresh = false) => {
-        // Open modal dialog container window immediately
-        setIsOpen(true);
+    // Handle user selecting an insight focus type
+    const handleSelectInsightType = (typeId: string) => {
+        // Set selected insight type in state
+        setSelectedInsightType(typeId);
+        // Clear previous conversation follow-up history
+        setChatMessages([]);
+        // Trigger analysis execution with chosen insight focus
+        executeAnalysis(typeId, false);
+    // Close handleSelectInsightType
+    };
+
+    // Handle returning to the insight type selector view
+    const handleResetInsightType = () => {
+        // Reset selected insight type to null to show picker
+        setSelectedInsightType(null);
+        // Reset analysis text
+        setAnalysis('');
+        // Clear follow-up chat
+        setChatMessages([]);
+        // Reset error
+        setError('');
+    // Close handleResetInsightType
+    };
+
+    // Execute the analysis stream for a specific insight type
+    const executeAnalysis = async (typeId: string, forceRefresh = false) => {
+        // Construct cache key including selected insight type
+        const typeCacheKey = `ai_cache_${user?.uid || 'guest'}_${currentYear}_${currentMonth}_${typeId}`;
+
         // Clear previous error messages
         setError('');
 
         // Check if cached report is available in session storage and refresh not forced
         if (!forceRefresh && typeof window !== 'undefined') {
             // Retrieve cached analysis string
-            const cached = sessionStorage.getItem(cacheKey);
+            const cached = sessionStorage.getItem(typeCacheKey);
             // Check if cached text exists
             if (cached) {
                 // Populate analysis state from cache
@@ -320,7 +446,19 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                 // Request headers
                 headers: { 'Content-Type': 'application/json' },
                 // JSON stringified payload
-                body: JSON.stringify({ financialProfile, isFollowUp: false })
+                body: JSON.stringify({
+                    // Financial profile metrics
+                    financialProfile,
+                    // Selected insight focus
+                    insightType: typeId,
+                    // Active currency code (SEK)
+                    currency: currency || 'SEK',
+                    // Active locale (sv-SE)
+                    locale: locale || 'sv-SE',
+                    // Follow-up flag false for initial run
+                    isFollowUp: false
+                // Close payload
+                })
             // Close fetch options
             });
 
@@ -367,7 +505,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             // Cache generated analysis in session storage
             if (typeof window !== 'undefined' && fullText) {
                 // Store analysis string under month cache key
-                sessionStorage.setItem(cacheKey, fullText);
+                sessionStorage.setItem(typeCacheKey, fullText);
             // Close session storage check
             }
         // Catch network or parse failures
@@ -384,7 +522,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             setIsStreaming(false);
         // Close finally block
         }
-    // Close handleAnalyze function
+    // Close executeAnalysis function
     };
 
     // Handle copying full analysis text to clipboard
@@ -400,13 +538,13 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             // Set copied confirmation flag
             setCopied(true);
             // Display toast confirmation
-            addToast('Financial analysis copied to clipboard!', 'success');
+            addToast('Analys kopierad till urklipp!', 'success');
             // Reset copied feedback after two seconds
             setTimeout(() => setCopied(false), 2000);
         // Catch clipboard permission errors
         } catch {
             // Notify user of clipboard write failure
-            addToast('Failed to copy analysis to clipboard.', 'error');
+            addToast('Kunde inte kopiera till urklipp.', 'error');
         // Close catch block
         }
     // Close handleCopyAnalysis function
@@ -432,13 +570,13 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                 // Update category budget limit
                 updateCategory(targetCat.id, targetCat.name, targetCat.color, amount);
                 // Dispatch success toast notification
-                addToast(`Updated ${targetCat.name} budget to ${formatCurrency(amount)}!`, 'success');
+                addToast(`Uppdaterade budget för ${targetCat.name} till ${formatCurrency(amount)}!`, 'success');
             // Else fallback to first category
             } else if (categories[0]) {
                 // Update first category budget
                 updateCategory(categories[0].id, categories[0].name, categories[0].color, amount);
                 // Dispatch success toast notification
-                addToast(`Updated ${categories[0].name} budget to ${formatCurrency(amount)}!`, 'success');
+                addToast(`Uppdaterade budget för ${categories[0].name} till ${formatCurrency(amount)}!`, 'success');
             // Close if-else
             }
         // Handle monthly savings deposit adjustment
@@ -450,7 +588,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             // Update monthly savings deposit setting
             setMonthlySavingsDeposit(amount);
             // Dispatch success toast notification
-            addToast(`Updated monthly savings deposit to ${formatCurrency(amount)}!`, 'success');
+            addToast(`Uppdaterade månadssparande till ${formatCurrency(amount)}!`, 'success');
         // Handle overall monthly budget adjustment
         } else if (actionType === 'SET_MONTHLY_BUDGET') {
             // Parse monthly budget amount
@@ -460,7 +598,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             // Update monthly budget setting
             setMonthlyBudget(amount);
             // Dispatch success toast notification
-            addToast(`Updated overall monthly budget to ${formatCurrency(amount)}!`, 'success');
+            addToast(`Uppdaterade total månadsbudget till ${formatCurrency(amount)}!`, 'success');
         // Close action routing
         }
 
@@ -504,6 +642,12 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                     financialProfile: profile,
                     // Previous conversation history
                     chatHistory: updatedHistory,
+                    // Active currency
+                    currency: currency || 'SEK',
+                    // Active locale
+                    locale: locale || 'sv-SE',
+                    // Current insight focus
+                    insightType: selectedInsightType || 'comprehensive',
                     // Follow-up mode flag
                     isFollowUp: true,
                     // Specific user inquiry question
@@ -555,7 +699,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
         // Catch follow-up errors
         } catch (err: any) {
             // Append error message to chat
-            setChatMessages(prev => [...prev, { role: 'assistant', content: 'Could not generate advice for that question. Please try again.' }]);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: 'Kunde inte generera svar på den frågan. Försök gärna igen.' }]);
         // Finalize follow-up streaming
         } finally {
             // Clear follow-up streaming flag
@@ -642,7 +786,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             {/* Icon indicator */}
                             <span>{isApplied ? '✓' : '⚡'}</span>
                             {/* Action label */}
-                            <span>{isApplied ? `${action.label} (Applied)` : action.label}</span>
+                            <span>{isApplied ? `${action.label} (Tillämpad)` : action.label}</span>
                         {/* Close button */}
                         </button>
                     {/* Close container */}
@@ -713,10 +857,16 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             {/* Card text description */}
             <p className={styles.cardDesc}>
                 {/* Descriptive card copy */}
-                {horizonData ? 'Analyze multi-month horizon scenario & trajectory.' : 'Get streaming AI insights, historical comparisons & 1-click recommendations.'}
+                {horizonData ? 'Få skräddarsydda insikter för din horisont och simulering.' : 'Välj insiktsfokus, få prognoser i kr och interagera med din AI-assistent.'}
             </p>
             {/* Trigger action button wrapper */}
-            <button className={styles.analyzeBtn} onClick={() => handleAnalyze(false)}>
+            <button
+                className={styles.analyzeBtn}
+                onClick={() => {
+                    // Open modal
+                    setIsOpen(true);
+                }}
+            >
                 {/* Sparkle SVG icon */}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {/* Sparkle star path */}
@@ -724,7 +874,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                 {/* Closing svg */}
                 </svg>
                 {/* Text title inside button */}
-                <span>{customTriggerLabel || (horizonData ? 'Analyze Horizon Trajectory' : 'Analyze Spending')}</span>
+                <span>{customTriggerLabel || (horizonData ? 'Analysera Horisont med AI' : 'Starta AI-Analys')}</span>
             </button>
 
             {/* Check if modal overlay needs rendering */}
@@ -736,17 +886,40 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                         {/* Header bar within modal */}
                         <div className={styles.modalHeader}>
                             {/* Title heading style */}
-                            <h2 className={styles.cardTitle}>AI Spending Analysis</h2>
+                            <h2 className={styles.cardTitle}>
+                                {/* Header title text */}
+                                {selectedInsightType
+                                    ? (insightOptions.find(o => o.id === selectedInsightType)?.title || 'AI Spending Analysis')
+                                    : 'Välj Typ av AI-Insikt'}
+                            </h2>
 
                             {/* Header action buttons container */}
                             <div className={styles.headerActions}>
+                                {/* Change Focus button when an insight type is active */}
+                                {selectedInsightType && (
+                                    <button
+                                        type="button"
+                                        className={styles.iconBtn}
+                                        onClick={handleResetInsightType}
+                                        title="Byt Insiktsfokus"
+                                    >
+                                        {/* Back arrow SVG icon */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="15 18 9 12 15 6" />
+                                        </svg>
+                                        {/* Button text */}
+                                        <span>Byt Fokus</span>
+                                    {/* Close button */}
+                                    </button>
+                                )}
+
                                 {/* Copy to clipboard button */}
-                                {analysis && (
+                                {selectedInsightType && analysis && (
                                     <button
                                         type="button"
                                         className={styles.iconBtn}
                                         onClick={handleCopyAnalysis}
-                                        title="Copy Analysis Markdown"
+                                        title="Kopiera text"
                                     >
                                         {/* Copy SVG icon */}
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -757,36 +930,38 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                         {/* Closing svg */}
                                         </svg>
                                         {/* Button text label */}
-                                        <span>{copied ? 'Copied!' : 'Copy'}</span>
+                                        <span>{copied ? 'Kopierad!' : 'Kopiera'}</span>
                                     {/* Close button */}
                                     </button>
                                 )}
 
                                 {/* Regenerate fresh report button */}
-                                <button
-                                    type="button"
-                                    className={styles.iconBtn}
-                                    onClick={() => handleAnalyze(true)}
-                                    title="Regenerate Fresh Analysis"
-                                    disabled={loading || isStreaming}
-                                >
-                                    {/* Refresh SVG icon */}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        {/* Refresh circular polyline */}
-                                        <polyline points="23 4 23 10 17 10" />
-                                        {/* Refresh bottom polyline */}
-                                        <polyline points="1 20 1 14 7 14" />
-                                        {/* Path arcs */}
-                                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                                    {/* Closing svg */}
-                                    </svg>
-                                    {/* Button label */}
-                                    <span>Regenerate</span>
-                                {/* Close button */}
-                                </button>
+                                {selectedInsightType && (
+                                    <button
+                                        type="button"
+                                        className={styles.iconBtn}
+                                        onClick={() => executeAnalysis(selectedInsightType, true)}
+                                        title="Generera ny analys"
+                                        disabled={loading || isStreaming}
+                                    >
+                                        {/* Refresh SVG icon */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Refresh circular polyline */}
+                                            <polyline points="23 4 23 10 17 10" />
+                                            {/* Refresh bottom polyline */}
+                                            <polyline points="1 20 1 14 7 14" />
+                                            {/* Path arcs */}
+                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                        {/* Button label */}
+                                        <span>Uppdatera</span>
+                                    {/* Close button */}
+                                    </button>
+                                )}
 
                                 {/* Close button modal trigger */}
-                                <button className={styles.closeBtn} onClick={() => setIsOpen(false)} title="Close Dialog">
+                                <button className={styles.closeBtn} onClick={() => setIsOpen(false)} title="Stäng fönster">
                                     {/* Close character entity */}
                                     &times;
                                 </button>
@@ -794,21 +969,55 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             </div>
                         </div>
 
-                        {/* Analysis results body wrapper */}
+                        {/* Analysis results or insight selector body wrapper */}
                         <div className={styles.analysisBody}>
+                            {/* Render Pre-Analysis Insight Selector Screen when no type is selected */}
+                            {!selectedInsightType && (
+                                <div className={styles.selectorContainer}>
+                                    {/* Selector title and subtitle */}
+                                    <div>
+                                        <h3 className={styles.selectorHeading}>Vad vill du att AI:n ska fokusera på?</h3>
+                                        <p className={styles.selectorSub}>
+                                            Välj den analysvinkel som bäst passar din situation. Alla belopp beräknas i svenska kronor ({currency === 'SEK' ? 'kr' : currency}).
+                                        </p>
+                                    </div>
+
+                                    {/* Grid of insight option cards */}
+                                    <div className={styles.insightGrid}>
+                                        {insightOptions.map((option) => (
+                                            <button
+                                                key={option.id}
+                                                type="button"
+                                                className={styles.insightCard}
+                                                onClick={() => handleSelectInsightType(option.id)}
+                                            >
+                                                {/* Card circular icon */}
+                                                <div className={styles.insightCardIcon}>
+                                                    {option.icon}
+                                                </div>
+                                                {/* Card title */}
+                                                <h4 className={styles.insightCardTitle}>{option.title}</h4>
+                                                {/* Card description */}
+                                                <p className={styles.insightCardDesc}>{option.desc}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Check if initial loading status active */}
-                            {loading && (
+                            {selectedInsightType && loading && (
                                 // Loading spinner container
                                 <div className={styles.loadingContainer}>
                                     {/* Spinner animation circle */}
                                     <div className={styles.spinner} />
                                     {/* Pulsating load text label */}
-                                    <span className={styles.loadingText}>Synthesizing financial telemetry & historical trends...</span>
+                                    <span className={styles.loadingText}>Analyserar budget och finansiell historik i kr...</span>
                                 </div>
                             )}
 
                             {/* Check if error occurred */}
-                            {error && (
+                            {selectedInsightType && error && (
                                 // Error notification box
                                 <div className={styles.errorBox}>
                                     {/* Error icon element */}
@@ -822,7 +1031,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             )}
 
                             {/* Check if analysis text is ready and not in initial loading */}
-                            {!loading && !error && analysis && (
+                            {selectedInsightType && !loading && !error && analysis && (
                                 // Renders parsed nodes list with streaming cursor
                                 <div>
                                     {/* Render parsed markdown sections */}
@@ -833,7 +1042,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                             )}
 
                             {/* Interactive conversational follow-up section */}
-                            {!loading && !error && analysis && (
+                            {selectedInsightType && !loading && !error && analysis && (
                                 <div className={styles.chatSection}>
                                     {/* Chat title heading */}
                                     <h4 className={styles.chatTitle}>
@@ -844,7 +1053,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                         {/* Closing svg */}
                                         </svg>
                                         {/* Title text */}
-                                        <span>Ask a Follow-Up Question</span>
+                                        <span>Ställ en Följdfråga till AI:n</span>
                                     {/* Close title */}
                                     </h4>
 
@@ -874,7 +1083,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                             className={styles.chatInput}
                                             value={followUpInput}
                                             onChange={(e) => setFollowUpInput(e.target.value)}
-                                            placeholder="Ask e.g. 'How can I trim $150 from dining?'..."
+                                            placeholder="Fråga t.ex. 'Hur sparar jag 1 500 kr på mat?'..."
                                             disabled={isStreamingFollowUp}
                                         />
                                         {/* Send question button */}
@@ -892,7 +1101,7 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
                                             {/* Closing svg */}
                                             </svg>
                                             {/* Send button text */}
-                                            <span>Send</span>
+                                            <span>Skicka</span>
                                         {/* Close button */}
                                         </button>
                                     {/* Close form */}
