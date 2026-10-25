@@ -43,12 +43,14 @@ const Summary: React.FC = () => {
         if (!isEditingDeposit) setTempDeposit(monthlySavingsDeposit.toString());
     }, [monthlySavingsDeposit, isEditingDeposit]);
 
-    // Calculate effective monthly budget target amount
-    const effectiveMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+    // Calculate effective monthly budget target amount preserving zero
+    const effectiveMonthlyBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
 
     // Calculate total planned budgeted expenses or actual expenses if higher
-    const plannedExpenses = monthlyBudget > 0 
+    const plannedExpenses = monthlyBudget !== undefined 
+        // Use max of budget and total expenses if custom budget is defined
         ? Math.max(monthlyBudget, totalExpenses) 
+        // Otherwise calculate planned expenses based on individual category budgets
         : categories.reduce((sum, cat) => sum + (cat.budget !== undefined ? Math.max(cat.budget, cat.expenses.reduce((s, e) => s + e.amount, 0)) : cat.expenses.reduce((s, e) => s + e.amount, 0)), 0);
     // Calculate free operational cash remaining after budgeted expenses and savings deposit
     const freeCash = income - plannedExpenses - monthlySavingsDeposit;

@@ -846,9 +846,9 @@ export default function HorizonPlanner() {
         // Calculate savings rate percentage of income
         const sRate = (activeMonthData.income || 0) > 0 ? Math.round(((activeMonthData.monthlySavingsDeposit || 0) / activeMonthData.income) * 100) : 0;
         // Calculate budget consumption percentage
-        const bUsage = (activeMonthData.monthlyBudget || 0) > 0 ? Math.round((expensesSum / (activeMonthData.monthlyBudget || 1)) * 100) : 0;
+        const bUsage = typeof activeMonthData.monthlyBudget === 'number' && activeMonthData.monthlyBudget > 0 ? Math.round((expensesSum / activeMonthData.monthlyBudget) * 100) : 0;
         // Calculate remaining budget headroom
-        const bRemaining = (activeMonthData.monthlyBudget || 0) - expensesSum;
+        const bRemaining = (activeMonthData.monthlyBudget ?? 0) - expensesSum;
         // Find index of currently inspected month in the horizon sequence
         const inspectedIndex = horizonSequence.findIndex(item => item.key === activeInspectorKey);
         // Accumulated simulated monthly deposits up to this inspected month
@@ -884,7 +884,7 @@ export default function HorizonPlanner() {
             // Monthly savings deposit
             savingsDeposit: activeMonthData.monthlySavingsDeposit || 0,
             // Monthly budget limit
-            budget: activeMonthData.monthlyBudget || 0,
+            budget: activeMonthData.monthlyBudget ?? 0,
             // Savings rate percentage
             savingsRate: sRate,
             // Budget consumption percentage
@@ -948,7 +948,23 @@ export default function HorizonPlanner() {
         }
         // Return if base month for other fields
         if (isBaseMonth) return;
-        // Parse float value
+        // Check if value string is empty to delete override
+        if (valueStr.trim() === '') {
+            // Clone existing month object
+            const updatedMonth: MonthData = {
+                // Spread existing month data
+                ...activeMonthData,
+            // End of updatedMonth clone
+            };
+            // Delete target field override
+            delete (updatedMonth as any)[field];
+            // Save cleared override state to simulation
+            saveSimulationState({ [activeInspectorKey]: updatedMonth });
+            // Return early
+            return;
+        // End of empty string check
+        }
+        // Parse float value from input string
         const val = parseFloat(valueStr) || 0;
         // Updated month object
         const updatedMonth: MonthData = {
@@ -1300,7 +1316,7 @@ export default function HorizonPlanner() {
                 // Assign copied or existing monthly savings deposit
                 monthlySavingsDeposit: copyScopeIncomeSavings ? (sourceData.monthlySavingsDeposit || 0) : existingTarget.monthlySavingsDeposit,
                 // Assign copied or existing monthly budget limit
-                monthlyBudget: copyScopeIncomeSavings ? (sourceData.monthlyBudget || 0) : existingTarget.monthlyBudget,
+                monthlyBudget: copyScopeIncomeSavings ? sourceData.monthlyBudget : existingTarget.monthlyBudget,
                 // Assign copied or existing categories
                 categories: finalCategories,
                 // End target month payload
@@ -1632,7 +1648,7 @@ export default function HorizonPlanner() {
                                     <span>Money Spent</span>
                                 </span>
                                 {/* Check if budget limit is configured */}
-                                {activeMonthData.monthlyBudget && activeMonthData.monthlyBudget > 0 ? (
+                                {typeof activeMonthData.monthlyBudget === 'number' ? (
                                     <span
                                         className={styles.statBadge}
                                         style={{
@@ -1877,7 +1893,7 @@ export default function HorizonPlanner() {
                                     type="number"
                                     className={styles.input}
                                     placeholder="0"
-                                    value={editingMonthFields['monthlyBudget'] !== undefined ? editingMonthFields['monthlyBudget'] : (activeMonthData.monthlyBudget === 0 ? '' : (activeMonthData.monthlyBudget || ''))}
+                                    value={editingMonthFields['monthlyBudget'] !== undefined ? editingMonthFields['monthlyBudget'] : (typeof activeMonthData.monthlyBudget === 'number' ? activeMonthData.monthlyBudget : '')}
                                     onChange={(e) => {
                                         // Raw string value from input
                                         const val = e.target.value;

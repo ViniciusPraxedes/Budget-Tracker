@@ -39,8 +39,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     const [categoriesState, setCategoriesState] = useState<Category[]>([]);
     // Declare state for monthly savings deposit
     const [monthlySavingsDepositState, setMonthlySavingsDepositState] = useState<number>(0);
-    // Declare state for total monthly spending budget
-    const [monthlyBudgetState, setMonthlyBudgetState] = useState<number>(0);
+    // Declare state for total monthly spending budget allowing undefined when unset
+    const [monthlyBudgetState, setMonthlyBudgetState] = useState<number | undefined>(undefined);
     // Declare state for loading indicator
     const [loading, setLoading] = useState(true);
     // Retrieve toast notification handler
@@ -57,8 +57,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
             setCategoriesState([]);
             // Set monthly savings deposit to zero
             setMonthlySavingsDepositState(0);
-            // Set monthly budget state to zero
-            setMonthlyBudgetState(0);
+            // Reset monthly budget state to undefined
+            setMonthlyBudgetState(undefined);
             // Disable loading spinner
             setLoading(false);
             // Return early
@@ -82,8 +82,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setIncomeState(data.income || 0);
                     // Update monthly savings deposit state
                     setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
-                    // Update monthly budget state
-                    setMonthlyBudgetState(data.monthlyBudget || 0);
+                    // Update monthly budget state with retrieved numeric value or undefined
+                    setMonthlyBudgetState(typeof data.monthlyBudget === 'number' ? data.monthlyBudget : undefined);
                     // Retrieve categories array or use empty array default
                     const fetchedCategories = data.categories || [];
                     // Sort categories by their order property
@@ -134,8 +134,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setIncomeState(data.income || 0);
                     // Update local monthly savings deposit state
                     setMonthlySavingsDepositState(data.monthlySavingsDeposit || 0);
-                    // Update local monthly budget state
-                    setMonthlyBudgetState(data.monthlyBudget || 0);
+                    // Update local monthly budget state with snapshot numeric value or undefined
+                    setMonthlyBudgetState(typeof data.monthlyBudget === 'number' ? data.monthlyBudget : undefined);
                     // Retrieve categories list
                     const fetchedCategories = data.categories || [];
                     // Sort categories by order index
@@ -152,8 +152,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
                     setCategoriesState([]);
                     // Reset monthly savings deposit to zero
                     setMonthlySavingsDepositState(0);
-                    // Reset monthly budget state to zero
-                    setMonthlyBudgetState(0);
+                    // Reset monthly budget state to undefined
+                    setMonthlyBudgetState(undefined);
                     // Disable loading spinner
                     setLoading(false);
                 }
@@ -177,8 +177,8 @@ export const useFirestoreSync = (user: User | null, currentKey: string) => {
     const updateFirestore = async (newIncome: number, newCategories: Category[], month: number, year: number, newSavingsDeposit?: number, newMonthlyBudget?: number) => {
         // Determine savings deposit value using state fallback
         const savingsDepositValue = newSavingsDeposit !== undefined ? newSavingsDeposit : (monthlySavingsDepositState || 0);
-        // Determine monthly budget value using state fallback
-        const monthlyBudgetValue = newMonthlyBudget !== undefined ? newMonthlyBudget : (monthlyBudgetState || 0);
+        // Determine monthly budget value preserving zero or undefined
+        const monthlyBudgetValue = newMonthlyBudget !== undefined ? newMonthlyBudget : monthlyBudgetState;
         // Log update parameters to console for debugging
         console.log("DEBUG: updateFirestore called!", { newIncome, cats: newCategories.length, month, year, currentKey, savingsDepositValue, monthlyBudgetValue });
         // Return early if no user session exists

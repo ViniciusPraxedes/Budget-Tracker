@@ -25,31 +25,54 @@ const BudgetPlanner: React.FC = () => {
     // Declare state for active tab selection inside budget planner
     const [activeTab, setActiveTab] = useState<'planner' | 'horizon'>('planner');
 
-    // Total effective budget threshold calculation
-    const effectiveTotalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((s, c) => s + (c.budget || 0), 0);
+    // Total effective budget threshold calculation preserving zero
+    const effectiveTotalBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((s, c) => s + (c.budget || 0), 0);
     // Declare state for inline monthly budget editing mode
     const [isEditingMonthlyBudget, setIsEditingMonthlyBudget] = useState(false);
     // Declare state for temporary monthly budget input string
-    const [tempMonthlyBudget, setTempMonthlyBudget] = useState(effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : '');
+    const [tempMonthlyBudget, setTempMonthlyBudget] = useState(monthlyBudget !== undefined ? monthlyBudget.toString() : (effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : ''));
 
     // Keep tempMonthlyBudget in sync with loaded budget values when not editing
     useEffect(() => {
+        // Only synchronize when editing mode is closed
         if (!isEditingMonthlyBudget) {
-            setTempMonthlyBudget(effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : '');
+            // Set temporary string matching configured budget or empty fallback
+            setTempMonthlyBudget(monthlyBudget !== undefined ? monthlyBudget.toString() : (effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : ''));
+        // End of editing mode check
         }
-    }, [effectiveTotalBudget, isEditingMonthlyBudget]);
+    // Track dependencies for synchronizing input value
+    }, [monthlyBudget, effectiveTotalBudget, isEditingMonthlyBudget]);
 
-    // Commit the pending monthly budget edit, ignoring non-numeric input
+    // Commit the pending monthly budget edit, supporting zero or clearing to undefined
     const commitMonthlyBudget = () => {
-        const val = parseFloat(tempMonthlyBudget);
-        if (!isNaN(val)) setMonthlyBudget(val);
+        // Check if input is empty to reset to undefined
+        if (tempMonthlyBudget.trim() === '') {
+            // Clear monthly budget override
+            setMonthlyBudget(undefined);
+        // Parse numeric value if provided
+        } else {
+            // Parse float value from input string
+            const val = parseFloat(tempMonthlyBudget);
+            // Verify parsed value is valid number
+            if (!isNaN(val)) {
+                // Set monthly budget to parsed number
+                setMonthlyBudget(val);
+            // End of valid number check
+            }
+        // End of empty check
+        }
+        // Close inline editing mode
         setIsEditingMonthlyBudget(false);
+    // End of commitMonthlyBudget definition
     };
 
     // Abandon the pending monthly budget edit and restore the persisted value
     const cancelMonthlyBudgetEdit = () => {
-        setTempMonthlyBudget(effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : '');
+        // Restore previous budget value or empty fallback
+        setTempMonthlyBudget(monthlyBudget !== undefined ? monthlyBudget.toString() : (effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : ''));
+        // Close inline editing mode
         setIsEditingMonthlyBudget(false);
+    // End of cancelMonthlyBudgetEdit definition
     };
 
     // Savings Goal state initializations
@@ -135,8 +158,10 @@ const BudgetPlanner: React.FC = () => {
     const budgetSpentPct = effectiveTotalBudget > 0 ? Math.round((totalExpenses / effectiveTotalBudget) * 100) : 0;
 
     // Calculate total planned budgeted expenses or actual expenses if higher
-    const plannedExpenses = monthlyBudget > 0
+    const plannedExpenses = monthlyBudget !== undefined
+        // If custom budget is configured use max of budget and total expenses
         ? Math.max(monthlyBudget, totalExpenses)
+        // Otherwise fall back to sum of category budgets
         : categories.reduce((sum, cat) => sum + (cat.budget !== undefined ? Math.max(cat.budget, cat.expenses.reduce((s, e) => s + e.amount, 0)) : cat.expenses.reduce((s, e) => s + e.amount, 0)), 0);
 
     // Calculate remaining net free cash flow incorporating budget limits
@@ -302,7 +327,9 @@ const BudgetPlanner: React.FC = () => {
                                 // Value display trigger to activate inline editing mode
                                 <div
                                     onClick={() => {
-                                        setTempMonthlyBudget(effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : '');
+                                        // Initialize edit field with current budget value
+                                        setTempMonthlyBudget(monthlyBudget !== undefined ? monthlyBudget.toString() : (effectiveTotalBudget > 0 ? effectiveTotalBudget.toString() : ''));
+                                        // Open editing mode
                                         setIsEditingMonthlyBudget(true);
                                     }}
                                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -323,7 +350,8 @@ const BudgetPlanner: React.FC = () => {
                             )}
                             {/* Metric subtext info string */}
                             <span className={styles.metricSubtext}>
-                                {monthlyBudget > 0 ? 'Custom budget set' : 'Category budgets sum'}
+                                {/* Display label indicating whether custom budget is set */}
+                                {monthlyBudget !== undefined ? 'Custom budget set' : 'Category budgets sum'}
                             </span>
                         </div>
 

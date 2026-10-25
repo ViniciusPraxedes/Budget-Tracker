@@ -532,8 +532,11 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(amount, categories);
     };
 
-    const setMonthlyBudget = (amount: number) => {
+    // Function to set or clear monthly budget limit
+    const setMonthlyBudget = (amount?: number) => {
+        // Persist updated monthly budget to database
         updateFirestore(income, categories, currentMonth, currentYear, monthlySavingsDeposit, amount);
+    // End of setMonthlyBudget definition
     };
 
     // Function to add a new custom category

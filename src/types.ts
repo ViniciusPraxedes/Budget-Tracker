@@ -71,12 +71,14 @@ export interface BudgetContextType {
     totalExpenses: number;
     savings: number;
     monthlySavingsDeposit: number;
-    monthlyBudget: number;
+    // Optional configured monthly budget limit
+    monthlyBudget?: number;
     paydayStartDay: number;
     paydayEndDay: number;
     setPaydayStartDay: (day: number) => void;
     setPaydayCycleDays: (startDay: number, endDay: number) => void;
-    setMonthlyBudget: (amount: number) => void;
+    // Function to set or clear monthly budget limit
+    setMonthlyBudget: (amount?: number) => void;
     setMonthlySavingsDeposit: (amount: number) => void;
     setIncome: (amount: number) => void;
     addCategory: (name: string, color: string, budget?: number) => Category;

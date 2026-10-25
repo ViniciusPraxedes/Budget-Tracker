@@ -33,8 +33,8 @@ export default function AiAnalysis() {
         setError('');
         // Open modal dialog container window
         setIsOpen(true);
-        // Calculate effective overall monthly budget target, falling back to sum of category budgets
-        const effectiveMonthlyBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        // Calculate effective overall monthly budget target preserving zero
+        const effectiveMonthlyBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
         // Calculate combined total of expenses flagged as recurring across all categories
         const recurringTotal = categories.reduce((sum, cat) => sum + cat.expenses.filter(exp => exp.isRecurring).reduce((s, exp) => s + exp.amount, 0), 0);
         // Calculate user's savings rate as a percentage of income

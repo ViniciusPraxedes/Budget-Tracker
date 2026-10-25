@@ -118,8 +118,8 @@ const Analytics: React.FC = () => {
     const paydayCycleDays = paydayCycle.lengthInDays;
     // Calculate average daily spending across the configured payday cycle
     const dailyAverage = paydayCycleDays > 0 ? totalExpenses / paydayCycleDays : 0;
-    // Calculate total effective monthly budget target
-    const totalBudget = monthlyBudget > 0 ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+    // Calculate total effective monthly budget target preserving zero
+    const totalBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
     // Calculate budget utilization rate
     const budgetUtilization = totalBudget > 0 ? (totalExpenses / totalBudget) * 100 : 0;
 
