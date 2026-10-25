@@ -220,7 +220,7 @@ const BudgetPlanner: React.FC = () => {
                 <div style={{ marginTop: '0.5rem' }}>
                     {/* Tab navigation bar container */}
                     <div className={styles.tabsContainer}>
-                        {/* Tab button for Current Month Budget & Goals */}
+                        {/* Tab button for Current Month Budget */}
                         <button
                             type="button"
                             className={`${styles.tabButton} ${activeTab === 'planner' ? styles.tabButtonActive : ''}`}
@@ -237,7 +237,7 @@ const BudgetPlanner: React.FC = () => {
                             {/* Closing svg */}
                             </svg>
                             {/* Tab label text */}
-                            <span>Current Month Budget & Goals</span>
+                            <span>Current Month Budget</span>
                         </button>
                         {/* Tab button for Multi-Month Horizon Planner */}
                         <button

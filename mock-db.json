@@ -5111,9 +5111,7 @@
         "2026-10": {
           "month": 10,
           "year": 2026,
-          "income": 23000,
-          "monthlySavingsDeposit": 5000,
-          "monthlyBudget": 18000,
+          "monthlyBudget": 19500,
           "categories": [
             {
               "id": "ha7g46evm",
@@ -5574,7 +5572,9 @@
                 }
               ]
             }
-          ]
+          ],
+          "totalSavings": 65000,
+          "income": 25000
         },
         "2026-9": {
           "income": 23000,
@@ -8384,6 +8384,12 @@
             }
           ]
         }
+      },
+      "simulationRange": {
+        "startMonth": 9,
+        "startYear": 2026,
+        "endMonth": 4,
+        "endYear": 2027
       }
     }
   }

@@ -2,6 +2,8 @@
 
 // Import React core library and state/memo hooks
 import React, { useState, useEffect, useMemo } from 'react';
+// Import createPortal to render modal dialog outside parent overflow/filter boundaries
+import { createPortal } from 'react-dom';
 // Import budget context consumer hook
 import { useBudget } from '../context/BudgetContext';
 // Import localization context consumer hook
@@ -20,6 +22,8 @@ import { sanitizeForFirestore } from '../context/useFirestoreSync';
 import { Category, Expense, MonthData } from '../types';
 // Import component CSS module styles
 import styles from './HorizonPlanner.module.css';
+// Import AI spending and horizon simulation analysis assistant
+import AiAnalysis from './AiAnalysis';
 
 // Month names list for label formatting
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -134,6 +138,27 @@ export default function HorizonPlanner() {
     const [isCopyToolOpen, setIsCopyToolOpen] = useState<boolean>(false);
     // State to toggle copy tool confirmation modal
     const [showCopyConfirm, setShowCopyConfirm] = useState<boolean>(false);
+
+    // Hook effect to lock background scrolling when modal is active
+    useEffect(() => {
+        // Guard check for document availability
+        if (typeof document === 'undefined') return;
+        // Check if copy confirmation dialog is open
+        if (showCopyConfirm) {
+            // Cache previous body overflow setting
+            const prevOverflow = document.body.style.overflow;
+            // Prevent background page scrolling
+            document.body.style.overflow = 'hidden';
+            // Return cleanup teardown handler
+            return () => {
+                // Re-enable original body scrolling behavior
+                document.body.style.overflow = prevOverflow;
+            // Close cleanup arrow function block
+            };
+        // Close conditional block
+        }
+    // Track modal display state dependency
+    }, [showCopyConfirm]);
     // State to track raw input string values for monthly parameters while editing
     const [editingMonthFields, setEditingMonthFields] = useState<Record<string, string>>({});
     // State to track raw input string values for itemized expense amounts while editing
@@ -2604,8 +2629,23 @@ export default function HorizonPlanner() {
                 )}
             </div>
 
-            {/* Confirmation Dialog Modal */}
-            {showCopyConfirm && (
+            {/* Horizon AI Analysis Section */}
+            <div style={{ marginTop: '1.25rem' }}>
+                {/* Mount AiAnalysis with Horizon Simulation Data */}
+                <AiAnalysis
+                    customTriggerLabel="Analyze Horizon Trajectory with AI"
+                    horizonData={{
+                        horizonSequenceCount: horizonSequence.length,
+                        projectedTotalSavings: timelineSavingsMap[horizonSequence[horizonSequence.length - 1]?.key] ?? totalSavings,
+                        savingsGoal: savingsGoal || 0,
+                        targetLabel: horizonSequence[horizonSequence.length - 1]?.label || 'Horizon Target'
+                    }}
+                />
+            {/* Close Horizon AI Analysis container */}
+            </div>
+
+            {/* Render copy confirmation dialog modal via portal directly on document body */}
+            {showCopyConfirm && typeof document !== 'undefined' && createPortal(
                 // Modal overlay backdrop
                 <div
                     onClick={() => setShowCopyConfirm(false)}
@@ -2613,6 +2653,8 @@ export default function HorizonPlanner() {
                         position: 'fixed',
                         top: 0,
                         left: 0,
+                        right: 0,
+                        bottom: 0,
                         width: '100vw',
                         height: '100vh',
                         backgroundColor: 'rgba(0, 0, 0, 0.65)',
@@ -2756,7 +2798,9 @@ export default function HorizonPlanner() {
                         {/* Modal card content container end */}
                     </div>
                     {/* Modal overlay backdrop end */}
-                </div>
+                </div>,
+                // Direct portal render target to document body
+                document.body
             )}
         </div>
     );

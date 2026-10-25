@@ -537,3 +537,311 @@
   /* Flex fill 1 */
   flex: 1;
 }
+
+/* Header actions container holding copy, regenerate and close buttons */
+.headerActions {
+  /* Use flex display */
+  display: flex;
+  /* Center items vertically */
+  align-items: center;
+  /* Gap spacing between actions */
+  gap: 0.5rem;
+}
+
+/* Header action icon button styling */
+.iconBtn {
+  /* Translucent surface background */
+  background: rgba(255, 255, 255, 0.08);
+  /* Border with subtle contrast */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  /* Text color secondary */
+  color: var(--text-secondary);
+  /* Rounded border radius */
+  border-radius: 8px;
+  /* Padding spacing */
+  padding: 0.4rem 0.65rem;
+  /* Small font size */
+  font-size: 0.8rem;
+  /* Medium font weight */
+  font-weight: 500;
+  /* Pointer cursor */
+  cursor: pointer;
+  /* Flex layout */
+  display: inline-flex;
+  /* Center items */
+  align-items: center;
+  /* Gap between icon and text */
+  gap: 0.35rem;
+  /* Smooth transition animations */
+  transition: all 0.2s ease;
+}
+
+/* Header action button hover state */
+.iconBtn:hover {
+  /* Brighter background on hover */
+  background: rgba(255, 255, 255, 0.15);
+  /* Primary text color */
+  color: var(--text-primary);
+  /* Translate slightly */
+  transform: translateY(-1px);
+}
+
+/* One-click recommendation action button chip */
+.actionChip {
+  /* Gradient background */
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.25));
+  /* Border highlight */
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  /* Accent light purple text color */
+  color: #c084fc;
+  /* Font weight semi-bold */
+  font-weight: 600;
+  /* Font size */
+  font-size: 0.82rem;
+  /* Padding */
+  padding: 0.45rem 0.85rem;
+  /* Rounded pill */
+  border-radius: 20px;
+  /* Pointer cursor */
+  cursor: pointer;
+  /* Inline flex */
+  display: inline-flex;
+  /* Center items */
+  align-items: center;
+  /* Gap */
+  gap: 0.4rem;
+  /* Margin top and bottom */
+  margin: 0.4rem 0 0.6rem 0;
+  /* Transition effect */
+  transition: all 0.2s ease;
+}
+
+/* Action button chip hover state */
+.actionChip:hover {
+  /* Brighten background */
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(99, 102, 241, 0.4));
+  /* White text */
+  color: #ffffff;
+  /* Slight elevate */
+  transform: translateY(-1px);
+  /* Box shadow */
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+}
+
+/* Action chip already applied state */
+.actionChipApplied {
+  /* Subtle green background */
+  background: rgba(0, 230, 118, 0.15);
+  /* Green border */
+  border: 1px solid rgba(0, 230, 118, 0.4);
+  /* Green text color */
+  color: #00e676;
+  /* Default cursor */
+  cursor: default;
+  /* Prevent pointer events */
+  pointer-events: none;
+}
+
+/* Blinking streaming cursor indicator */
+.streamingCursor {
+  /* Inline display */
+  display: inline-block;
+  /* Width */
+  width: 7px;
+  /* Height */
+  height: 14px;
+  /* Background color accent */
+  background: #a855f7;
+  /* Margin left */
+  margin-left: 3px;
+  /* Vertical alignment */
+  vertical-align: middle;
+  /* Infinite pulse animation */
+  animation: cursorBlink 0.8s infinite;
+}
+
+/* Keyframes for streaming cursor blink */
+@keyframes cursorBlink {
+  /* Zero opacity at half */
+  0%, 100% { opacity: 1; }
+  /* Full opacity at ends */
+  50% { opacity: 0; }
+}
+
+/* Interactive follow-up chat section container */
+.chatSection {
+  /* Margin top */
+  margin-top: 1.5rem;
+  /* Top border separator */
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  /* Padding top */
+  padding-top: 1.25rem;
+  /* Display flex */
+  display: flex;
+  /* Flex direction column */
+  flex-direction: column;
+  /* Gap between elements */
+  gap: 0.85rem;
+}
+
+/* Chat section title heading */
+.chatTitle {
+  /* Font size */
+  font-size: 0.95rem;
+  /* Font weight */
+  font-weight: 600;
+  /* Primary text color */
+  color: var(--text-primary);
+  /* Margin zero */
+  margin: 0;
+  /* Flex alignment */
+  display: flex;
+  /* Center vertically */
+  align-items: center;
+  /* Gap */
+  gap: 0.45rem;
+}
+
+/* Message history container */
+.chatThread {
+  /* Display flex */
+  display: flex;
+  /* Column layout */
+  flex-direction: column;
+  /* Gap between chat bubbles */
+  gap: 0.75rem;
+  /* Max height with scrolling */
+  max-height: 240px;
+  /* Overflow auto */
+  overflow-y: auto;
+  /* Padding right for scrollbar */
+  padding-right: 0.25rem;
+}
+
+/* User message speech bubble */
+.chatMsgUser {
+  /* Self align to right */
+  align-self: flex-end;
+  /* Purple gradient background */
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  /* White text */
+  color: #ffffff;
+  /* Border radius with speech notch */
+  border-radius: 12px 12px 2px 12px;
+  /* Internal padding */
+  padding: 0.6rem 0.95rem;
+  /* Font size */
+  font-size: 0.88rem;
+  /* Max width */
+  max-width: 85%;
+  /* Word break */
+  word-break: break-word;
+}
+
+/* Assistant message speech bubble */
+.chatMsgAssistant {
+  /* Self align to left */
+  align-self: flex-start;
+  /* Translucent surface background */
+  background: rgba(255, 255, 255, 0.05);
+  /* Border line */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Secondary text color */
+  color: var(--text-primary);
+  /* Border radius with speech notch */
+  border-radius: 12px 12px 12px 2px;
+  /* Internal padding */
+  padding: 0.75rem 1rem;
+  /* Font size */
+  font-size: 0.88rem;
+  /* Max width */
+  max-width: 92%;
+  /* Word break */
+  word-break: break-word;
+  /* Line height */
+  line-height: 1.5;
+}
+
+/* Chat input form row */
+.chatInputRow {
+  /* Display flex */
+  display: flex;
+  /* Gap */
+  gap: 0.5rem;
+  /* Align items */
+  align-items: center;
+}
+
+/* Chat text input box */
+.chatInput {
+  /* Flex fill */
+  flex: 1;
+  /* Dark translucent background */
+  background: rgba(0, 0, 0, 0.35);
+  /* Border */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  /* Rounded corners */
+  border-radius: 8px;
+  /* Padding */
+  padding: 0.65rem 0.9rem;
+  /* Primary text color */
+  color: var(--text-primary);
+  /* Font size */
+  font-size: 0.88rem;
+  /* Outline none */
+  outline: none;
+  /* Transition border */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Chat input focus state */
+.chatInput:focus {
+  /* Purple border highlight */
+  border-color: #a855f7;
+  /* Glow shadow */
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+/* Chat send button */
+.chatSendBtn {
+  /* Background gradient */
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  /* Border none */
+  border: none;
+  /* White text */
+  color: #ffffff;
+  /* Rounded corners */
+  border-radius: 8px;
+  /* Padding */
+  padding: 0.65rem 1rem;
+  /* Font size */
+  font-size: 0.88rem;
+  /* Font weight */
+  font-weight: 600;
+  /* Pointer cursor */
+  cursor: pointer;
+  /* Flex display */
+  display: inline-flex;
+  /* Center items */
+  align-items: center;
+  /* Gap */
+  gap: 0.35rem;
+  /* Transition */
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Chat send button hover */
+.chatSendBtn:hover:not(:disabled) {
+  /* Opacity 0.95 */
+  opacity: 0.95;
+  /* Transform */
+  transform: translateY(-1px);
+}
+
+/* Chat send button disabled state */
+.chatSendBtn:disabled {
+  /* Reduced opacity */
+  opacity: 0.5;
+  /* Not-allowed cursor */
+  cursor: not-allowed;
+}
