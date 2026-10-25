@@ -106,6 +106,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({ onClose, onCr
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
                     {/* Category name input */}
                     <input
+                        autoFocus
                         placeholder="Category Name"
                         value={newName}
                         onChange={e => setNewName(e.target.value)}

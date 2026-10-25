@@ -84,6 +84,8 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Manage transaction selection filter status
   const [filterStatus, setFilterStatus] = useState<'all' | 'selected' | 'unselected' | 'unmapped' | 'received' | 'sent'>('all');
+  // Manage visibility state to hide already imported duplicate transactions
+  const [hideAlreadyImported, setHideAlreadyImported] = useState(false);
   // Manage settings configurations step 3 sort order
   const [step3SortOrder, setStep3SortOrder] = useState<'asc' | 'desc'>('asc');
   // State for new inline mapping name text input field
@@ -1887,6 +1889,11 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
 
   // Filter transactions list dynamically matching search, selections, and active month/year
   const filteredTransactions = transactions.filter((tx) => {
+    // Exclude duplicate transactions if hide already imported toggle is active
+    if (hideAlreadyImported && tx.isDuplicate) {
+      // Exclude already imported duplicate transaction
+      return false;
+    }
     // Allow all transaction dates
     const matchesMonthYear = true;
     // Check search query text match
@@ -1969,6 +1976,9 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
     // Return array of group objects
     return Object.values(groups);
   }, [filteredTransactions]);
+
+  // Count total duplicate transactions that are already imported
+  const duplicateCount = transactions.filter((tx) => tx.isDuplicate).length;
 
   // Count how many loaded transactions belong to other months (disabled)
   const otherMonthsCount = 0;
@@ -2245,7 +2255,7 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
               )}
 
               {/* Selection summary statistics row toolbar */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0.25rem 0 0.75rem 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', margin: '0.25rem 0 0.75rem 0' }}>
                 {/* Filtered count matching description search query */}
                 <span className={styles.pickerText} style={{ marginLeft: '0.5rem' }}>
                   {/* Print summary text */}
@@ -2261,43 +2271,72 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                   />
                   Group by Merchant
                 </label>
-                {/* Toggle Select All checkboxes button trigger */}
-                <button
-                  // Click handler callback to toggle checkbox select all state
-                  onClick={() => {
-                    // Extract non-duplicate filtered transactions
-                    const nonDuplicates = filteredTransactions.filter((tx) => !tx.isDuplicate);
-                    // Verify if all non-duplicate transactions are currently selected
-                    const allSelected = nonDuplicates.length > 0 && nonDuplicates.every((tx) => tx.selected);
-                    // Map transactions to toggle checked state on filtered matches
-                    setTransactions(
-                      // Map over each transaction to toggle selected state
-                      transactions.map((tx) => {
-                        // Determine if current transaction is filtered
-                        const isFiltered = filteredTransactions.some((ft) => ft.id === tx.id);
-                        // Check if transaction is filtered
-                        if (isFiltered) {
-                          // Check if transaction is duplicate
-                          if (tx.isDuplicate) {
-                            // Force duplicate transaction to remain deselected
-                            return { ...tx, selected: false };
+                {/* Action buttons controls wrapper */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* Toggle Hide Already Imported button */}
+                  <button
+                    type="button"
+                    onClick={() => setHideAlreadyImported((prev) => !prev)}
+                    className={styles.btnSecondary}
+                    style={{
+                      minHeight: '32px',
+                      padding: '0.25rem 0.75rem',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      ...(hideAlreadyImported
+                        ? {
+                            backgroundColor: 'rgba(255, 152, 0, 0.15)',
+                            borderColor: '#ffa726',
+                            color: '#ffa726',
                           }
-                          // Return transaction with toggled selection state
-                          return { ...tx, selected: !allSelected };
-                        }
-                        // Return unmodified transaction
-                        return tx;
-                      })
-                    );
-                  }}
-                  // Secondary styling button class
-                  className={styles.btnSecondary}
-                  // Sizing adjustments inline styles overrides
-                  style={{ minHeight: '32px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
-                >
-                  {/* Conditional labels */}
-                  {filteredTransactions.filter((tx) => !tx.isDuplicate).length > 0 && filteredTransactions.filter((tx) => !tx.isDuplicate).every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
-                </button>
+                        : {}),
+                    }}
+                    title={hideAlreadyImported ? 'Show already imported transactions' : 'Hide already imported transactions'}
+                  >
+                    {/* Hide or Show Already Imported label with duplicate count */}
+                    {hideAlreadyImported ? 'Show Already Imported' : 'Hide Already Imported'}{duplicateCount > 0 ? ` (${duplicateCount})` : ''}
+                  {/* End toggle hide button */}
+                  </button>
+                  {/* Toggle Select All checkboxes button trigger */}
+                  <button
+                    // Click handler callback to toggle checkbox select all state
+                    onClick={() => {
+                      // Extract non-duplicate filtered transactions
+                      const nonDuplicates = filteredTransactions.filter((tx) => !tx.isDuplicate);
+                      // Verify if all non-duplicate transactions are currently selected
+                      const allSelected = nonDuplicates.length > 0 && nonDuplicates.every((tx) => tx.selected);
+                      // Map transactions to toggle checked state on filtered matches
+                      setTransactions(
+                        // Map over each transaction to toggle selected state
+                        transactions.map((tx) => {
+                          // Determine if current transaction is filtered
+                          const isFiltered = filteredTransactions.some((ft) => ft.id === tx.id);
+                          // Check if transaction is filtered
+                          if (isFiltered) {
+                            // Check if transaction is duplicate
+                            if (tx.isDuplicate) {
+                              // Force duplicate transaction to remain deselected
+                              return { ...tx, selected: false };
+                            }
+                            // Return transaction with toggled selection state
+                            return { ...tx, selected: !allSelected };
+                          }
+                          // Return unmodified transaction
+                          return tx;
+                        })
+                      );
+                    }}
+                    // Secondary styling button class
+                    className={styles.btnSecondary}
+                    // Sizing adjustments inline styles overrides
+                    style={{ minHeight: '32px', padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
+                  >
+                    {/* Conditional labels */}
+                    {filteredTransactions.filter((tx) => !tx.isDuplicate).length > 0 && filteredTransactions.filter((tx) => !tx.isDuplicate).every((tx) => tx.selected) ? 'Deselect All' : 'Select All'}
+                  {/* End toggle select all button */}
+                  </button>
+                {/* End action buttons wrapper */}
+                </div>
               </div>
 
               {/* Scrollable list containing filtered transaction entries */}
@@ -2317,15 +2356,13 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                         />
                       </div>
                       {/* Card contents flex container */}
-                      <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+                      <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: '0.75rem' }}>
                         {/* Text descriptions column layout */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
                           {/* Heading line container with optional badge tags */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, width: '100%' }}>
                             {/* Merchant description label */}
-                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {group.description}
-                            </span>
+                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{group.description}</span>
                             {/* Render duplicate badge if group is fully duplicate */}
                             {group.isDuplicate && (
                               // Already Imported warning badge
@@ -2342,14 +2379,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                             )}
                           </div>
                           {/* Suffix transaction count description */}
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {group.count} transaction{group.count !== 1 ? 's' : ''}
-                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{group.count} transaction{group.count !== 1 ? 's' : ''}</span>
                         </div>
                         {/* Formatted amount value display */}
-                        <span className={styles.amount} style={{ color: group.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
-                          {formatCurrency(group.amount)}
-                        </span>
+                        <span className={styles.amount} style={{ color: group.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0, textAlign: 'right' }}>{formatCurrency(group.amount)}</span>
                       </div>
                     </div>
                   ))
@@ -2368,15 +2401,13 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                         />
                       </div>
                       {/* Card contents flex container */}
-                      <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+                      <div className={styles.cardContent} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1, minWidth: 0, gap: '0.75rem' }}>
                         {/* Text descriptions column layout */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: 0 }}>
                           {/* Heading line container with optional badge tag */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, width: '100%' }}>
                             {/* Merchant description label */}
-                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {tx.description}
-                            </span>
+                            <span className={styles.pickerText} style={{ fontWeight: 500, color: '#fff', fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{tx.description}</span>
                             {/* Render duplicate badge if transaction is already imported */}
                             {tx.isDuplicate && (
                               // Already Imported warning badge
@@ -2386,14 +2417,10 @@ const PDFImportModal: React.FC<PDFImportModalProps> = ({ onClose }) => {
                             )}
                           </div>
                           {/* Date details label description */}
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {tx.date}
-                          </span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{tx.date}</span>
                         </div>
                         {/* Formatted amount value display */}
-                        <span className={styles.amount} style={{ color: tx.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0 }}>
-                          {formatCurrency(tx.amount)}
-                        </span>
+                        <span className={styles.amount} style={{ color: tx.selected ? 'var(--firebase-yellow)' : 'var(--text-secondary)', flexShrink: 0, textAlign: 'right' }}>{formatCurrency(tx.amount)}</span>
                       </div>
                     </div>
                   ))

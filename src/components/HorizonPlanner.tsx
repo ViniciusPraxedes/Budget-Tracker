@@ -1,7 +1,7 @@
 "use client";
 
-// Import React core library and state/memo hooks
-import React, { useState, useEffect, useMemo } from 'react';
+// Import React core library and state/memo/ref hooks
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 // Import createPortal to render modal dialog outside parent overflow/filter boundaries
 import { createPortal } from 'react-dom';
 // Import budget context consumer hook
@@ -119,6 +119,24 @@ export default function HorizonPlanner() {
 
     // State to toggle new category form visibility in inspected month
     const [isAddingCategory, setIsAddingCategory] = useState<boolean>(false);
+    // Reference to the horizon planner inline category form container
+    const addHorizonCategoryRef = useRef<HTMLDivElement>(null);
+    // Reference to the horizon planner category name input element
+    const horizonCatNameInputRef = useRef<HTMLInputElement>(null);
+
+    // Automatically scroll to and focus the new category form when opened
+    useEffect(() => {
+        // Verify if category form is open
+        if (isAddingCategory) {
+            // Scroll category form container smoothly into view
+            addHorizonCategoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Set timeout to ensure DOM focus triggers after scroll transition
+            setTimeout(() => {
+                // Focus category name input field for immediate typing
+                horizonCatNameInputRef.current?.focus();
+            }, 100);
+        }
+    }, [isAddingCategory]);
     // New category name input state
     const [newCatName, setNewCatName] = useState<string>('');
     // New category color input state
@@ -2076,7 +2094,7 @@ export default function HorizonPlanner() {
 
                     {/* Inline Add Category Form */}
                     {!isBaseMonth && isAddingCategory && (
-                        <div className={styles.categoryFormBox}>
+                        <div ref={addHorizonCategoryRef} className={styles.categoryFormBox}>
                             {/* Form Title */}
                             <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                                 New Category
@@ -2085,6 +2103,8 @@ export default function HorizonPlanner() {
                             <div className={styles.formGrid}>
                                 {/* Name Input */}
                                 <input
+                                    ref={horizonCatNameInputRef}
+                                    autoFocus
                                     type="text"
                                     className={styles.input}
                                     placeholder="Category Name"

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// Import React along with hooks for component state, side effects, and references
+import React, { useState, useEffect, useRef } from 'react';
 import { useBudget } from '../context/BudgetContext';
 import CategoryBox from './CategoryBox';
 import { PREDEFINED_COLORS } from '../constants';
@@ -24,8 +25,28 @@ import {
 const CategoryList: React.FC = () => {
     // Destructure required state and functions from the budget context provider
     const { categories, addCategory, copyPreviousMonthData, loadMockData, reorderCategories } = useBudget();
+    // State to toggle new category creation form
     const [isAdding, setIsAdding] = useState(false);
+    // State to store new category name input value
     const [newName, setNewName] = useState('');
+    // Reference to the add category form container
+    const addCategoryFormRef = useRef<HTMLDivElement>(null);
+    // Reference to the category name text input element
+    const categoryNameInputRef = useRef<HTMLInputElement>(null);
+
+    // Automatically scroll to and focus the category form when opened
+    useEffect(() => {
+        // Verify if category form is active
+        if (isAdding) {
+            // Scroll add category form into view centered on screen
+            addCategoryFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Set timeout to ensure DOM focus triggers after scroll transition
+            setTimeout(() => {
+                // Focus text input field for immediate typing
+                categoryNameInputRef.current?.focus();
+            }, 150);
+        }
+    }, [isAdding]);
 
     const [newColor, setNewColor] = useState(PREDEFINED_COLORS[0]);
     const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -177,19 +198,25 @@ const CategoryList: React.FC = () => {
                 </div>
             </div>
 
+            {/* Conditional rendering for adding category form */}
             {isAdding && (
-                <div style={{
-                    marginBottom: '2rem',
-                    padding: '1.5rem',
-                    background: 'var(--surface-dark)',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-color)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem'
-                }}>
+                <div 
+                    ref={addCategoryFormRef}
+                    style={{
+                        marginBottom: '2rem',
+                        padding: '1.5rem',
+                        background: 'var(--surface-dark)',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem'
+                    }}
+                >
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                         <input
+                            ref={categoryNameInputRef}
+                            autoFocus
                             placeholder="Category Name"
                             value={newName}
                             onChange={e => setNewName(e.target.value)}

@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
                             // User role declaration
                             role: 'user',
                             // Parts array
-                            parts: [{ text: `User Question: "${userQuestion}"\nLanguage: Respond in fluent English.\nCurrency: The user's active currency is Swedish kronor (${currencyUnit}). ALWAYS format all monetary amounts in ${currencyUnit} (e.g. 1 500 ${currencyUnit}). NEVER use USD or "$". Provide concise, direct financial advice.` }]
+                            parts: [{ text: `User Question: "${userQuestion}"\nLanguage: Respond in fluent English.\nCurrency: The user's active currency is Swedish kronor (${currencyUnit}). ALWAYS format all monetary amounts in ${currencyUnit} (e.g. 1 500 ${currencyUnit}). NEVER use USD or "$".\nCRITICAL CONTEXT: The user's monthly budget is how much they expect/plan to spend for the entire month, whereas expenses are actual month-to-date spending logged so far. Do not mistake current expenses as the total for the whole month. Provide concise, direct financial advice.` }]
                         // Close object
                         }
                     // Close array
@@ -157,14 +157,22 @@ CRITICAL INSTRUCTIONS:
 - ALWAYS format and display all currency numbers in ${currencyUnit} (e.g., "12 500 ${currencyUnit}" or "500 ${currencyUnit}").
 - NEVER use USD, US dollars, or the "$" dollar sign under ANY circumstance.
 
+CRITICAL TEMPORAL & BUDGET CONTEXT (NEVER CONFUSE SPENT WITH BUDGET):
+- BUDGET = EXPECTED/PLANNED SPENDING FOR THE WHOLE MONTH: The "Full-Month Expected Budget" (both overall and per category) represents what the user expects and plans to spend across the entire month. It is their planned spending target, NOT money already spent.
+- EXPENSES = ACTUAL SPENT MONTH-TO-DATE: The "Month-to-Date Actual Expenses" are ONLY what the user has spent up to today. The month is currently in progress. NEVER assume or state that the user has only spent this amount for the whole month!
+- REMAINING ALLOWANCE: If Month-to-Date expenses are lower than the expected budget, the user has remaining budget left to spend for the rest of the month. Evaluate their burn rate and remaining allowance rather than assuming spending has stopped.
+- PROJECTED SAVINGS: End-of-month projected savings should be evaluated based on (Income - Full-Month Expected Budget), whereas current net cash flow to date is (Income - Month-to-Date Actual Expenses).
+
 Analytical Focus:
 ${focusGuidance}
 
 Financial Profile:
 - Monthly Income: ${formatAmount(income || 0)}
-- Monthly Expenses: ${formatAmount(totalExpenses || 0)}
-- Overall Monthly Budget: ${formatAmount(effectiveMonthlyBudget || 0)}
-- Net Monthly Savings: ${formatAmount(savings || 0)} (${Number(savingsRate || 0).toFixed(1)}% of income)
+- Full-Month Expected Budget (Planned spending for the entire month): ${formatAmount(effectiveMonthlyBudget || 0)}
+- Month-to-Date Actual Expenses (Logged so far up to current date): ${formatAmount(totalExpenses || 0)}
+- Remaining Monthly Budget Allowance: ${formatAmount((effectiveMonthlyBudget || 0) - (totalExpenses || 0))} (${effectiveMonthlyBudget > 0 ? (((effectiveMonthlyBudget - totalExpenses) / effectiveMonthlyBudget) * 100).toFixed(1) : 0}% left to spend)
+- Current Net Cash Flow to Date (Income minus spent so far): ${formatAmount(savings || 0)}
+- Projected Net Savings at Month-End (Income minus full-month planned budget): ${formatAmount((income || 0) - (effectiveMonthlyBudget || 0))}
 - Cumulative Total Savings: ${formatAmount(totalSavings || 0)}
 - Long-Term Savings Goal: ${formatAmount(savingsGoal || 0)}
 - Recurring Bills/Subscriptions: ${formatAmount(recurringTotal || 0)}
@@ -178,8 +186,8 @@ Formatting Rules:
 ### 2. Key Insights
 ### 3. Actionable Recommendations
 - Do NOT use level-4 headers (####) and do NOT output raw '---' lines.
-- In Section 1, summarize income vs expense, monthly savings rate, and goal progress trajectory using ${currencyUnit}.
-- In Section 2, highlight over-budget categories and major spending drivers.
+- In Section 1, summarize income, full-month expected budget, actual expenses logged to date, remaining budget buffer for the rest of the month, and projected savings trajectory using ${currencyUnit}.
+- In Section 2, evaluate spending pace against expected monthly budgets, highlighting over-budget categories and categories burning through their budget too quickly.
 - In Section 3, provide 3 to 4 clear recommendations in English. Where you suggest budgeting or setting savings, append structured action tags formatted in ${currencyUnit} so the user can apply them with one click:
   - To suggest a category budget: [[ACTION:SET_CATEGORY_BUDGET|CATEGORY_ID|SUGGESTED_AMOUNT|Set Category Name budget to SuggestedAmount ${currencyUnit}]]
   - To suggest a savings deposit: [[ACTION:SET_SAVINGS_DEPOSIT|AMOUNT|Set monthly savings deposit to SuggestedAmount ${currencyUnit}]]
@@ -537,14 +545,15 @@ function generateDynamicAnalysis(
     // Specific section generation based on insightType in English
     if (insightType === 'cost_cutting') {
         return `### 1. Spending Overview
-- **Net Cash Flow:** Total expenses of **${fmt(totalExpenses)}** against an income of **${fmt(income)}** (${fmt(netSavings)} net margin).${momText}
-- **Budget Limits:** ${budget > 0 ? `Overall budget cap is set at **${fmt(budget)}** (${totalExpenses > budget ? 'Over limit by ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' remaining buffer'}).` : 'No overall monthly budget ceiling is currently set.'}
+- **Month-to-Date Cash Flow:** Actual spending so far is **${fmt(totalExpenses)}** against an income of **${fmt(income)}** (current net surplus: ${fmt(netSavings)}).${momText}
+- **Full-Month Expected Budget:** ${budget > 0 ? `Expected monthly spending cap is **${fmt(budget)}** (${totalExpenses > budget ? 'Currently over budget by ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' remaining buffer for the rest of the month'}).` : 'No overall monthly budget ceiling is currently set.'}
+- **Projected Month-End Savings:** Estimated net savings of **${fmt(income - budget)}** if full expected budget is spent.
 
 ### 2. Key Insights
 ${overBudgetCats.length > 0
-    ? overBudgetCats.map((c: any) => `- **Alert - Over Budget:** **${c.name}** spent **${fmt(c.spent || 0)}** against a limit of ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} over limit).`).join('\n')
-    : '- **Budget Adherence:** None of your categories currently exceed their designated budget caps.'}
-${topCat ? `- **Primary Cost Driver:** **${topCat.name}** accounts for **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% of total spending).` : ''}
+    ? overBudgetCats.map((c: any) => `- **Alert - Over Budget:** **${c.name}** has already spent **${fmt(c.spent || 0)}** against an expected full-month limit of ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} over limit).`).join('\n')
+    : '- **Budget Adherence:** None of your categories currently exceed their designated monthly budget caps.'}
+${topCat ? `- **Primary Cost Driver:** **${topCat.name}** accounts for **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% of spending to date).` : ''}
 
 ### 3. Actionable Recommendations
 1. **Trim ${actionCat ? actionCat.name : 'Variable Costs'}:** Establish a monthly budget ceiling of ${fmt(suggestedCatBudget)} to capture immediate cash savings.
@@ -556,11 +565,12 @@ ${topCat ? `- **Primary Cost Driver:** **${topCat.name}** accounts for **${fmt(t
 
     if (insightType === 'savings_goal') {
         return `### 1. Spending Overview
-- **Savings Rate:** You are currently saving **${savingsRate.toFixed(1)}%** of your net income (${fmt(netSavings)}/month). A healthy benchmark target is 20%+.
+- **Current Savings Rate:** You have saved **${savingsRate.toFixed(1)}%** of your net income so far this month (${fmt(netSavings)} to date).
+- **Projected Full-Month Savings:** Based on your expected monthly budget of ${fmt(budget)}, projected end-of-month savings is **${fmt(income - budget)}** (${income > 0 ? (((income - budget) / income) * 100).toFixed(1) : 0}%).
 - **Cumulative Reserves:** You hold **${fmt(totalSavings)}** in total saved funds.${goalProjection}
 
 ### 2. Key Insights
-- **Emergency Runway:** Three months of baseline living costs equals **${fmt(totalExpenses * 3)}**. ${totalSavings >= totalExpenses * 3 ? 'Your safety runway is fully funded!' : `You need an additional ${fmt(Math.max(0, (totalExpenses * 3) - totalSavings))} to establish a 3-month buffer.`}
+- **Emergency Runway:** Three months of baseline living costs based on your expected monthly budget (${fmt((budget > 0 ? budget : totalExpenses) * 3)}). ${totalSavings >= (budget > 0 ? budget : totalExpenses) * 3 ? 'Your safety runway is fully funded!' : `You need an additional ${fmt(Math.max(0, ((budget > 0 ? budget : totalExpenses) * 3) - totalSavings))} to establish a 3-month buffer.`}
 ${horizonNote}
 
 ### 3. Actionable Recommendations
@@ -588,23 +598,24 @@ ${horizonNote}
 
     // Default: Comprehensive health check in English
     return `### 1. Spending Overview
-- **Net Cash Flow:** Income of **${fmt(income)}** vs Total Expenses of **${fmt(totalExpenses)}** yields a net surplus of **${fmt(netSavings)}** (${savingsRate.toFixed(1)}% savings rate).${momText}
-- **Budget Health:** ${
+- **Month-to-Date Cash Flow:** Actual spending logged so far is **${fmt(totalExpenses)}** against an income of **${fmt(income)}** (current net surplus to date: **${fmt(netSavings)}**).${momText}
+- **Full-Month Expected Budget:** ${
         budget > 0
-            ? `Your overall monthly budget limit is **${fmt(budget)}** (${totalExpenses > budget ? 'Over limit by ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' remaining buffer'}).`
+            ? `You expect/plan to spend **${fmt(budget)}** across the full month (${totalExpenses > budget ? 'Currently over budget by ' + fmt(totalExpenses - budget) : fmt(budget - totalExpenses) + ' remaining buffer to spend for the rest of the month'}).`
             : 'No overall monthly budget ceiling is set. Setting an explicit threshold anchors monthly discipline.'
     }
+- **Projected End-of-Month Savings:** If you spend your full expected budget, your projected net savings will be **${fmt(income - budget)}** (${income > 0 ? (((income - budget) / income) * 100).toFixed(1) : 0}% projected savings rate).
 - **Savings Momentum:** You hold **${fmt(totalSavings)}** in cumulative reserves.${goalProjection}${horizonNote}
 
 ### 2. Key Insights
 ${
     overBudgetCats.length > 0
-        ? overBudgetCats.map((c: any) => `- **Alert - Over Budget:** **${c.name}** spent **${fmt(c.spent || 0)}** against a limit of ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} over limit).`).join('\n')
-        : '- **Budget Adherence:** None of your categories currently exceed their designated budget caps.'
+        ? overBudgetCats.map((c: any) => `- **Alert - Over Budget:** **${c.name}** has already spent **${fmt(c.spent || 0)}** against an expected monthly limit of ${fmt(c.budget)} (${fmt((c.spent || 0) - c.budget)} over limit).`).join('\n')
+        : '- **Budget Adherence:** None of your categories currently exceed their designated full-month budget caps.'
 }
 ${
     topCat
-        ? `- **Primary Cost Driver:** **${topCat.name}** accounts for your largest monthly outlay at **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% of total expenses).`
+        ? `- **Primary Cost Driver:** **${topCat.name}** accounts for your largest outlay to date at **${fmt(topCatSpent)}** (${totalExpenses > 0 ? ((topCatSpent / totalExpenses) * 100).toFixed(1) : 0}% of expenses logged so far).`
         : ''
 }
 - **Recurring Bills:** Subscriptions and recurring bills account for **${fmt(recurringTotal)}/month** (${income > 0 ? ((recurringTotal / income) * 100).toFixed(1) : 0}% of net income).
@@ -616,6 +627,6 @@ ${
    [[ACTION:SET_SAVINGS_DEPOSIT|${suggestedDeposit}|Set Monthly Savings Deposit to ${fmt(suggestedDeposit)}]]
 3. **Set Monthly Ceiling:** Establish an overall monthly spending limit of ${fmt(suggestedBudget)} to secure cash flow.
    [[ACTION:SET_MONTHLY_BUDGET|${suggestedBudget}|Set Overall Monthly Budget to ${fmt(suggestedBudget)}]]
-4. **Build Safety Buffer:** Ensure your cumulative savings target covers 3 to 6 months of baseline living costs (${fmt(totalExpenses * 3)}–${fmt(totalExpenses * 6)}).`;
+4. **Build Safety Buffer:** Ensure your cumulative savings target covers 3 to 6 months of baseline living costs (${fmt((budget > 0 ? budget : totalExpenses) * 3)}–${fmt((budget > 0 ? budget : totalExpenses) * 6)}).`;
 // Close generateDynamicAnalysis function
 }

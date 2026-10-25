@@ -262,6 +262,8 @@
   min-width: 44px;
   /* Height touch size */
   min-height: 44px;
+  /* Prevent container from shrinking in flex row */
+  flex-shrink: 0;
 }
 
 /* Big custom checkbox scale */
@@ -1188,11 +1190,11 @@
   /* Align items center */
   align-items: center;
   /* Set vertical and horizontal padding */
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.35rem;
   /* Set border radius to make corners rounded */
   border-radius: 4px;
-  /* Set font size to be smaller */
-  font-size: 0.75rem;
+  /* Set font size to be compact */
+  font-size: 0.7rem;
   /* Set font weight to be semi-bold */
   font-weight: 600;
   /* Set semi-transparent yellow background */
@@ -1201,6 +1203,12 @@
   color: #ffb74d;
   /* Set thin semi-transparent orange border */
   border: 1px solid rgba(255, 152, 0, 0.3);
+  /* Prevent badge text wrapping onto multiple lines */
+  white-space: nowrap;
+  /* Prevent flex container from shrinking badge */
+  flex-shrink: 0;
+  /* Push badge to right side of flex container */
+  margin-left: auto;
 }
 
 

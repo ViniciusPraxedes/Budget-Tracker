@@ -204,20 +204,26 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
         // Calculate user's savings rate as a percentage of income
         const savingsRate = income > 0 ? (savings / income) * 100 : 0;
 
-        // Build readable category summary string
+        // Build readable category summary string with explicit distinction between planned budget and actual spending so far
         const categoriesSummary = categories.map(cat => {
-            // Calculate total expenses for the category
-            const total = cat.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-            // Calculate percentage of category budget consumed, if a budget is set
-            const budgetPct = cat.budget && cat.budget > 0 ? (total / cat.budget) * 100 : null;
-            // Build a budget status label for this category
-            const budgetStatus = budgetPct === null
-                ? 'No budget set'
-                : `Budget: ${formatCurrency(cat.budget!)} (${Math.round(budgetPct)}% used${budgetPct > 100 ? ' - OVER BUDGET' : ''})`;
-            // Format expenses in the category as list
-            const expensesList = cat.expenses.map(exp => `- ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Recurring)' : ''}`).join('\n');
+            // Calculate actual month-to-date expenses logged so far in the category
+            const spentSoFar = cat.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+            // Retrieve expected planned budget for the full month if configured
+            const expectedBudget = cat.budget && cat.budget > 0 ? cat.budget : null;
+            // Calculate percentage of category budget consumed so far
+            const budgetPct = expectedBudget !== null ? (spentSoFar / expectedBudget) * 100 : null;
+            // Calculate remaining budget buffer for the rest of the month
+            const remainingBudget = expectedBudget !== null ? expectedBudget - spentSoFar : null;
+            // Build a clear budget status label
+            const budgetStatus = expectedBudget === null
+                ? 'Expected Full-Month Budget: No budget set (User has not defined an expected limit)'
+                : `Expected Full-Month Budget: ${formatCurrency(expectedBudget)} | Spent Month-to-Date: ${formatCurrency(spentSoFar)} (${Math.round(budgetPct!)}% of expected budget consumed so far) | Remaining Budget: ${formatCurrency(remainingBudget!)}${remainingBudget! < 0 ? ' (OVER BUDGET)' : ''}`;
+            // Format expenses logged so far in the category as list
+            const expensesList = cat.expenses.length > 0
+                ? cat.expenses.map(exp => `  - ${exp.name}: ${formatCurrency(exp.amount)}${exp.isRecurring ? ' (Recurring)' : ''}`).join('\n')
+                : '  - No expenses logged yet this month';
             // Return formatted string for this category
-            return `Category: ${cat.name} (ID: ${cat.id})\nTotal Spending: ${formatCurrency(total)}\n${budgetStatus}\nExpenses:\n${expensesList}`;
+            return `Category: ${cat.name} (ID: ${cat.id})\n${budgetStatus}\nLogged Expenses Month-to-Date:\n${expensesList}`;
         // Join all category summaries with double newlines
         }).join('\n\n');
 
@@ -351,10 +357,18 @@ export default function AiAnalysis({ horizonData, customTriggerLabel }: AiAnalys
             currentYear,
             // Monthly income
             income,
-            // Total expenses
+            // Total expenses logged so far (month-to-date)
             totalExpenses,
-            // Effective monthly budget
+            // Effective monthly budget (how much user expects/plans to spend for the whole month)
             effectiveMonthlyBudget,
+            // Spent to date alias
+            spentToDate: totalExpenses,
+            // Remaining budget allowance for the rest of the month
+            remainingBudget: (effectiveMonthlyBudget || 0) - (totalExpenses || 0),
+            // Projected net savings at month-end if user spends full budget
+            projectedSavingsAtMonthEnd: (income || 0) - (effectiveMonthlyBudget || 0),
+            // Current day of month for temporal pacing context
+            currentDay: new Date().getDate(),
             // Net savings
             savings,
             // Savings rate percentage
