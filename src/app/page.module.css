@@ -213,3 +213,123 @@
     font-weight: 500;
     padding: 0.25rem 0;
 }
+
+/* Container for header action buttons and user dropdown */
+.headerControls {
+    /* Align elements in horizontal layout */
+    display: flex;
+    /* Center align flex items vertically */
+    align-items: center;
+    /* Space between controls */
+    gap: 0.75rem;
+}
+
+/* Header button to trigger production to test database sync */
+.syncBtn {
+    /* Flex layout to align icon and label */
+    display: flex;
+    /* Center align items vertically */
+    align-items: center;
+    /* Space between icon and text */
+    gap: 0.5rem;
+    /* Semi-transparent dark background */
+    background: var(--surface-dark);
+    /* Border matching design system */
+    border: 1px solid var(--border-color);
+    /* Subtle theme yellow text color */
+    color: var(--firebase-yellow);
+    /* Compact padding */
+    padding: 0.45rem 0.85rem;
+    /* Rounded border radius */
+    border-radius: 8px;
+    /* Font size */
+    font-size: 0.85rem;
+    /* Semi-bold text */
+    font-weight: 500;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Smooth transition for hover effects */
+    transition: all 0.2s ease;
+}
+
+/* Hover state for sync button */
+.syncBtn:hover:not(:disabled) {
+    /* Brighter background on hover */
+    background: rgba(255, 196, 0, 0.1);
+    /* Highlight border color */
+    border-color: var(--firebase-yellow);
+}
+
+/* Disabled state when sync is in progress */
+.syncBtn:disabled {
+    /* Dim opacity */
+    opacity: 0.6;
+    /* Default cursor */
+    cursor: not-allowed;
+}
+
+/* Dropdown menu sync button */
+.syncBtnDropdown {
+    /* Flex layout for alignment */
+    display: flex;
+    /* Align icon and text vertically */
+    align-items: center;
+    /* Space between icon and text */
+    gap: 0.5rem;
+    /* Full width */
+    width: 100%;
+    /* Transparent background */
+    background: none;
+    /* Remove default border */
+    border: none;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Yellow accent color */
+    color: var(--firebase-yellow);
+    /* Match font size */
+    font-size: 0.875rem;
+    /* Medium font weight */
+    font-weight: 500;
+    /* Compact padding */
+    padding: 0.5rem 0;
+    /* Border bottom separation */
+    border-bottom: 1px solid var(--border-color);
+    /* Bottom margin */
+    margin-bottom: 0.5rem;
+    /* Smooth hover transition */
+    transition: opacity 0.2s ease;
+}
+
+/* Dropdown sync button hover */
+.syncBtnDropdown:hover:not(:disabled) {
+    /* Full opacity */
+    opacity: 0.8;
+}
+
+/* Disabled state for dropdown sync button */
+.syncBtnDropdown:disabled {
+    /* Reduced opacity */
+    opacity: 0.5;
+    /* Not allowed cursor */
+    cursor: not-allowed;
+}
+
+/* Keyframes for spinning animation */
+@keyframes spin {
+    /* Start at zero rotation */
+    from {
+        /* Zero degrees transform */
+        transform: rotate(0deg);
+    }
+    /* End at full rotation */
+    to {
+        /* 360 degrees transform */
+        transform: rotate(360deg);
+    }
+}
+
+/* Class to rotate spinning sync icon */
+.spinIcon {
+    /* Apply continuous linear spin animation */
+    animation: spin 1s linear infinite;
+}

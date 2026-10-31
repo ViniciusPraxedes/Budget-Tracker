@@ -60,6 +60,10 @@ interface MockUser {
     totalSavings: number;
     // User persisted target savings goal amount
     savingsGoal?: number;
+    // Configurable payday cycle start day
+    paydayStartDay?: number;
+    // Configurable payday cycle end day
+    paydayEndDay?: number;
     // Default start month
     defaultMonth: number | null;
     // Default start year
@@ -346,8 +350,8 @@ export async function POST(request: NextRequest) {
         };
     // End of user creation check
     }
-    // Retrieve user reference
-    const user = db.users[userId];
+    // Retrieve mutable user reference
+    let user = db.users[userId];
     // Check if update settings action requested
     if (action === 'update_settings') {
         // Retrieve settings payload from request body
@@ -427,6 +431,18 @@ export async function POST(request: NextRequest) {
             // Assign simulation range configuration to user record
             user.simulationRange = rangePayload;
             // End simulation range check
+        }
+    // Check if replacing complete user record with incoming production dataset
+    } else if (action === 'override_user') {
+        // Retrieve incoming user dataset object from request body
+        const userData = body.userData;
+        // Verify incoming user dataset exists and is a valid object
+        if (userData && typeof userData === 'object') {
+            // Overwrite target user entry in mock database with incoming data
+            db.users[userId] = userData as MockUser;
+            // Update local user variable reference to point to new dataset
+            user = db.users[userId];
+            // Close conditional validation block
         }
     // Handle invalid action parameter
     } else {

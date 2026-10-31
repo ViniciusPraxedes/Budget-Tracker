@@ -73,7 +73,7 @@ function getHorizonSequence(startM: number, startY: number, endM: number, endY: 
 // Declare HorizonPlanner component
 export default function HorizonPlanner() {
     // Retrieve budget variables from state hook
-    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget, totalSavings, savingsGoal, updateTotalSavings } = useBudget();
+    const { income, categories, currentMonth, currentYear, changeMonth, monthlySavingsDeposit, monthlyBudget, totalSavings, savingsGoal, updateTotalSavings, setIncome, setMonthlySavingsDeposit, setMonthlyBudget } = useBudget();
     // Retrieve currency formatter from localization hook
     const { formatCurrency } = useLocalization();
     // Retrieve current user session from auth context
@@ -117,6 +117,27 @@ export default function HorizonPlanner() {
     // Single month quick add category
     const [singleExpCatId, setSingleExpCatId] = useState<string>(categories[0]?.id || '');
 
+    // State to toggle new expense form visibility in inspected month
+    const [isAddingExpense, setIsAddingExpense] = useState<boolean>(false);
+    // Reference to the horizon planner inline expense form container
+    const addHorizonExpenseRef = useRef<HTMLDivElement>(null);
+    // Reference to the horizon planner expense name input element
+    const horizonExpNameInputRef = useRef<HTMLInputElement>(null);
+
+    // Automatically scroll to and focus the new expense form when opened
+    useEffect(() => {
+        // Verify if expense form is open
+        if (isAddingExpense) {
+            // Scroll expense form container smoothly into view
+            addHorizonExpenseRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Set timeout to ensure DOM focus triggers after scroll transition
+            setTimeout(() => {
+                // Focus expense name input field for immediate typing
+                horizonExpNameInputRef.current?.focus();
+            }, 100);
+        }
+    }, [isAddingExpense]);
+
     // State to toggle new category form visibility in inspected month
     const [isAddingCategory, setIsAddingCategory] = useState<boolean>(false);
     // Reference to the horizon planner inline category form container
@@ -146,6 +167,8 @@ export default function HorizonPlanner() {
 
     // ID of category currently in edit mode
     const [editingCatId, setEditingCatId] = useState<string | null>(null);
+    // Category pending deletion confirmation dialog
+    const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
     // Edited category name input state
     const [editCatName, setEditCatName] = useState<string>('');
     // Edited category color input state
@@ -621,6 +644,22 @@ export default function HorizonPlanner() {
 
     // Reference baseline values derived strictly from the first month of the range
     const rangeBaseline = useMemo(() => {
+        // If the start month has customized simulation data, use it as baseline
+        if (simulationMonths[firstMonthKey]) {
+            // Return baseline constructed from customized start month
+            return {
+                // Customized income
+                income: simulationMonths[firstMonthKey].income ?? income,
+                // Customized savings deposit
+                monthlySavingsDeposit: simulationMonths[firstMonthKey].monthlySavingsDeposit ?? monthlySavingsDeposit,
+                // Customized budget
+                monthlyBudget: simulationMonths[firstMonthKey].monthlyBudget ?? monthlyBudget,
+                // Customized categories
+                categories: simulationMonths[firstMonthKey].categories ?? categories,
+            // End customized start month baseline
+            };
+        // End customized simulation check
+        }
         // If start month matches active month in context, prioritize current live data
         if (startMonth === currentMonth && startYear === currentYear) {
             // Return live context baseline
@@ -665,8 +704,8 @@ export default function HorizonPlanner() {
             categories,
             // End of fallback baseline object
         };
-        // Re-evaluate when first month data or active context updates
-    }, [firstMonthData, startMonth, startYear, currentMonth, currentYear, income, monthlySavingsDeposit, monthlyBudget, categories]);
+        // Re-evaluate when first month data, simulation months, or active context updates
+    }, [simulationMonths, firstMonthKey, firstMonthData, startMonth, startYear, currentMonth, currentYear, income, monthlySavingsDeposit, monthlyBudget, categories]);
 
     // Helper to retrieve simulated month data, defaulting to the exact data of the first month of the range
     const getSimulatedMonthData = (key: string, itemMonth: number, itemYear: number): MonthData => {
@@ -845,6 +884,226 @@ export default function HorizonPlanner() {
         // Re-evaluate when inspector key or data records change
     }, [activeInspectorKey, activeMonthItem, simulationMonths, rangeBaseline, firstMonthKey]);
 
+    // State to toggle sync confirmation dialog for inspected month
+    const [isConfirmSyncOpen, setIsConfirmSyncOpen] = useState(false);
+    // State to toggle the date range selector dialog box
+    const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState<boolean>(false);
+    // State to toggle the edit values dialog box
+    const [isEditValuesDialogOpen, setIsEditValuesDialogOpen] = useState(false);
+    // Temporary editing form state inside the edit dialog box
+    const [tempDialogValues, setTempDialogValues] = useState<{
+        // Income string
+        income: string;
+        // Monthly savings deposit string
+        monthlySavingsDeposit: string;
+        // Monthly budget limit string
+        monthlyBudget: string;
+        // Total savings string
+        totalSavings: string;
+    }>({
+        // Default income
+        income: '',
+        // Default deposit
+        monthlySavingsDeposit: '',
+        // Default budget
+        monthlyBudget: '',
+        // Default savings
+        totalSavings: '',
+    });
+    // Specific field to target for editing in the dialog box
+    const [dialogEditingField, setDialogEditingField] = useState<'income' | 'monthlySavingsDeposit' | 'monthlyBudget' | 'totalSavings' | null>(null);
+
+    // Handler to open the edit values dialog modal pre-filled for a specific value
+    const handleOpenEditValuesDialog = (targetField: 'income' | 'monthlySavingsDeposit' | 'monthlyBudget' | 'totalSavings') => {
+        // Guard if active month data not loaded
+        if (!activeMonthData) return;
+        // Pre-fill temporary editing state
+        setTempDialogValues({
+            // Pre-fill monthly income
+            income: (activeMonthData.income ?? 0).toString(),
+            // Pre-fill monthly savings deposit
+            monthlySavingsDeposit: (activeMonthData.monthlySavingsDeposit ?? 0).toString(),
+            // Pre-fill monthly budget limit
+            monthlyBudget: activeMonthData.monthlyBudget !== undefined ? activeMonthData.monthlyBudget.toString() : '',
+            // Pre-fill total savings
+            totalSavings: isBaseMonth
+                ? (totalSavings ?? 0).toString()
+                : (activeMonthData.totalSavings !== undefined ? activeMonthData.totalSavings.toString() : Math.round(inspectedMetrics.projectedTotalSavings).toString()),
+        });
+        // Set target editing field
+        setDialogEditingField(targetField);
+        // Open edit dialog modal
+        setIsEditValuesDialogOpen(true);
+    };
+
+    // Handler to save the specific edited value from the dialog box
+    const handleSaveEditValuesDialog = () => {
+        // Guard if active month data not loaded or no target field specified
+        if (!activeMonthData || !dialogEditingField) return;
+        // Construct updated month data object copying current active data
+        const updatedMonth: MonthData = {
+            // Spread current active month data
+            ...activeMonthData,
+        };
+        // Check if user is editing monthly income
+        if (dialogEditingField === 'income') {
+            // Parse float income
+            const parsedIncome = parseFloat(tempDialogValues.income) || 0;
+            // Update context income if inspecting base month
+            if (isBaseMonth) setIncome(parsedIncome);
+            // Assign updated income to month record
+            updatedMonth.income = parsedIncome;
+            // Display toast feedback notification
+            addToast('Monthly income updated successfully!', 'success');
+        // Check if user is editing monthly savings contribution
+        } else if (dialogEditingField === 'monthlySavingsDeposit') {
+            // Parse float monthly savings deposit
+            const parsedDeposit = parseFloat(tempDialogValues.monthlySavingsDeposit) || 0;
+            // Update context savings deposit if inspecting base month
+            if (isBaseMonth) setMonthlySavingsDeposit(parsedDeposit);
+            // Assign updated savings deposit to month record
+            updatedMonth.monthlySavingsDeposit = parsedDeposit;
+            // Display toast feedback notification
+            addToast('Monthly savings contribution updated successfully!', 'success');
+        // Check if user is editing total spending budget limit
+        } else if (dialogEditingField === 'monthlyBudget') {
+            // Parse optional float monthly budget
+            const parsedBudget = tempDialogValues.monthlyBudget.trim() !== '' ? parseFloat(tempDialogValues.monthlyBudget) : undefined;
+            // Update context monthly budget if inspecting base month and budget is set
+            if (isBaseMonth && parsedBudget !== undefined) setMonthlyBudget(parsedBudget);
+            // Assign updated monthly budget to month record
+            updatedMonth.monthlyBudget = parsedBudget;
+            // Display toast feedback notification
+            addToast('Spending budget limit updated successfully!', 'success');
+        // Check if user is editing total savings balance
+        } else if (dialogEditingField === 'totalSavings') {
+            // Parse float total savings
+            const parsedTotalSavings = parseFloat(tempDialogValues.totalSavings) || 0;
+            // Update context total savings if inspecting base month
+            if (isBaseMonth) updateTotalSavings(parsedTotalSavings);
+            // Assign updated total savings override to month record
+            updatedMonth.totalSavings = parsedTotalSavings;
+            // Display toast feedback notification
+            addToast('Total savings updated successfully!', 'success');
+        }
+        // Persist updated month record to simulation storage
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Close dialog modal
+        setIsEditValuesDialogOpen(false);
+    };
+
+    // Resolve actual non-simulation database record for the currently inspected month
+    const actualMonthData: MonthData | undefined = useMemo(() => {
+        // Check if inspected month matches live budget context month
+        if (activeInspectorKey === `${currentYear}-${currentMonth}`) {
+            // Check if live context has any recorded data
+            if (categories.length > 0 || income > 0 || (monthlyBudget !== undefined && monthlyBudget > 0)) {
+                // Return live context record
+                return {
+                    // Month index
+                    month: currentMonth,
+                    // Year number
+                    year: currentYear,
+                    // Income
+                    income,
+                    // Savings deposit
+                    monthlySavingsDeposit,
+                    // Budget limit
+                    monthlyBudget,
+                    // Categories list
+                    categories,
+                // End live context record
+                };
+            // End live check
+            }
+        // End live month key check
+        }
+        // Retrieve record from cached real months dictionary
+        const dbData = realMonths[activeInspectorKey];
+        // Check if real database record exists and has non-empty content
+        if (dbData && ((dbData.categories && dbData.categories.length > 0) || (dbData.income && dbData.income > 0) || typeof dbData.monthlyBudget === 'number')) {
+            // Return real database record
+            return dbData;
+        // End db data validation
+        }
+        // Return undefined when no actual data exists
+        return undefined;
+    // Recompute when active key, live context, or real months change
+    }, [activeInspectorKey, currentMonth, currentYear, income, monthlySavingsDeposit, monthlyBudget, categories, realMonths]);
+
+    // Handler to execute sync from actual month data into simulation
+    const handleSyncFromActualMonth = () => {
+        // Guard if no actual data exists
+        if (!actualMonthData) return;
+        // Deep clone actual month categories and expenses to ensure isolated state
+        const clonedCategories = (actualMonthData.categories || []).map(cat => ({
+            // Category ID
+            id: cat.id,
+            // Name
+            name: cat.name,
+            // Color
+            color: cat.color,
+            // Order
+            order: cat.order,
+            // Budget
+            budget: cat.budget,
+            // Expenses array
+            expenses: (cat.expenses || []).map(exp => ({
+                // Expense ID
+                id: exp.id || Math.random().toString(36).substr(2, 9),
+                // Name
+                name: exp.name,
+                // Amount
+                amount: exp.amount,
+                // Payment day
+                paymentDay: exp.paymentDay,
+                // Recurring flag
+                isRecurring: exp.isRecurring,
+                // Installment flag
+                isInstallment: exp.isInstallment,
+                // Total amount
+                totalAmount: exp.totalAmount,
+                // Total installments
+                totalInstallments: exp.totalInstallments,
+                // Remaining installments
+                remainingInstallments: exp.remainingInstallments,
+                // Annual interest rate
+                annualInterestRate: exp.annualInterestRate,
+                // Installment start month
+                installmentStartMonth: exp.installmentStartMonth,
+            // End expense mapping
+            })),
+        // End category mapping
+        }));
+        // Target month index
+        const itemMonth = activeMonthItem ? activeMonthItem.month : startMonth;
+        // Target year number
+        const itemYear = activeMonthItem ? activeMonthItem.year : startYear;
+        // Construct updated simulation month data
+        const updatedMonth: MonthData = {
+            // Month index
+            month: itemMonth,
+            // Year number
+            year: itemYear,
+            // Actual income
+            income: actualMonthData.income ?? 0,
+            // Actual monthly savings deposit
+            monthlySavingsDeposit: actualMonthData.monthlySavingsDeposit ?? 0,
+            // Actual monthly budget limit
+            monthlyBudget: actualMonthData.monthlyBudget,
+            // Cloned categories list
+            categories: clonedCategories,
+        // End updatedMonth
+        };
+        // Save to simulation state
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Close confirmation dialog
+        setIsConfirmSyncOpen(false);
+        // Show success notification
+        addToast(`Simulation updated with actual ${MONTH_NAMES[itemMonth]} ${itemYear} data!`, 'success');
+    // End handleSyncFromActualMonth
+    };
+
     // Synchronize quick-add category selector with valid categories in inspected month
     useEffect(() => {
         // Guard if categories are loaded and non-empty
@@ -899,16 +1158,42 @@ export default function HorizonPlanner() {
             return sum + (cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
             // End of category reduction
         }, 0);
+        // Calculate effective monthly budget target amount preserving zero
+        const effectiveMonthlyBudget = activeMonthData.monthlyBudget !== undefined 
+            // Adopt explicit monthly budget if set
+            ? activeMonthData.monthlyBudget 
+            // Fallback to sum of individual category budgets
+            : (activeMonthData.categories || []).reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        // Calculate total planned budgeted expenses or actual expenses if higher
+        const plannedExpenses = activeMonthData.monthlyBudget !== undefined 
+            // Use max of budget and total expenses if custom budget is defined
+            ? Math.max(activeMonthData.monthlyBudget, expensesSum) 
+            // Otherwise calculate planned expenses based on individual category budgets
+            : (activeMonthData.categories || []).reduce((sum, cat) => sum + (cat.budget !== undefined ? Math.max(cat.budget, (cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0)) : (cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0)), 0);
         // Net savings balance
         const net = (activeMonthData.income || 0) - expensesSum;
-        // Calculate net free cash after spending and savings deposit
-        const freeCash = net - (activeMonthData.monthlySavingsDeposit || 0);
+        // Calculate free operational cash remaining after budgeted expenses and savings deposit
+        const freeCash = (activeMonthData.income || 0) - plannedExpenses - (activeMonthData.monthlySavingsDeposit || 0);
         // Calculate savings rate percentage of income
         const sRate = (activeMonthData.income || 0) > 0 ? Math.round(((activeMonthData.monthlySavingsDeposit || 0) / activeMonthData.income) * 100) : 0;
-        // Calculate budget consumption percentage
-        const bUsage = typeof activeMonthData.monthlyBudget === 'number' && activeMonthData.monthlyBudget > 0 ? Math.round((expensesSum / activeMonthData.monthlyBudget) * 100) : 0;
+        // Calculate percentage of budget consumed by actual expenses
+        const budgetUsedPercentage = effectiveMonthlyBudget > 0 ? (expensesSum / effectiveMonthlyBudget) * 100 : 0;
+        // Clamp displayed bar width to 100% so overspend doesn't overflow the track
+        const budgetBarWidth = Math.min(budgetUsedPercentage, 100);
+        // Choose progress bar color based on how close to or over budget
+        const budgetBarColor = budgetUsedPercentage >= 100
+            // Red indicator when budget exceeded
+            ? 'var(--firebase-red)'
+            // Yellow indicator when approaching budget limit
+            : budgetUsedPercentage >= 80
+                // Warning yellow color
+                ? 'var(--firebase-yellow)'
+                // Green indicator when well within budget
+                : '#00E676';
+        // Calculate budget consumption percentage rounded for display
+        const bUsage = Math.round(budgetUsedPercentage);
         // Calculate remaining budget headroom
-        const bRemaining = (activeMonthData.monthlyBudget ?? 0) - expensesSum;
+        const bRemaining = effectiveMonthlyBudget - expensesSum;
         // Find index of currently inspected month in the horizon sequence
         const inspectedIndex = horizonSequence.findIndex(item => item.key === activeInspectorKey);
         // Accumulated simulated monthly deposits up to this inspected month
@@ -930,13 +1215,21 @@ export default function HorizonPlanner() {
         // Calculate projected total savings in bank from timeline map
         const projectedTotalSavings = timelineSavingsMap[activeInspectorKey] !== undefined ? timelineSavingsMap[activeInspectorKey] : (totalSavings || 0) + cumulativeDeposits;
         // Calculate progress percentage towards savings goal
-        const goalPercent = (savingsGoal || 0) > 0 ? Math.round((projectedTotalSavings / (savingsGoal || 1)) * 100) : 0;
+        const goalPercent = (savingsGoal || 0) > 0 ? (projectedTotalSavings / (savingsGoal || 1)) * 100 : 0;
+        // Clamp displayed savings goal bar width to 100% once reached
+        const savingsGoalBarWidth = Math.min(goalPercent, 100);
+        // Highlight bar in green once goal is reached or exceeded, otherwise card accent blue
+        const savingsGoalBarColor = goalPercent >= 100 ? '#00E676' : '#2196F3';
         // Return metrics
         return {
             // Month income
             income: activeMonthData.income || 0,
             // Total expenses
             totalExpenses: Math.round(expensesSum * 100) / 100,
+            // Effective monthly budget target
+            effectiveMonthlyBudget,
+            // Planned expenses
+            plannedExpenses,
             // Net savings
             netSavings: Math.round(net * 100) / 100,
             // Net free cash
@@ -949,6 +1242,12 @@ export default function HorizonPlanner() {
             savingsRate: sRate,
             // Budget consumption percentage
             budgetUsagePercent: bUsage,
+            // Budget used percentage unrounded
+            budgetUsedPercentage,
+            // Budget bar width clamp
+            budgetBarWidth,
+            // Budget bar dynamic color
+            budgetBarColor,
             // Remaining budget
             budgetRemaining: Math.round(bRemaining * 100) / 100,
             // Projected cumulative total savings
@@ -956,7 +1255,11 @@ export default function HorizonPlanner() {
             // Cumulative deposits in horizon
             cumulativeDeposits,
             // Savings goal percentage
-            savingsGoalPercentage: goalPercent,
+            savingsGoalPercentage: Math.round(goalPercent),
+            // Savings goal bar width clamp
+            savingsGoalBarWidth,
+            // Savings goal bar dynamic color
+            savingsGoalBarColor,
             // End of metrics object
         };
         // Re-evaluate when active month data, sequence, timeline map, or baseline changes
@@ -974,6 +1277,16 @@ export default function HorizonPlanner() {
                 const val = parseFloat(valueStr) || 0;
                 // Update global total savings in context
                 updateTotalSavings(val);
+                // Construct updated month data object preserving overrides
+                const updatedMonth: MonthData = {
+                    // Spread active month data
+                    ...activeMonthData,
+                    // Persist total savings override
+                    totalSavings: val,
+                // End updatedMonth definition
+                };
+                // Save updated month into simulation state
+                saveSimulationState({ [activeInspectorKey]: updatedMonth });
                 // Return early
                 return;
                 // End base month check
@@ -1006,8 +1319,6 @@ export default function HorizonPlanner() {
             return;
             // End total savings check
         }
-        // Return if base month for other fields
-        if (isBaseMonth) return;
         // Check if value string is empty to delete override
         if (valueStr.trim() === '') {
             // Clone existing month object
@@ -1041,8 +1352,8 @@ export default function HorizonPlanner() {
 
     // Handler to update an expense amount in the currently inspected month
     const handleUpdateSingleExpenseAmount = (categoryId: string, expenseId: string, amountStr: string) => {
-        // Return if active month data not loaded or base month
-        if (!activeMonthData || isBaseMonth) return;
+        // Return if active month data not loaded
+        if (!activeMonthData) return;
         // Parse numeric amount
         const newAmt = parseFloat(amountStr) || 0;
         // Update categories array
@@ -1072,8 +1383,8 @@ export default function HorizonPlanner() {
 
     // Handler to remove an expense from the currently inspected month
     const handleDeleteSingleExpense = (categoryId: string, expenseId: string) => {
-        // Return if active month data not loaded or base month
-        if (!activeMonthData || isBaseMonth) return;
+        // Return if active month data not loaded
+        if (!activeMonthData) return;
         // Clean up transient input if active
         setEditingExpenseAmounts(prev => {
             // Clone map
@@ -1111,8 +1422,8 @@ export default function HorizonPlanner() {
 
     // Handler to add a new expense to the currently inspected month
     const handleAddSingleExpense = () => {
-        // Return if active month data not loaded, name empty, or base month
-        if (!activeMonthData || !singleExpName.trim() || isBaseMonth) return;
+        // Return if active month data not loaded or name empty
+        if (!activeMonthData || !singleExpName.trim()) return;
         // Parse amount
         const amt = parseFloat(singleExpAmount);
         // Guard positive amount
@@ -1185,6 +1496,8 @@ export default function HorizonPlanner() {
         setSingleExpName('');
         // Reset amount
         setSingleExpAmount('');
+        // Close inline add expense form
+        setIsAddingExpense(false);
         // Show success notification
         addToast(`Added "${newExp.name}" to simulation`, 'success');
         // End of handleAddSingleExpense definition
@@ -1192,8 +1505,8 @@ export default function HorizonPlanner() {
 
     // Handler to add a new category to the currently inspected month
     const handleAddSingleCategory = () => {
-        // Return if active month data not loaded, name empty, or base month
-        if (!activeMonthData || !newCatName.trim() || isBaseMonth) return;
+        // Return if active month data not loaded or name empty
+        if (!activeMonthData || !newCatName.trim()) return;
         // Parse optional budget
         const budgetNum = parseFloat(newCatBudget);
         // Create new category object
@@ -1248,8 +1561,8 @@ export default function HorizonPlanner() {
 
     // Handler to save edits to an existing category
     const handleSaveEditCategory = (categoryId: string) => {
-        // Return if active month data not loaded, name empty, or base month
-        if (!activeMonthData || !editCatName.trim() || isBaseMonth) return;
+        // Return if active month data not loaded or name empty
+        if (!activeMonthData || !editCatName.trim()) return;
         // Parse optional budget
         const budgetNum = parseFloat(editCatBudget);
         // Map categories array
@@ -1287,14 +1600,16 @@ export default function HorizonPlanner() {
 
     // Handler to remove a category from the currently inspected month
     const handleDeleteSingleCategory = (categoryId: string) => {
-        // Return if active month data not loaded or base month
-        if (!activeMonthData || isBaseMonth) return;
+        // Return if active month data not loaded
+        if (!activeMonthData) return;
         // Filter out category
         const newCats = activeMonthData.categories.filter(cat => cat.id !== categoryId);
         // Updated month
         const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
         // Save to simulation state
         saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Reset category pending deletion state
+        setCategoryToDelete(null);
         // Show notification
         addToast('Category removed', 'info');
         // End of handleDeleteSingleCategory definition
@@ -1432,193 +1747,6 @@ export default function HorizonPlanner() {
     return (
         // Container wrapper
         <div className={styles.container}>
-            {/* Range Generator Setup Card */}
-            <div className={styles.panelCard}>
-                {/* Header row */}
-                <div className={styles.cardHeader}>
-                    {/* Title */}
-                    <div className={styles.cardTitle}>
-                        {/* Horizon calendar vector icon */}
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#b388ff' }}>
-                            {/* Calendar outline */}
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                            {/* Calendar top line 1 */}
-                            <line x1="16" y1="2" x2="16" y2="6" />
-                            {/* Calendar top line 2 */}
-                            <line x1="8" y1="2" x2="8" y2="6" />
-                            {/* Calendar divider */}
-                            <line x1="3" y1="10" x2="21" y2="10" />
-                            {/* Closing svg */}
-                        </svg>
-                        {/* Text */}
-                        <span>Month Simulation</span>
-                    </div>
-                    {/* Action button to initialize/reset simulation */}
-                    <button
-                        type="button"
-                        className={styles.primaryButton}
-                        onClick={handleInitializeSimulation}
-                    >
-                        {/* Label */}
-                        <span>Reset Range to Match {MONTH_SHORT[startMonth]} {startYear}</span>
-                    </button>
-                </div>
-
-                {/* Form grid to configure range */}
-                <div className={styles.formGrid}>
-                    {/* Start month */}
-                    <div className={styles.formGroup}>
-                        {/* Label */}
-                        <label className={styles.label}>Start Month</label>
-                        {/* Select */}
-                        <select
-                            className={styles.select}
-                            value={startMonth}
-                            onChange={(e) => {
-                                // Parse integer month value from select event
-                                const val = parseInt(e.target.value, 10);
-                                // Update start month state
-                                setStartMonth(val);
-                                // Persist updated range configuration
-                                saveSimulationRange({ startMonth: val, startYear, endMonth, endYear });
-                                // End of start month onChange
-                            }}
-                        >
-                            {/* Map month names */}
-                            {MONTH_NAMES.map((name, i) => (
-                                <option key={i} value={i}>{name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Start year */}
-                    <div className={styles.formGroup}>
-                        {/* Label */}
-                        <label className={styles.label}>Start Year</label>
-                        {/* Input */}
-                        <input
-                            type="number"
-                            className={styles.input}
-                            value={startYearInput !== null ? startYearInput : startYear}
-                            onChange={(e) => {
-                                // Raw string value
-                                const val = e.target.value;
-                                // Store raw string input
-                                setStartYearInput(val);
-                                // Parse integer year
-                                const parsed = parseInt(val, 10);
-                                // Check if valid year
-                                if (!isNaN(parsed) && parsed > 0) {
-                                    // Update start year state
-                                    setStartYear(parsed);
-                                    // Persist updated range configuration
-                                    saveSimulationRange({ startMonth, startYear: parsed, endMonth, endYear });
-                                    // End check
-                                }
-                                // End onChange
-                            }}
-                            onBlur={() => {
-                                // Reset transient input on blur
-                                setStartYearInput(null);
-                                // End onBlur
-                            }}
-                        />
-                    </div>
-
-                    {/* End month */}
-                    <div className={styles.formGroup}>
-                        {/* Label */}
-                        <label className={styles.label}>End Month</label>
-                        {/* Select */}
-                        <select
-                            className={styles.select}
-                            value={endMonth}
-                            onChange={(e) => {
-                                // Parse integer month value from select event
-                                const val = parseInt(e.target.value, 10);
-                                // Update end month state
-                                setEndMonth(val);
-                                // Persist updated range configuration
-                                saveSimulationRange({ startMonth, startYear, endMonth: val, endYear });
-                                // End of end month onChange
-                            }}
-                        >
-                            {/* Map month names */}
-                            {MONTH_NAMES.map((name, i) => (
-                                <option key={i} value={i}>{name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* End year */}
-                    <div className={styles.formGroup}>
-                        {/* Label */}
-                        <label className={styles.label}>End Year</label>
-                        {/* Input */}
-                        <input
-                            type="number"
-                            className={styles.input}
-                            value={endYearInput !== null ? endYearInput : endYear}
-                            onChange={(e) => {
-                                // Raw string value
-                                const val = e.target.value;
-                                // Store raw string input
-                                setEndYearInput(val);
-                                // Parse integer year
-                                const parsed = parseInt(val, 10);
-                                // Check if valid year
-                                if (!isNaN(parsed) && parsed > 0) {
-                                    // Update end year state
-                                    setEndYear(parsed);
-                                    // Persist updated range configuration
-                                    saveSimulationRange({ startMonth, startYear, endMonth, endYear: parsed });
-                                    // End check
-                                }
-                                // End onChange
-                            }}
-                            onBlur={() => {
-                                // Reset transient input on blur
-                                setEndYearInput(null);
-                                // End onBlur
-                            }}
-                        />
-                    </div>
-
-                    {/* Starting total savings */}
-                    <div className={styles.formGroup}>
-                        {/* Label */}
-                        <label className={styles.label}>Starting Total Savings</label>
-                        {/* Input */}
-                        <input
-                            type="number"
-                            className={styles.input}
-                            placeholder="0"
-                            value={startTotalSavingsInput !== null ? startTotalSavingsInput : (totalSavings === 0 ? '' : totalSavings)}
-                            onChange={(e) => {
-                                // Raw string value from input
-                                const val = e.target.value;
-                                // Store raw string input in state
-                                setStartTotalSavingsInput(val);
-                                // Parse float amount
-                                const parsed = parseFloat(val);
-                                // Check if parsed number is valid
-                                if (!isNaN(parsed)) {
-                                    // Update total savings in budget context
-                                    updateTotalSavings(parsed);
-                                // End valid number check
-                                }
-                                // End onChange
-                            }}
-                            onBlur={() => {
-                                // Reset transient starting savings input on blur
-                                setStartTotalSavingsInput(null);
-                                // End onBlur
-                            }}
-                        />
-                    </div>
-                </div>
-            </div>
-
             {/* In-Widget Simplified Month Browser Strip */}
             <div className={styles.panelCard}>
                 {/* Header row */}
@@ -1636,6 +1764,24 @@ export default function HorizonPlanner() {
                         {/* Text */}
                         <span>Timeline ({horizonSequence.length} Months)</span>
                     </div>
+                    {/* Action button to open date range dialog */}
+                    <button
+                        type="button"
+                        className={styles.cardPencilBtn}
+                        onClick={() => setIsDateRangeDialogOpen(true)}
+                        title="Configure simulation date range"
+                        aria-label="Configure simulation date range"
+                    >
+                        {/* Pencil SVG icon */}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                            {/* Bottom line path */}
+                            <path d="M12 20h9" />
+                            {/* Pencil tip path */}
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            {/* Closing svg tag */}
+                        </svg>
+                        {/* Closing button tag */}
+                    </button>
                 </div>
 
                 {/* Horizontal scrollable pills strip */}
@@ -1670,6 +1816,245 @@ export default function HorizonPlanner() {
                 </div>
             </div>
 
+            {/* Date Range Selector Modal Dialog */}
+            {isDateRangeDialogOpen && typeof document !== 'undefined' && createPortal(
+                <div
+                    className={styles.confirmOverlay}
+                    onClick={() => setIsDateRangeDialogOpen(false)}
+                >
+                    {/* Modal container */}
+                    <div
+                        className={styles.editValuesModal}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Modal Header Row */}
+                        <div className={styles.modalHeaderRow}>
+                            {/* Title */}
+                            <div className={styles.confirmTitle}>
+                                {/* Calendar vector icon */}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#b388ff' }}>
+                                    {/* Calendar outline */}
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    {/* Calendar pin 1 */}
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    {/* Calendar pin 2 */}
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    {/* Calendar horizontal line */}
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                    {/* Closing svg */}
+                                </svg>
+                                {/* Title text */}
+                                <span>Simulation Date Range</span>
+                            </div>
+                            {/* Close button */}
+                            <button
+                                type="button"
+                                className={styles.modalCloseBtn}
+                                onClick={() => setIsDateRangeDialogOpen(false)}
+                                title="Close dialog"
+                            >
+                                {/* Cross icon */}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Diagonal line 1 */}
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    {/* Diagonal line 2 */}
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                    {/* Closing svg */}
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Modal Subtitle explanation */}
+                        <p className={styles.confirmSubtext}>
+                            Configure the starting and ending months for the simulation projection sequence.
+                        </p>
+
+                        {/* Form grid to configure range */}
+                        <div className={styles.modalFormGrid}>
+                            {/* Start month form group */}
+                            <div className={styles.formGroup}>
+                                {/* Label with indicator */}
+                                <label className={styles.modalFieldLabel}>
+                                    {/* Indicator bar */}
+                                    <span style={{ width: '3px', height: '12px', background: '#b388ff', borderRadius: '2px', display: 'inline-block' }} />
+                                    {/* Label text */}
+                                    <span>Start Month</span>
+                                </label>
+                                {/* Select dropdown */}
+                                <select
+                                    className={styles.modalInput}
+                                    value={startMonth}
+                                    onChange={(e) => {
+                                        // Parse integer month value from select event
+                                        const val = parseInt(e.target.value, 10);
+                                        // Update start month state
+                                        setStartMonth(val);
+                                        // Persist updated range configuration
+                                        saveSimulationRange({ startMonth: val, startYear, endMonth, endYear });
+                                    }}
+                                >
+                                    {/* Map month names */}
+                                    {MONTH_NAMES.map((name, i) => (
+                                        <option key={i} value={i}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Start year form group */}
+                            <div className={styles.formGroup}>
+                                {/* Label with indicator */}
+                                <label className={styles.modalFieldLabel}>
+                                    {/* Indicator bar */}
+                                    <span style={{ width: '3px', height: '12px', background: '#b388ff', borderRadius: '2px', display: 'inline-block' }} />
+                                    {/* Label text */}
+                                    <span>Start Year</span>
+                                </label>
+                                {/* Input field */}
+                                <input
+                                    type="number"
+                                    className={styles.modalInput}
+                                    value={startYearInput !== null ? startYearInput : startYear}
+                                    onChange={(e) => {
+                                        // Raw string value
+                                        const val = e.target.value;
+                                        // Store raw string input
+                                        setStartYearInput(val);
+                                        // Parse integer year
+                                        const parsed = parseInt(val, 10);
+                                        // Check if valid year
+                                        if (!isNaN(parsed) && parsed > 0) {
+                                            // Update start year state
+                                            setStartYear(parsed);
+                                            // Persist updated range configuration
+                                            saveSimulationRange({ startMonth, startYear: parsed, endMonth, endYear });
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Reset transient input on blur
+                                        setStartYearInput(null);
+                                    }}
+                                />
+                            </div>
+
+                            {/* End month form group */}
+                            <div className={styles.formGroup}>
+                                {/* Label with indicator */}
+                                <label className={styles.modalFieldLabel}>
+                                    {/* Indicator bar */}
+                                    <span style={{ width: '3px', height: '12px', background: '#b388ff', borderRadius: '2px', display: 'inline-block' }} />
+                                    {/* Label text */}
+                                    <span>End Month</span>
+                                </label>
+                                {/* Select dropdown */}
+                                <select
+                                    className={styles.modalInput}
+                                    value={endMonth}
+                                    onChange={(e) => {
+                                        // Parse integer month value from select event
+                                        const val = parseInt(e.target.value, 10);
+                                        // Update end month state
+                                        setEndMonth(val);
+                                        // Persist updated range configuration
+                                        saveSimulationRange({ startMonth, startYear, endMonth: val, endYear });
+                                    }}
+                                >
+                                    {/* Map month names */}
+                                    {MONTH_NAMES.map((name, i) => (
+                                        <option key={i} value={i}>{name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* End year form group */}
+                            <div className={styles.formGroup}>
+                                {/* Label with indicator */}
+                                <label className={styles.modalFieldLabel}>
+                                    {/* Indicator bar */}
+                                    <span style={{ width: '3px', height: '12px', background: '#b388ff', borderRadius: '2px', display: 'inline-block' }} />
+                                    {/* Label text */}
+                                    <span>End Year</span>
+                                </label>
+                                {/* Input field */}
+                                <input
+                                    type="number"
+                                    className={styles.modalInput}
+                                    value={endYearInput !== null ? endYearInput : endYear}
+                                    onChange={(e) => {
+                                        // Raw string value
+                                        const val = e.target.value;
+                                        // Store raw string input
+                                        setEndYearInput(val);
+                                        // Parse integer year
+                                        const parsed = parseInt(val, 10);
+                                        // Check if valid year
+                                        if (!isNaN(parsed) && parsed > 0) {
+                                            // Update end year state
+                                            setEndYear(parsed);
+                                            // Persist updated range configuration
+                                            saveSimulationRange({ startMonth, startYear, endMonth, endYear: parsed });
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Reset transient input on blur
+                                        setEndYearInput(null);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Starting total savings form group */}
+                            <div className={styles.formGroup}>
+                                {/* Label with indicator */}
+                                <label className={styles.modalFieldLabel}>
+                                    {/* Indicator bar */}
+                                    <span style={{ width: '3px', height: '12px', background: '#2196F3', borderRadius: '2px', display: 'inline-block' }} />
+                                    {/* Label text */}
+                                    <span>Starting Total Savings</span>
+                                </label>
+                                {/* Input field */}
+                                <input
+                                    type="number"
+                                    className={styles.modalInput}
+                                    placeholder="0"
+                                    value={startTotalSavingsInput !== null ? startTotalSavingsInput : (totalSavings === 0 ? '' : totalSavings)}
+                                    onChange={(e) => {
+                                        // Raw string value from input
+                                        const val = e.target.value;
+                                        // Store raw string input in state
+                                        setStartTotalSavingsInput(val);
+                                        // Parse float amount
+                                        const parsed = parseFloat(val);
+                                        // Check if parsed number is valid
+                                        if (!isNaN(parsed)) {
+                                            // Update total savings in budget context
+                                            updateTotalSavings(parsed);
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // Reset transient starting savings input on blur
+                                        setStartTotalSavingsInput(null);
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+
+                        {/* Modal Action Buttons */}
+                        <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                            {/* Close/Done button */}
+                            <button
+                                type="button"
+                                className={styles.primaryButton}
+                                onClick={() => setIsDateRangeDialogOpen(false)}
+                            >
+                                {/* Button label */}
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
             {/* Single Month In-Widget Detailed Inspector & Editor */}
             {activeMonthData && (
                 <div className={styles.panelCard}>
@@ -1677,7 +2062,7 @@ export default function HorizonPlanner() {
                     <div className={styles.cardHeader}>
                         {/* Title */}
                         <div className={styles.cardTitle}>
-                            {/* Edit pencil vector icon */}
+                            {/* Decorative edit pencil vector icon */}
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#FFB74D' }}>
                                 {/* Pencil path */}
                                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -1687,422 +2072,480 @@ export default function HorizonPlanner() {
                             <span>
                                 {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}
                             </span>
+                            {/* Closing cardTitle div */}
                         </div>
-                        {/* Simulation indicator badge for simulation months */}
-                        {!isBaseMonth && (
-                            // Simulation mode badge span
-                            <span
-                                style={{
-                                    fontSize: '0.78rem',
-                                    padding: '0.25rem 0.6rem',
-                                    borderRadius: '4px',
-                                    background: 'rgba(124, 77, 255, 0.15)',
-                                    color: '#b388ff',
-                                    border: '1px solid rgba(124, 77, 255, 0.3)'
-                                }}
-                            >
-                                {/* Simulation label container */}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    {/* Flask simulation icon */}
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        {/* Flask body */}
-                                        <path d="M10 2v7.31L4.14 18.1A2 2 0 0 0 5.8 21h12.4a2 2 0 0 0 1.66-2.9L14 9.31V2" />
-                                        {/* Flask lip */}
-                                        <line x1="8.5" y1="2" x2="15.5" y2="2" />
-                                        {/* Flask liquid line */}
-                                        <line x1="6.8" y1="15" x2="17.2" y2="15" />
-                                        {/* Closing svg */}
-                                    </svg>
-                                    {/* Label text */}
-                                    <span>Simulation Mode</span>
-                                    {/* Close badge span */}
-                                </span>
-                                {/* Close badge container */}
-                            </span>
-                        )}
+                        {/* Sync actual month data button positioned on the right */}
+                        <button
+                            type="button"
+                            className={styles.syncMonthBtn}
+                            onClick={() => setIsConfirmSyncOpen(true)}
+                            disabled={!actualMonthData}
+                            title={actualMonthData ? "Sync and override simulation data with actual database records" : "No actual database records exist for this month"}
+                        >
+                            {/* Sync circular arrows icon */}
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                {/* Top arrow arc */}
+                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                {/* Closing svg */}
+                            </svg>
+                            {/* Button label text */}
+                            <span>Sync</span>
+                            {/* Closing button */}
+                        </button>
+                        {/* Closing cardHeader div */}
                     </div>
+
+                    {/* Confirmation dialog for syncing actual month data */}
+                    {isConfirmSyncOpen && typeof document !== 'undefined' && createPortal(
+                        <div className={styles.confirmOverlay} onClick={() => setIsConfirmSyncOpen(false)}>
+                            <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+                                {/* Dialog title */}
+                                <div className={styles.confirmTitle}>
+                                    {/* Sync circular arrows icon */}
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
+                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                    </svg>
+                                    <span>Sync from Actual Month Data</span>
+                                </div>
+                                {/* Confirmation description text */}
+                                <p className={styles.confirmText}>
+                                    Are you sure you want to override the simulation data for <strong>{MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}</strong> with the actual data from the database?
+                                </p>
+                                {/* Warning subtext */}
+                                <p className={styles.confirmSubtext}>
+                                    This will replace this month's simulated income, savings contribution, budget limit, and expenses with your actual non-simulation records.
+                                </p>
+                                {/* Dialog action buttons row */}
+                                <div className={styles.confirmActions}>
+                                    {/* Cancel button */}
+                                    <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => setIsConfirmSyncOpen(false)}
+                                    >
+                                        Cancel
+                                    </button>
+                                    {/* Confirm override button */}
+                                    <button
+                                        type="button"
+                                        className={styles.primaryButton}
+                                        style={{ background: '#2196F3', borderColor: '#1E88E5', color: '#fff' }}
+                                        onClick={handleSyncFromActualMonth}
+                                    >
+                                        Yes, Override Simulation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>,
+                        document.body
+                    )}
 
 
 
                     {/* Financial Statistics Overview Grid */}
                     <div className={styles.statsGrid}>
-                        {/* Stat Card 1: Money Spent */}
+                        {/* Stat Card 1: Monthly Income */}
                         <div className={styles.statCard}>
-                            {/* Card Header */}
-                            <div className={styles.statHeader}>
-                                {/* Header label */}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    {/* Credit card icon */}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#E57373' }}>
-                                        {/* Card body */}
-                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                                        {/* Card stripe */}
-                                        <line x1="1" y1="10" x2="23" y2="10" />
-                                        {/* Closing svg */}
-                                    </svg>
-                                    {/* Label text */}
-                                    <span>Money Spent</span>
-                                </span>
-                                {/* Check if budget limit is configured */}
-                                {typeof activeMonthData.monthlyBudget === 'number' ? (
-                                    <span
-                                        className={styles.statBadge}
-                                        style={{
-                                            background: inspectedMetrics.budgetUsagePercent <= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 82, 82, 0.15)',
-                                            color: inspectedMetrics.budgetUsagePercent <= 100 ? '#00E676' : '#FF5252'
-                                        }}
-                                    >
-                                        {/* Budget percentage text */}
-                                        {inspectedMetrics.budgetUsagePercent}%
-                                    </span>
-                                ) : null}
-                            </div>
-                            {/* Value display */}
-                            <div className={styles.statValue}>
-                                {formatCurrency(inspectedMetrics.totalExpenses)}
-                            </div>
-                        </div>
-
-                        {/* Stat Card 2: Monthly Savings */}
-                        <div className={styles.statCard}>
-                            {/* Card Header */}
-                            <div className={styles.statHeader}>
-                                {/* Header label */}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    {/* Savings deposit icon */}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
-                                        {/* Box path */}
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                        {/* Arrow head */}
-                                        <polyline points="7 10 12 15 17 10" />
-                                        {/* Arrow stem */}
-                                        <line x1="12" y1="15" x2="12" y2="3" />
-                                        {/* Closing svg */}
-                                    </svg>
-                                    {/* Label text */}
-                                    <span>Monthly Savings</span>
-                                </span>
-                                {/* Savings rate badge */}
-                                <span
-                                    className={styles.statBadge}
-                                    style={{
-                                        background: 'rgba(33, 150, 243, 0.15)',
-                                        color: '#64B5F6'
-                                    }}
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Monthly Income
+                            </span>
+                            {/* Card Value with inline pencil trigger */}
+                            <div className={styles.statValue} style={{ color: 'var(--firebase-yellow)' }}>
+                                {/* Value amount text */}
+                                <span>{formatCurrency(inspectedMetrics.income)}</span>
+                                {/* Edit pencil button for monthly income */}
+                                <button
+                                    type="button"
+                                    className={styles.cardPencilBtn}
+                                    onClick={() => handleOpenEditValuesDialog('income')}
+                                    title="Edit Monthly Income"
                                 >
-                                    {/* Savings rate percentage */}
-                                    {inspectedMetrics.savingsRate}%
-                                </span>
+                                    {/* Pencil SVG icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                                        {/* Bottom line path */}
+                                        <path d="M12 20h9" />
+                                        {/* Pencil tip path */}
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        {/* Closing svg tag */}
+                                    </svg>
+                                    {/* Closing button tag */}
+                                </button>
+                                {/* Closing value div */}
                             </div>
-                            {/* Value display */}
-                            <div className={styles.statValue}>
-                                {formatCurrency(inspectedMetrics.savingsDeposit)}
-                            </div>
+                            {/* Explanatory subtext description */}
+                            <span className={styles.statSubtext}>
+                                {activeMonthData.income !== undefined ? 'Custom income set' : 'Monthly revenue available'}
+                            </span>
+                            {/* Closing card div */}
                         </div>
 
-                        {/* Stat Card 3: Projected Total Savings */}
+                        {/* Stat Card 2: Monthly Expenses */}
                         <div className={styles.statCard}>
-                            {/* Card Header */}
-                            <div className={styles.statHeader}>
-                                {/* Header label */}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    {/* Bank vault icon */}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#b388ff' }}>
-                                        {/* Bank roof */}
-                                        <path d="m3 9 9-7 9 7v1H3v-1z" />
-                                        {/* Pillar 1 */}
-                                        <line x1="4" y1="10" x2="4" y2="18" />
-                                        {/* Pillar 2 */}
-                                        <line x1="9" y1="10" x2="9" y2="18" />
-                                        {/* Pillar 3 */}
-                                        <line x1="15" y1="10" x2="15" y2="18" />
-                                        {/* Pillar 4 */}
-                                        <line x1="20" y1="10" x2="20" y2="18" />
-                                        {/* Bank base */}
-                                        <line x1="2" y1="18" x2="22" y2="18" />
-                                        {/* Bank bottom */}
-                                        <line x1="2" y1="22" x2="22" y2="22" />
-                                        {/* Closing svg */}
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Monthly Expenses
+                            </span>
+                            {/* Card Value with inline pencil trigger */}
+                            <div className={styles.statValue} style={{ color: '#29B6F6' }}>
+                                {/* Value amount text */}
+                                <span>{formatCurrency(inspectedMetrics.totalExpenses)}</span>
+                                {/* Edit pencil button for spending budget limit */}
+                                <button
+                                    type="button"
+                                    className={styles.cardPencilBtn}
+                                    onClick={() => handleOpenEditValuesDialog('monthlyBudget')}
+                                    title="Edit Spending Budget Limit"
+                                >
+                                    {/* Pencil SVG icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                                        {/* Bottom line path */}
+                                        <path d="M12 20h9" />
+                                        {/* Pencil tip path */}
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        {/* Closing svg tag */}
                                     </svg>
-                                    {/* Label text */}
-                                    <span>Total Savings</span>
-                                </span>
-                                {/* Status badges container */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    {/* Manual simulation override indicator badge */}
-                                    {!isBaseMonth && activeMonthData.totalSavings !== undefined && (
-                                        <span
-                                            className={styles.statBadge}
-                                            style={{
-                                                background: 'rgba(179, 136, 255, 0.15)',
-                                                color: '#b388ff'
-                                            }}
-                                        >
-                                            Custom
-                                        </span>
-                                    )}
-                                    {/* Check if target savings goal is set */}
-                                    {savingsGoal && savingsGoal > 0 ? (
-                                        <span
-                                            className={styles.statBadge}
-                                            style={{
-                                                background: inspectedMetrics.savingsGoalPercentage >= 100 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(124, 77, 255, 0.15)',
-                                                color: inspectedMetrics.savingsGoalPercentage >= 100 ? '#00E676' : '#b388ff'
-                                            }}
-                                        >
-                                            {/* Savings goal progress percentage text */}
-                                            {inspectedMetrics.savingsGoalPercentage}% goal
-                                        </span>
-                                    ) : null}
+                                    {/* Closing button tag */}
+                                </button>
+                                {/* Closing value div */}
+                            </div>
+                            {/* Budgeted subtext info */}
+                            <span className={styles.statSubtext}>
+                                Budgeted: {formatCurrency(inspectedMetrics.effectiveMonthlyBudget)}{inspectedMetrics.effectiveMonthlyBudget > 0 ? ` (${Math.round(inspectedMetrics.budgetUsedPercentage)}%)` : ''}
+                            </span>
+                            {/* Budget progress bar conditional check */}
+                            {inspectedMetrics.effectiveMonthlyBudget > 0 && (
+                                <div
+                                    className={styles.statProgressBar}
+                                    title={`${Math.round(inspectedMetrics.budgetUsedPercentage)}% of budget used`}
+                                >
+                                    {/* Budget progress bar fill */}
+                                    <div
+                                        className={styles.statProgressFill}
+                                        style={{
+                                            width: `${inspectedMetrics.budgetBarWidth}%`,
+                                            background: inspectedMetrics.budgetBarColor
+                                        }}
+                                    />
                                 </div>
+                            )}
+                            {/* Closing card div */}
+                        </div>
+
+                        {/* Stat Card 3: Monthly Savings Deposit */}
+                        <div className={styles.statCard}>
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Monthly Savings
+                            </span>
+                            {/* Card Value with inline pencil trigger */}
+                            <div className={styles.statValue} style={{ color: '#AB47BC' }}>
+                                {/* Value amount text */}
+                                <span>{formatCurrency(inspectedMetrics.savingsDeposit)}</span>
+                                {/* Edit pencil button for savings deposit */}
+                                <button
+                                    type="button"
+                                    className={styles.cardPencilBtn}
+                                    onClick={() => handleOpenEditValuesDialog('monthlySavingsDeposit')}
+                                    title="Edit Monthly Savings Deposit"
+                                >
+                                    {/* Pencil SVG icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                                        {/* Bottom line path */}
+                                        <path d="M12 20h9" />
+                                        {/* Pencil tip path */}
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        {/* Closing svg tag */}
+                                    </svg>
+                                    {/* Closing button tag */}
+                                </button>
+                                {/* Closing value div */}
                             </div>
-                            {/* Value display */}
-                            <div className={styles.statValue}>
-                                {formatCurrency(inspectedMetrics.projectedTotalSavings)}
-                            </div>
+                            {/* Savings rate subtext description */}
+                            <span className={styles.statSubtext}>
+                                {inspectedMetrics.savingsRate}% savings rate
+                            </span>
+                            {/* Closing card div */}
                         </div>
 
                         {/* Stat Card 4: Net Free Cash */}
                         <div className={styles.statCard}>
-                            {/* Card Header */}
-                            <div className={styles.statHeader}>
-                                {/* Header label */}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    {/* Dollar icon */}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#81C784' }}>
-                                        {/* Dollar stem */}
-                                        <line x1="12" y1="1" x2="12" y2="23" />
-                                        {/* Dollar loop */}
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                                        {/* Closing svg */}
-                                    </svg>
-                                    {/* Label text */}
-                                    <span>Net Free Cash</span>
-                                </span>
-                                {/* Status badge */}
-                                <span
-                                    className={styles.statBadge}
-                                    style={{
-                                        background: inspectedMetrics.netFreeCash >= 0 ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 82, 82, 0.15)',
-                                        color: inspectedMetrics.netFreeCash >= 0 ? '#00E676' : '#FF5252'
-                                    }}
-                                >
-                                    {inspectedMetrics.netFreeCash >= 0 ? 'Surplus' : 'Deficit'}
-                                </span>
-                            </div>
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Net Free Cash
+                            </span>
                             {/* Value display with dynamic color */}
                             <div
                                 className={styles.statValue}
                                 style={{
-                                    color: inspectedMetrics.netFreeCash >= 0 ? '#00E676' : '#FF5252'
+                                    color: inspectedMetrics.netFreeCash < 0 ? 'var(--firebase-red)' : '#00E676'
                                 }}
                             >
+                                {/* Formatted net free cash figure */}
                                 {formatCurrency(inspectedMetrics.netFreeCash)}
+                                {/* Closing value div */}
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Parameter Adjustment Inputs Subsection */}
-                    <div style={{ marginBottom: '0.85rem' }}>
-                        {/* Form grid */}
-                        <div className={styles.formGrid}>
-                            {/* Income field */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Monthly Income</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="0"
-                                    value={editingMonthFields['income'] !== undefined ? editingMonthFields['income'] : (activeMonthData.income === 0 ? '' : (activeMonthData.income || ''))}
-                                    onChange={(e) => {
-                                        // Raw string value from input
-                                        const val = e.target.value;
-                                        // Update transient editing state
-                                        setEditingMonthFields(prev => ({ ...prev, income: val }));
-                                        // Propagate to simulation update handler
-                                        handleUpdateSingleMonthField('income', val);
-                                        // End onChange
-                                    }}
-                                    onBlur={() => {
-                                        // Clear transient field on blur
-                                        setEditingMonthFields(prev => {
-                                            // Clone map
-                                            const next = { ...prev };
-                                            // Delete key
-                                            delete next.income;
-                                            // Return updated map
-                                            return next;
-                                            // End reducer
-                                        });
-                                        // End onBlur
-                                    }}
-                                    disabled={isBaseMonth}
-                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
-                                />
-                            </div>
-
-                            {/* Monthly savings contribution */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Monthly Savings Contribution</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="0"
-                                    value={editingMonthFields['monthlySavingsDeposit'] !== undefined ? editingMonthFields['monthlySavingsDeposit'] : (activeMonthData.monthlySavingsDeposit === 0 ? '' : (activeMonthData.monthlySavingsDeposit || ''))}
-                                    onChange={(e) => {
-                                        // Raw string value from input
-                                        const val = e.target.value;
-                                        // Update transient editing state
-                                        setEditingMonthFields(prev => ({ ...prev, monthlySavingsDeposit: val }));
-                                        // Propagate to simulation update handler
-                                        handleUpdateSingleMonthField('monthlySavingsDeposit', val);
-                                        // End onChange
-                                    }}
-                                    onBlur={() => {
-                                        // Clear transient field on blur
-                                        setEditingMonthFields(prev => {
-                                            // Clone map
-                                            const next = { ...prev };
-                                            // Delete key
-                                            delete next.monthlySavingsDeposit;
-                                            // Return updated map
-                                            return next;
-                                            // End reducer
-                                        });
-                                        // End onBlur
-                                    }}
-                                    disabled={isBaseMonth}
-                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
-                                />
-                            </div>
-
-                            {/* Monthly spending budget limit */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Total Spending Budget Limit</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="0"
-                                    value={editingMonthFields['monthlyBudget'] !== undefined ? editingMonthFields['monthlyBudget'] : (typeof activeMonthData.monthlyBudget === 'number' ? activeMonthData.monthlyBudget : '')}
-                                    onChange={(e) => {
-                                        // Raw string value from input
-                                        const val = e.target.value;
-                                        // Update transient editing state
-                                        setEditingMonthFields(prev => ({ ...prev, monthlyBudget: val }));
-                                        // Propagate to simulation update handler
-                                        handleUpdateSingleMonthField('monthlyBudget', val);
-                                        // End onChange
-                                    }}
-                                    onBlur={() => {
-                                        // Clear transient field on blur
-                                        setEditingMonthFields(prev => {
-                                            // Clone map
-                                            const next = { ...prev };
-                                            // Delete key
-                                            delete next.monthlyBudget;
-                                            // Return updated map
-                                            return next;
-                                            // End reducer
-                                        });
-                                        // End onBlur
-                                    }}
-                                    disabled={isBaseMonth}
-                                    style={isBaseMonth ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
-                                />
-                            </div>
-
-                            {/* Total savings parameter */}
-                            <div className={styles.formGroup}>
-                                {/* Label */}
-                                <label className={styles.label}>Total Savings</label>
-                                {/* Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder={isBaseMonth ? "0" : `Projected: ${Math.round(inspectedMetrics.projectedTotalSavings)}`}
-                                    value={editingMonthFields['totalSavings'] !== undefined ? editingMonthFields['totalSavings'] : (isBaseMonth ? (totalSavings === 0 ? '' : totalSavings) : (activeMonthData.totalSavings !== undefined ? activeMonthData.totalSavings : ''))}
-                                    onChange={(e) => {
-                                        // Raw string value from input
-                                        const val = e.target.value;
-                                        // Update transient editing state
-                                        setEditingMonthFields(prev => ({ ...prev, totalSavings: val }));
-                                        // Propagate to simulation update handler
-                                        handleUpdateSingleMonthField('totalSavings', val);
-                                        // End onChange
-                                    }}
-                                    onBlur={() => {
-                                        // Clear transient field on blur
-                                        setEditingMonthFields(prev => {
-                                            // Clone map
-                                            const next = { ...prev };
-                                            // Delete key
-                                            delete next.totalSavings;
-                                            // Return updated map
-                                            return next;
-                                            // End reducer
-                                        });
-                                        // End onBlur
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Quick Add Expense to this month */}
-                    {!isBaseMonth && (
-                        <div style={{ marginTop: '0.75rem', marginBottom: '1rem', padding: '0.65rem 0.75rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px' }}>
-                            {/* Section label */}
-                            <span className={styles.label} style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 600 }}>
-                                + Add Expense to this Month
+                            {/* Explanatory subtext description */}
+                            <span className={styles.statSubtext}>
+                                {inspectedMetrics.netFreeCash >= 0 ? 'Unallocated income available' : 'Expenses exceed income'}
                             </span>
-                            {/* Inline grid */}
-                            <div className={styles.formGrid}>
-                                {/* Name input */}
-                                <input
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="Expense Name (e.g. Electricity)"
-                                    value={singleExpName}
-                                    onChange={(e) => setSingleExpName(e.target.value)}
-                                />
-                                {/* Amount input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="Amount"
-                                    value={singleExpAmount}
-                                    onChange={(e) => setSingleExpAmount(e.target.value)}
-                                />
-                                {/* Category selector */}
-                                <select
-                                    className={styles.select}
-                                    value={activeMonthData.categories.some(c => c.id === singleExpCatId) ? singleExpCatId : (activeMonthData.categories[0]?.id || '')}
-                                    onChange={(e) => setSingleExpCatId(e.target.value)}
-                                >
-                                    {activeMonthData.categories.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                                {/* Add button */}
+                            {/* Closing card div */}
+                        </div>
+
+                        {/* Stat Card 5: Total Savings */}
+                        <div className={styles.statCard}>
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Total Savings
+                            </span>
+                            {/* Card Value with inline pencil trigger */}
+                            <div className={styles.statValue} style={{ color: '#2196F3' }}>
+                                {/* Value amount text */}
+                                <span>{formatCurrency(inspectedMetrics.projectedTotalSavings)}</span>
+                                {/* Edit pencil button for total savings */}
                                 <button
                                     type="button"
-                                    className={styles.secondaryButton}
-                                    onClick={handleAddSingleExpense}
+                                    className={styles.cardPencilBtn}
+                                    onClick={() => handleOpenEditValuesDialog('totalSavings')}
+                                    title="Edit Total Savings"
                                 >
-                                    + Add Expense
+                                    {/* Pencil SVG icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                                        {/* Bottom line path */}
+                                        <path d="M12 20h9" />
+                                        {/* Pencil tip path */}
+                                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                        {/* Closing svg tag */}
+                                    </svg>
+                                    {/* Closing button tag */}
                                 </button>
+                                {/* Closing value div */}
                             </div>
+                            {/* Subtext display showing monthly deposit and goal progress */}
+                            <span className={styles.statSubtext}>
+                                +{formatCurrency(inspectedMetrics.savingsDeposit)} this month{savingsGoal && savingsGoal > 0 ? ` · Goal: ${formatCurrency(savingsGoal)} (${Math.round(inspectedMetrics.savingsGoalPercentage)}%)` : ''}
+                            </span>
+                            {/* Savings goal progress bar conditional check */}
+                            {savingsGoal && savingsGoal > 0 ? (
+                                <div
+                                    className={styles.statProgressBar}
+                                    title={`${Math.round(inspectedMetrics.savingsGoalPercentage)}% of savings goal reached`}
+                                >
+                                    {/* Savings goal progress bar fill */}
+                                    <div
+                                        className={styles.statProgressFill}
+                                        style={{
+                                            width: `${inspectedMetrics.savingsGoalBarWidth}%`,
+                                            background: inspectedMetrics.savingsGoalBarColor
+                                        }}
+                                    />
+                                </div>
+                            ) : null}
+                            {/* Closing card div */}
                         </div>
+                    </div>
+
+                    {/* Edit Values Modal Dialog */}
+                    {isEditValuesDialogOpen && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => setIsEditValuesDialogOpen(false)}
+                        >
+                            {/* Modal container */}
+                            <div
+                                className={styles.editValuesModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header Row */}
+                                <div className={styles.modalHeaderRow}>
+                                    {/* Modal Title */}
+                                    <div className={styles.confirmTitle}>
+                                        {/* Edit pencil SVG icon with dynamic thematic color */}
+                                        <svg
+                                            width="18"
+                                            height="18"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            style={{
+                                                color: dialogEditingField === 'income'
+                                                    ? 'var(--firebase-yellow)'
+                                                    : dialogEditingField === 'monthlyBudget'
+                                                    ? 'var(--firebase-red)'
+                                                    : dialogEditingField === 'monthlySavingsDeposit'
+                                                    ? '#00E676'
+                                                    : '#2196F3'
+                                            }}
+                                        >
+                                            {/* Pencil body */}
+                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                        {/* Title text */}
+                                        <span>
+                                            {dialogEditingField === 'income' && `Edit Monthly Income – ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}`}
+                                            {dialogEditingField === 'monthlyBudget' && `Edit Spending Budget Limit – ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}`}
+                                            {dialogEditingField === 'monthlySavingsDeposit' && `Edit Monthly Savings Deposit – ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}`}
+                                            {dialogEditingField === 'totalSavings' && `Edit Total Savings – ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}`}
+                                        </span>
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        className={styles.modalCloseBtn}
+                                        onClick={() => setIsEditValuesDialogOpen(false)}
+                                        title="Close dialog"
+                                    >
+                                        {/* Cross icon */}
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Diagonal line 1 */}
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            {/* Diagonal line 2 */}
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Modal Subtitle explanation */}
+                                <p className={styles.confirmSubtext}>
+                                    {dialogEditingField === 'income' && `Update the monthly income for ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}.`}
+                                    {dialogEditingField === 'monthlyBudget' && `Update the total spending budget limit for ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}.`}
+                                    {dialogEditingField === 'monthlySavingsDeposit' && `Update the monthly savings contribution for ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}.`}
+                                    {dialogEditingField === 'totalSavings' && `Update the total savings balance for ${MONTH_NAMES[activeMonthData.month]} ${activeMonthData.year}.`}
+                                </p>
+
+                                {/* Modal Form */}
+                                <form
+                                    onSubmit={(e) => {
+                                        // Prevent standard browser form submission
+                                        e.preventDefault();
+                                        // Execute save handler
+                                        handleSaveEditValuesDialog();
+                                    }}
+                                >
+                                    {/* Form Inputs Grid */}
+                                    <div className={styles.modalFormGrid}>
+                                        {/* Conditional render for Monthly Income Field */}
+                                        {dialogEditingField === 'income' && (
+                                            <div className={styles.formGroup}>
+                                                {/* Label with icon */}
+                                                <label className={styles.modalFieldLabel}>
+                                                    {/* Income indicator bar */}
+                                                    <span style={{ width: '3px', height: '12px', background: 'var(--firebase-yellow)', borderRadius: '2px', display: 'inline-block' }} />
+                                                    {/* Label text */}
+                                                    <span>Monthly Income</span>
+                                                </label>
+                                                {/* Input */}
+                                                <input
+                                                    type="number"
+                                                    className={styles.modalInput}
+                                                    placeholder="0"
+                                                    value={tempDialogValues.income}
+                                                    onChange={(e) => setTempDialogValues(prev => ({ ...prev, income: e.target.value }))}
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Conditional render for Monthly Savings Deposit Field */}
+                                        {dialogEditingField === 'monthlySavingsDeposit' && (
+                                            <div className={styles.formGroup}>
+                                                {/* Label with icon */}
+                                                <label className={styles.modalFieldLabel}>
+                                                    {/* Deposit indicator bar */}
+                                                    <span style={{ width: '3px', height: '12px', background: '#00E676', borderRadius: '2px', display: 'inline-block' }} />
+                                                    {/* Label text */}
+                                                    <span>Monthly Savings Contribution</span>
+                                                </label>
+                                                {/* Input */}
+                                                <input
+                                                    type="number"
+                                                    className={styles.modalInput}
+                                                    placeholder="0"
+                                                    value={tempDialogValues.monthlySavingsDeposit}
+                                                    onChange={(e) => setTempDialogValues(prev => ({ ...prev, monthlySavingsDeposit: e.target.value }))}
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Conditional render for Total Spending Budget Limit Field */}
+                                        {dialogEditingField === 'monthlyBudget' && (
+                                            <div className={styles.formGroup}>
+                                                {/* Label with icon */}
+                                                <label className={styles.modalFieldLabel}>
+                                                    {/* Budget indicator bar */}
+                                                    <span style={{ width: '3px', height: '12px', background: 'var(--firebase-red)', borderRadius: '2px', display: 'inline-block' }} />
+                                                    {/* Label text */}
+                                                    <span>Total Spending Budget Limit</span>
+                                                </label>
+                                                {/* Input */}
+                                                <input
+                                                    type="number"
+                                                    className={styles.modalInput}
+                                                    placeholder="0"
+                                                    value={tempDialogValues.monthlyBudget}
+                                                    onChange={(e) => setTempDialogValues(prev => ({ ...prev, monthlyBudget: e.target.value }))}
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Conditional render for Total Savings Field */}
+                                        {dialogEditingField === 'totalSavings' && (
+                                            <div className={styles.formGroup}>
+                                                {/* Label with icon */}
+                                                <label className={styles.modalFieldLabel}>
+                                                    {/* Savings indicator bar */}
+                                                    <span style={{ width: '3px', height: '12px', background: '#2196F3', borderRadius: '2px', display: 'inline-block' }} />
+                                                    {/* Label text */}
+                                                    <span>Total Savings (Bank Balance)</span>
+                                                </label>
+                                                {/* Input */}
+                                                <input
+                                                    type="number"
+                                                    className={styles.modalInput}
+                                                    placeholder="0"
+                                                    value={tempDialogValues.totalSavings}
+                                                    onChange={(e) => setTempDialogValues(prev => ({ ...prev, totalSavings: e.target.value }))}
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Modal Action Buttons */}
+                                    <div className={styles.confirmActions}>
+                                        {/* Cancel button */}
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() => setIsEditValuesDialogOpen(false)}
+                                        >
+                                            {/* Cancel text */}
+                                            Cancel
+                                        </button>
+                                        {/* Save button */}
+                                        <button
+                                            type="submit"
+                                            className={styles.primaryButton}
+                                        >
+                                            {/* Save text */}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* Categories and Expenses Header */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                         {/* Section Title */}
                         <span className={styles.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
                             {/* Folder icon */}
@@ -2114,108 +2557,358 @@ export default function HorizonPlanner() {
                             {/* Title text */}
                             <span>Categories</span>
                         </span>
-                        {/* Add Category button when not base month */}
-                        {!isBaseMonth && (
+                        {/* Action buttons row for adding expenses and categories */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {/* Add Expense button */}
                             <button
                                 type="button"
                                 className={styles.secondaryButton}
                                 style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                                onClick={() => setIsAddingCategory(prev => !prev)}
+                                onClick={() => setIsAddingExpense(true)}
                             >
-                                {isAddingCategory ? (
-                                    <>
-                                        {/* Cross icon */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18" />
-                                            <line x1="6" y1="6" x2="18" y2="18" />
-                                        </svg>
-                                        <span>Cancel</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        {/* Plus icon */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <line x1="12" y1="5" x2="12" y2="19" />
-                                            <line x1="5" y1="12" x2="19" y2="12" />
-                                        </svg>
-                                        <span>Add Category</span>
-                                    </>
-                                )}
+                                {/* Plus icon */}
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Vertical line */}
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    {/* Horizontal line */}
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    {/* Closing svg */}
+                                </svg>
+                                {/* Button text */}
+                                <span>Add Expense</span>
                             </button>
-                        )}
+                            {/* Add Category button */}
+                            <button
+                                type="button"
+                                className={styles.secondaryButton}
+                                style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                                onClick={() => setIsAddingCategory(true)}
+                            >
+                                {/* Plus icon */}
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Vertical line */}
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    {/* Horizontal line */}
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    {/* Closing svg */}
+                                </svg>
+                                {/* Add Category button text */}
+                                <span>Add Category</span>
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Inline Add Category Form */}
-                    {!isBaseMonth && isAddingCategory && (
-                        <div ref={addHorizonCategoryRef} className={styles.categoryFormBox}>
-                            {/* Form Title */}
-                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                                New Category
-                            </span>
-                            {/* Inputs row */}
-                            <div className={styles.formGrid}>
-                                {/* Name Input */}
-                                <input
-                                    ref={horizonCatNameInputRef}
-                                    autoFocus
-                                    type="text"
-                                    className={styles.input}
-                                    placeholder="Category Name"
-                                    value={newCatName}
-                                    onChange={(e) => setNewCatName(e.target.value)}
-                                />
-                                {/* Budget Input */}
-                                <input
-                                    type="number"
-                                    className={styles.input}
-                                    placeholder="Budget Limit (Optional)"
-                                    value={newCatBudget}
-                                    onChange={(e) => setNewCatBudget(e.target.value)}
-                                />
-                            </div>
-                            {/* Color Selector Row */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {/* Label */}
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Color:</span>
-                                {/* Palette */}
-                                <div className={styles.colorPalette}>
-                                    {COLOR_PRESETS.map(color => (
-                                        <button
-                                            key={color}
-                                            type="button"
-                                            className={`${styles.colorSwatch} ${newCatColor === color ? styles.colorSwatchActive : ''}`}
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => setNewCatColor(color)}
-                                        />
-                                    ))}
+                    {/* Add Expense Modal Dialog */}
+                    {isAddingExpense && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => setIsAddingExpense(false)}
+                        >
+                            {/* Modal container */}
+                            <div
+                                className={styles.editValuesModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header Row */}
+                                <div className={styles.modalHeaderRow}>
+                                    {/* Modal Title */}
+                                    <div className={styles.confirmTitle}>
+                                        {/* Plus circle icon */}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#00E676' }}>
+                                            {/* Plus circle outline */}
+                                            <circle cx="12" cy="12" r="10" />
+                                            {/* Vertical line */}
+                                            <line x1="12" y1="8" x2="12" y2="16" />
+                                            {/* Horizontal line */}
+                                            <line x1="8" y1="12" x2="16" y2="12" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                        {/* Title text */}
+                                        <span>Add Expense – {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}</span>
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        className={styles.modalCloseBtn}
+                                        onClick={() => setIsAddingExpense(false)}
+                                        title="Close dialog"
+                                    >
+                                        {/* Cross icon */}
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Diagonal line 1 */}
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            {/* Diagonal line 2 */}
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                    </button>
                                 </div>
-                            </div>
-                            {/* Action Buttons */}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                {/* Cancel Button */}
-                                <button
-                                    type="button"
-                                    className={styles.secondaryButton}
-                                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                                    onClick={() => {
-                                        setIsAddingCategory(false);
-                                        setNewCatName('');
-                                        setNewCatBudget('');
+
+                                {/* Modal Subtitle explanation */}
+                                <p className={styles.confirmSubtext}>
+                                    Add a new simulated expense item to {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}.
+                                </p>
+
+                                {/* Expense Form */}
+                                <form
+                                    onSubmit={(e) => {
+                                        // Prevent default browser form submission
+                                        e.preventDefault();
+                                        // Execute add expense handler
+                                        handleAddSingleExpense();
                                     }}
                                 >
-                                    Cancel
-                                </button>
-                                {/* Create Category Button */}
-                                <button
-                                    type="button"
-                                    className={styles.primaryButton}
-                                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
-                                    onClick={handleAddSingleCategory}
-                                >
-                                    Save Category
-                                </button>
+                                    {/* Form Inputs Grid */}
+                                    <div className={styles.modalFormGrid}>
+                                        {/* Expense Name Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: '#00E676', borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Expense Name</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                className={styles.modalInput}
+                                                placeholder="e.g. Electricity, Groceries"
+                                                value={singleExpName}
+                                                onChange={(e) => setSingleExpName(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Expense Amount Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: '#00E676', borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Amount</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                type="number"
+                                                className={styles.modalInput}
+                                                placeholder="0"
+                                                value={singleExpAmount}
+                                                onChange={(e) => setSingleExpAmount(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Category Select Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: '#64B5F6', borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Category</span>
+                                            </label>
+                                            {/* Select dropdown */}
+                                            <select
+                                                className={styles.modalInput}
+                                                value={activeMonthData.categories.some(c => c.id === singleExpCatId) ? singleExpCatId : (activeMonthData.categories[0]?.id || '')}
+                                                onChange={(e) => setSingleExpCatId(e.target.value)}
+                                            >
+                                                {/* Map categories to select options */}
+                                                {activeMonthData.categories.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Action Buttons */}
+                                    <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                                        {/* Cancel button */}
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() => setIsAddingExpense(false)}
+                                        >
+                                            {/* Cancel text */}
+                                            Cancel
+                                        </button>
+                                        {/* Save button */}
+                                        <button
+                                            type="submit"
+                                            className={styles.primaryButton}
+                                        >
+                                            {/* Save text */}
+                                            + Add Expense
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
+                    )}
+
+                    {/* Add Category Modal Dialog */}
+                    {isAddingCategory && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => {
+                                // Close modal and reset fields
+                                setIsAddingCategory(false);
+                                setNewCatName('');
+                                setNewCatBudget('');
+                            }}
+                        >
+                            {/* Modal container */}
+                            <div
+                                className={styles.editValuesModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header Row */}
+                                <div className={styles.modalHeaderRow}>
+                                    {/* Modal Title */}
+                                    <div className={styles.confirmTitle}>
+                                        {/* Folder icon */}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
+                                            {/* Folder outline */}
+                                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                        {/* Title text */}
+                                        <span>New Category – {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}</span>
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        className={styles.modalCloseBtn}
+                                        onClick={() => {
+                                            // Close modal and reset fields
+                                            setIsAddingCategory(false);
+                                            setNewCatName('');
+                                            setNewCatBudget('');
+                                        }}
+                                        title="Close dialog"
+                                    >
+                                        {/* Cross icon */}
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Diagonal line 1 */}
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            {/* Diagonal line 2 */}
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Modal Subtitle explanation */}
+                                <p className={styles.confirmSubtext}>
+                                    Create a new expense category with an optional monthly spending budget limit.
+                                </p>
+
+                                {/* Category Form */}
+                                <form
+                                    onSubmit={(e) => {
+                                        // Prevent default browser form submission
+                                        e.preventDefault();
+                                        // Execute add category handler
+                                        handleAddSingleCategory();
+                                    }}
+                                >
+                                    {/* Form Inputs Grid */}
+                                    <div className={styles.modalFormGrid}>
+                                        {/* Category Name Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: newCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Category Name</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                className={styles.modalInput}
+                                                placeholder="Category Name"
+                                                value={newCatName}
+                                                onChange={(e) => setNewCatName(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Budget Limit Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: 'var(--firebase-red)', borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Budget Limit (Optional)</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                type="number"
+                                                className={styles.modalInput}
+                                                placeholder="0"
+                                                value={newCatBudget}
+                                                onChange={(e) => setNewCatBudget(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Color Palette Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: newCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Theme Color</span>
+                                            </label>
+                                            {/* Color Palette container */}
+                                            <div className={styles.colorPalette} style={{ marginTop: '0.25rem' }}>
+                                                {/* Map preset color swatches */}
+                                                {COLOR_PRESETS.map(color => (
+                                                    <button
+                                                        key={color}
+                                                        type="button"
+                                                        className={`${styles.colorSwatch} ${newCatColor === color ? styles.colorSwatchActive : ''}`}
+                                                        style={{ backgroundColor: color }}
+                                                        onClick={() => setNewCatColor(color)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Action Buttons */}
+                                    <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                                        {/* Cancel button */}
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() => {
+                                                // Close modal and reset fields
+                                                setIsAddingCategory(false);
+                                                setNewCatName('');
+                                                setNewCatBudget('');
+                                            }}
+                                        >
+                                            {/* Cancel text */}
+                                            Cancel
+                                        </button>
+                                        {/* Save button */}
+                                        <button
+                                            type="submit"
+                                            className={styles.primaryButton}
+                                        >
+                                            {/* Save text */}
+                                            Save Category
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* Category and expenses breakdown list */}
@@ -2235,105 +2928,40 @@ export default function HorizonPlanner() {
                                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }} />
                                         {/* Name */}
                                         <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{cat.name}</span>
-                                        {/* Category actions for non-base months */}
-                                        {!isBaseMonth && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }} onClick={(e) => e.stopPropagation()}>
-                                                {/* Edit Category Button */}
-                                                <button
-                                                    type="button"
-                                                    className={styles.iconButton}
-                                                    title="Edit category"
-                                                    onClick={() => handleStartEditCategory(cat)}
-                                                >
-                                                    {/* Edit pencil icon */}
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                                    </svg>
-                                                </button>
-                                                {/* Delete Category Button */}
-                                                <button
-                                                    type="button"
-                                                    className={styles.iconButton}
-                                                    title="Delete category"
-                                                    onClick={() => handleDeleteSingleCategory(cat.id)}
-                                                >
-                                                    {/* Trash icon */}
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <polyline points="3 6 5 6 21 6" />
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        )}
+                                        {/* Category actions */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }} onClick={(e) => e.stopPropagation()}>
+                                            {/* Edit Category Button */}
+                                            <button
+                                                type="button"
+                                                className={styles.iconButton}
+                                                title="Edit category"
+                                                onClick={() => handleStartEditCategory(cat)}
+                                            >
+                                                {/* Edit pencil icon */}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                                </svg>
+                                            </button>
+                                            {/* Delete Category Button */}
+                                            <button
+                                                type="button"
+                                                className={styles.iconButton}
+                                                title="Delete category"
+                                                onClick={() => setCategoryToDelete(cat)}
+                                            >
+                                                {/* Trash icon */}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
                                     {/* Category total */}
                                     <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                         {formatCurrency((cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}
                                     </span>
                                 </div>
-
-                                {/* Inline Edit Form when editing this category */}
-                                {!isBaseMonth && editingCatId === cat.id && (
-                                    <div className={styles.categoryFormBox} style={{ marginTop: '0.5rem' }}>
-                                        {/* Inputs row */}
-                                        <div className={styles.formGrid}>
-                                            {/* Name Input */}
-                                            <input
-                                                type="text"
-                                                className={styles.input}
-                                                placeholder="Category Name"
-                                                value={editCatName}
-                                                onChange={(e) => setEditCatName(e.target.value)}
-                                            />
-                                            {/* Budget Input */}
-                                            <input
-                                                type="number"
-                                                className={styles.input}
-                                                placeholder="Budget Limit (Optional)"
-                                                value={editCatBudget}
-                                                onChange={(e) => setEditCatBudget(e.target.value)}
-                                            />
-                                        </div>
-                                        {/* Color Selector Row */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            {/* Label */}
-                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Color:</span>
-                                            {/* Palette */}
-                                            <div className={styles.colorPalette}>
-                                                {COLOR_PRESETS.map(color => (
-                                                    <button
-                                                        key={color}
-                                                        type="button"
-                                                        className={`${styles.colorSwatch} ${editCatColor === color ? styles.colorSwatchActive : ''}`}
-                                                        style={{ backgroundColor: color }}
-                                                        onClick={() => setEditCatColor(color)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        {/* Action Buttons */}
-                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
-                                            {/* Cancel Button */}
-                                            <button
-                                                type="button"
-                                                className={styles.secondaryButton}
-                                                style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                                                onClick={() => setEditingCatId(null)}
-                                            >
-                                                Cancel
-                                            </button>
-                                            {/* Save Button */}
-                                            <button
-                                                type="button"
-                                                className={styles.primaryButton}
-                                                style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem' }}
-                                                onClick={() => handleSaveEditCategory(cat.id)}
-                                            >
-                                                Save
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
 
                                 {/* Render expenses list when category is expanded */}
                                 {expandedCategoryIds.includes(cat.id) && (
@@ -2345,56 +2973,48 @@ export default function HorizonPlanner() {
                                                 <span style={{ fontSize: '0.82rem', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.name}</span>
                                                 {/* Amount and delete */}
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                    {/* Amount display or input */}
-                                                    {isBaseMonth ? (
-                                                        <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                                                            {formatCurrency(exp.amount)}
-                                                        </span>
-                                                    ) : (
-                                                        <input
-                                                            type="number"
-                                                            className={styles.inlineInput}
-                                                            placeholder="0"
-                                                            value={editingExpenseAmounts[exp.id] !== undefined ? editingExpenseAmounts[exp.id] : (exp.amount === 0 ? '' : exp.amount)}
-                                                            onChange={(e) => {
-                                                                // Raw string value from input
-                                                                const val = e.target.value;
-                                                                // Update transient editing state
-                                                                setEditingExpenseAmounts(prev => ({ ...prev, [exp.id]: val }));
-                                                                // Propagate to simulation update handler
-                                                                handleUpdateSingleExpenseAmount(cat.id, exp.id, val);
-                                                                // End onChange
-                                                            }}
-                                                            onBlur={() => {
-                                                                // Clear transient expense string on blur
-                                                                setEditingExpenseAmounts(prev => {
-                                                                    // Clone map
-                                                                    const next = { ...prev };
-                                                                    // Delete key
-                                                                    delete next[exp.id];
-                                                                    // Return updated map
-                                                                    return next;
-                                                                    // End reducer
-                                                                });
-                                                                // End onBlur
-                                                            }}
-                                                        />
-                                                    )}
-                                                    {/* Delete button only if not base month */}
-                                                    {!isBaseMonth && (
-                                                        <button
-                                                            type="button"
-                                                            className={styles.dangerButton}
-                                                            onClick={() => handleDeleteSingleExpense(cat.id, exp.id)}
-                                                            title="Delete expense from this month"
-                                                        >
-                                                            {/* Cross delete icon */}
-                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <line x1="18" y1="6" x2="6" y2="18" />
-                                                                <line x1="6" y1="6" x2="18" y2="18" />
-                                                            </svg>
-                                                        </button>
-                                                    )}
+                                                    {/* Amount input */}
+                                                    <input
+                                                        type="number"
+                                                        className={styles.inlineInput}
+                                                        placeholder="0"
+                                                        value={editingExpenseAmounts[exp.id] !== undefined ? editingExpenseAmounts[exp.id] : (exp.amount === 0 ? '' : exp.amount)}
+                                                        onChange={(e) => {
+                                                            // Raw string value from input
+                                                            const val = e.target.value;
+                                                            // Update transient editing state
+                                                            setEditingExpenseAmounts(prev => ({ ...prev, [exp.id]: val }));
+                                                            // Propagate to simulation update handler
+                                                            handleUpdateSingleExpenseAmount(cat.id, exp.id, val);
+                                                            // End onChange
+                                                        }}
+                                                        onBlur={() => {
+                                                            // Clear transient expense string on blur
+                                                            setEditingExpenseAmounts(prev => {
+                                                                // Clone map
+                                                                const next = { ...prev };
+                                                                // Delete key
+                                                                delete next[exp.id];
+                                                                // Return updated map
+                                                                return next;
+                                                                // End reducer
+                                                            });
+                                                            // End onBlur
+                                                        }}
+                                                    />
+                                                    {/* Delete expense button */}
+                                                    <button
+                                                        type="button"
+                                                        className={styles.dangerButton}
+                                                        onClick={() => handleDeleteSingleExpense(cat.id, exp.id)}
+                                                        title="Delete expense from this month"
+                                                    >
+                                                        {/* Cross delete icon */}
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))}
@@ -2410,6 +3030,213 @@ export default function HorizonPlanner() {
                             </div>
                         ))}
                     </div>
+
+                    {/* Edit Category Modal Dialog */}
+                    {editingCatId !== null && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => setEditingCatId(null)}
+                        >
+                            {/* Modal container */}
+                            <div
+                                className={styles.editValuesModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header Row */}
+                                <div className={styles.modalHeaderRow}>
+                                    {/* Modal Title */}
+                                    <div className={styles.confirmTitle}>
+                                        {/* Edit pencil icon */}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: editCatColor || '#64B5F6' }}>
+                                            {/* Pencil body */}
+                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                        {/* Title text */}
+                                        <span>Edit Category</span>
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        className={styles.modalCloseBtn}
+                                        onClick={() => setEditingCatId(null)}
+                                        title="Close dialog"
+                                    >
+                                        {/* Cross icon */}
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Diagonal line 1 */}
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            {/* Diagonal line 2 */}
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                            {/* Closing svg */}
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Modal Subtitle explanation */}
+                                <p className={styles.confirmSubtext}>
+                                    Update the category settings for {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}.
+                                </p>
+
+                                {/* Edit Category Form */}
+                                <form
+                                    onSubmit={(e) => {
+                                        // Prevent default browser form submission
+                                        e.preventDefault();
+                                        // Execute save category edits handler
+                                        handleSaveEditCategory(editingCatId);
+                                    }}
+                                >
+                                    {/* Form Inputs Grid */}
+                                    <div className={styles.modalFormGrid}>
+                                        {/* Category Name Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: editCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Category Name</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                className={styles.modalInput}
+                                                placeholder="Category Name"
+                                                value={editCatName}
+                                                onChange={(e) => setEditCatName(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Budget Limit Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: 'var(--firebase-red)', borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Budget Limit (Optional)</span>
+                                            </label>
+                                            {/* Input */}
+                                            <input
+                                                type="number"
+                                                className={styles.modalInput}
+                                                placeholder="0"
+                                                value={editCatBudget}
+                                                onChange={(e) => setEditCatBudget(e.target.value)}
+                                            />
+                                        </div>
+
+                                        {/* Color Palette Field */}
+                                        <div className={styles.formGroup}>
+                                            {/* Label with icon */}
+                                            <label className={styles.modalFieldLabel}>
+                                                {/* Indicator bar */}
+                                                <span style={{ width: '3px', height: '12px', background: editCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                {/* Label text */}
+                                                <span>Theme Color</span>
+                                            </label>
+                                            {/* Color Palette container */}
+                                            <div className={styles.colorPalette} style={{ marginTop: '0.25rem' }}>
+                                                {/* Map preset color swatches */}
+                                                {COLOR_PRESETS.map(color => (
+                                                    <button
+                                                        key={color}
+                                                        type="button"
+                                                        className={`${styles.colorSwatch} ${editCatColor === color ? styles.colorSwatchActive : ''}`}
+                                                        style={{ backgroundColor: color }}
+                                                        onClick={() => setEditCatColor(color)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Modal Action Buttons */}
+                                    <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                                        {/* Cancel button */}
+                                        <button
+                                            type="button"
+                                            className={styles.secondaryButton}
+                                            onClick={() => setEditingCatId(null)}
+                                        >
+                                            {/* Cancel text */}
+                                            Cancel
+                                        </button>
+                                        {/* Save button */}
+                                        <button
+                                            type="submit"
+                                            className={styles.primaryButton}
+                                        >
+                                            {/* Save text */}
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>,
+                        document.body
+                    )}
+
+                    {/* Delete Category Confirmation Dialog */}
+                    {categoryToDelete && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => setCategoryToDelete(null)}
+                        >
+                            {/* Modal container */}
+                            <div
+                                className={styles.confirmModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Modal Header Row */}
+                                <div className={styles.confirmTitle}>
+                                    {/* Danger trash icon */}
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--firebase-red)' }}>
+                                        {/* Trash top line */}
+                                        <polyline points="3 6 5 6 21 6" />
+                                        {/* Trash can body */}
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        {/* Closing svg */}
+                                    </svg>
+                                    {/* Title text */}
+                                    <span>Delete Category</span>
+                                </div>
+                                {/* Confirmation description text */}
+                                <p className={styles.confirmText}>
+                                    Are you sure you want to delete the category <strong>&quot;{categoryToDelete.name}&quot;</strong> for <strong>{MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}</strong>?
+                                </p>
+                                {/* Warning subtext */}
+                                <p className={styles.confirmSubtext}>
+                                    This will also remove all itemized expenses ({categoryToDelete.expenses?.length || 0}) listed under this category for this simulation month.
+                                </p>
+                                {/* Modal Action Buttons */}
+                                <div className={styles.confirmActions}>
+                                    {/* Cancel button */}
+                                    <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => setCategoryToDelete(null)}
+                                    >
+                                        {/* Cancel text */}
+                                        Cancel
+                                    </button>
+                                    {/* Delete confirmation button */}
+                                    <button
+                                        type="button"
+                                        className={styles.dangerButton}
+                                        style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                                        onClick={() => handleDeleteSingleCategory(categoryToDelete.id)}
+                                    >
+                                        {/* Delete button text */}
+                                        Delete Category
+                                    </button>
+                                </div>
+                            </div>
+                        </div>,
+                        document.body
+                    )}
                 </div>
             )}
 
@@ -2665,7 +3492,7 @@ export default function HorizonPlanner() {
                         </div>
 
                         {/* Execute Action Row */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.25rem' }}>
+                        <div className={styles.copyExecuteRow}>
                             {/* Execute copy button */}
                             <button
                                 type="button"

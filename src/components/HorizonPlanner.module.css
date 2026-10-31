@@ -461,19 +461,19 @@
 /* Individual financial statistic card */
 .statCard {
     /* Semi-transparent dark background */
-    background: rgba(255, 255, 255, 0.035);
+    background: rgba(255, 255, 255, 0.03);
     /* Subtle border outline */
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     /* Smooth rounded corners */
-    border-radius: 8px;
+    border-radius: 10px;
     /* Inner padding layout */
-    padding: 0.75rem 0.9rem;
+    padding: 1rem;
     /* Flexbox display */
     display: flex;
     /* Flow in column direction */
     flex-direction: column;
     /* Internal element spacing gap */
-    gap: 0.25rem;
+    gap: 0.35rem;
     /* Transition animation */
     transition: border-color 0.2s ease, transform 0.2s ease;
 }
@@ -486,28 +486,34 @@
     align-items: center;
     /* Push label and badge to opposite sides */
     justify-content: space-between;
-    /* Label font size */
-    font-size: 0.75rem;
+    /* Small label font size */
+    font-size: 0.8rem;
     /* Muted secondary text color */
     color: var(--text-secondary);
-    /* Semi-bold text weight */
-    font-weight: 600;
+    /* Medium text weight */
+    font-weight: 500;
     /* Uppercase styling */
     text-transform: uppercase;
     /* Letter spacing */
-    letter-spacing: 0.04em;
+    letter-spacing: 0.5px;
 }
 
 /* Primary numerical statistic value */
 .statValue {
     /* Large prominent font size */
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     /* Bold font weight */
     font-weight: 700;
     /* Crisp white text color */
     color: var(--text-primary);
     /* Compact line height */
     line-height: 1.2;
+    /* Inline flex alignment */
+    display: inline-flex;
+    /* Center align vertically */
+    align-items: center;
+    /* Gap between value and pencil */
+    gap: 0.45rem;
 }
 
 /* Secondary explanatory subtext */
@@ -524,6 +530,8 @@
     gap: 0.35rem;
     /* Line height */
     line-height: 1.3;
+    /* Margin top separation */
+    margin-top: 0.15rem;
 }
 
 /* Compact status badge for metrics */
@@ -652,6 +660,28 @@
     transform: scale(1.2);
 }
 
+/* Container for inspected month header actions */
+.monthHeaderActions {
+    /* Flex display */
+    display: flex;
+    /* Align centered */
+    align-items: center;
+    /* Spacing gap */
+    gap: 0.6rem;
+    /* Allow wrapping */
+    flex-wrap: wrap;
+}
+
+/* Row wrapper for copy action button */
+.copyExecuteRow {
+    /* Flex display */
+    display: flex;
+    /* Align right */
+    justify-content: flex-end;
+    /* Top padding */
+    padding-top: 0.25rem;
+}
+
 /* Media query breakpoint for tablet and mobile viewport optimization */
 @media (max-width: 768px) {
     /* Compact container spacing */
@@ -695,6 +725,13 @@
         /* Compact gap */
         gap: 0.5rem;
     /* Stats grid query end */
+    }
+
+    /* Expand last stat card across both columns when odd count */
+    .statCard:last-child {
+        /* Span both columns */
+        grid-column: 1 / -1;
+    /* Stat card last child end */
     }
 
     /* Compact statistic card padding */
@@ -790,40 +827,132 @@
     /* Form grid 480 end */
     }
 
-    /* Compact stat cards grid */
+    /* Single column stack for stat cards on small screens */
     .statsGrid {
-        /* Tighter gap */
-        gap: 0.45rem;
+        /* Single column layout for unclipped cards */
+        grid-template-columns: 1fr;
+        /* Compact gap */
+        gap: 0.5rem;
     /* Stats grid 480 end */
+    }
+
+    /* Reset last child span since grid is single column */
+    .statCard:last-child {
+        /* Default single column */
+        grid-column: auto;
+    /* Stat card last child 480 end */
     }
 
     /* Tighter stat card */
     .statCard {
         /* Compact padding */
-        padding: 0.5rem 0.55rem;
+        padding: 0.65rem 0.75rem;
     /* Stat card 480 end */
     }
 
-    /* Adjusted stat value */
+    /* Prominent numerical value on mobile */
     .statValue {
-        /* Font size */
-        font-size: 0.95rem;
+        /* Clear prominent font size */
+        font-size: 1.15rem;
     /* Stat value 480 end */
     }
 
     /* Compact section title */
     .cardTitle {
         /* Scaled font */
-        font-size: 0.92rem;
+        font-size: 0.95rem;
     /* Card title 480 end */
+    }
+
+    /* Responsive month header actions */
+    .monthHeaderActions {
+        /* Full width */
+        width: 100%;
+        /* Push elements apart */
+        justify-content: space-between;
+        /* Gap */
+        gap: 0.4rem;
+    /* Month header actions 480 end */
+    }
+
+    /* Responsive sync month button */
+    .syncMonthBtn {
+        /* Align self to center */
+        align-self: center;
+        /* Compact padding */
+        padding: 0.18rem 0.45rem;
+        /* Scaled font size */
+        font-size: 0.72rem;
+    /* Sync month btn 480 end */
+    }
+
+    /* Responsive copy execute row */
+    .copyExecuteRow button {
+        /* Full width */
+        width: 100%;
+        /* Center content */
+        justify-content: center;
+        /* Minimum touch height */
+        min-height: 42px;
+    /* Copy execute row button 480 end */
+    }
+
+    /* Responsive expense row */
+    .expenseRow {
+        /* Padding */
+        padding: 0.45rem 0.55rem;
+        /* Gap */
+        gap: 0.4rem;
+    /* Expense row 480 end */
+    }
+
+    /* Responsive danger delete button */
+    .dangerButton {
+        /* Minimum touch height */
+        min-height: 36px;
+        /* Minimum touch width */
+        min-width: 36px;
+        /* Inline flex display */
+        display: inline-flex;
+        /* Center horizontally */
+        align-items: center;
+        /* Center vertically */
+        justify-content: center;
+    /* Danger button 480 end */
+    }
+
+    /* Responsive category icon button */
+    .iconButton {
+        /* Minimum touch height */
+        min-height: 34px;
+        /* Minimum touch width */
+        min-width: 34px;
+        /* Inline flex display */
+        display: inline-flex;
+        /* Center horizontally */
+        align-items: center;
+        /* Center vertically */
+        justify-content: center;
+    /* Icon button 480 end */
+    }
+
+    /* Responsive inline number input */
+    .inlineInput {
+        /* Width */
+        width: 80px;
+        /* Minimum height */
+        min-height: 34px;
+        /* Font size */
+        font-size: 0.85rem;
+    /* Inline input 480 end */
     }
 
     /* Compact month pill for extra-small screens */
     .monthPill {
         /* Narrower width */
-        min-width: 105px;
+        min-width: 110px;
         /* Compact padding */
-        padding: 0.5rem 0.6rem;
+        padding: 0.55rem 0.65rem;
     /* Month pill 480 end */
     }
 
@@ -831,7 +960,416 @@
     .cardHeader .primaryButton {
         /* Full width */
         width: 100%;
+        /* Center content */
+        justify-content: center;
+        /* Minimum touch height */
+        min-height: 40px;
     /* Card header primary button end */
     }
+
+    /* Mobile optimized confirmation modal */
+    .confirmModal {
+        /* Compact padding */
+        padding: 1.15rem;
+        /* Compact gap */
+        gap: 0.65rem;
+    /* Confirm modal 480 end */
+    }
+
+    /* Mobile stacked modal action buttons */
+    .confirmActions {
+        /* Stack buttons */
+        flex-direction: column-reverse;
+        /* Gap */
+        gap: 0.5rem;
+    /* Confirm actions 480 end */
+    }
+
+    /* Full width modal buttons */
+    .confirmActions button {
+        /* Full width */
+        width: 100%;
+        /* Center content */
+        justify-content: center;
+        /* Minimum touch height */
+        min-height: 40px;
+    /* Confirm actions button 480 end */
+    }
+
+    /* Mobile edit modal padding */
+    .editValuesModal {
+        /* Compact padding */
+        padding: 1.15rem;
+        /* Compact gap */
+        gap: 0.85rem;
+        /* Margin */
+        margin: 0.5rem;
+    /* Edit values modal 480 end */
+    }
+
+    /* Mobile modal input height */
+    .modalInput {
+        /* Minimum touch height */
+        min-height: 44px;
+        /* Font size 16px to prevent iOS auto-zoom */
+        font-size: 1rem;
+    /* Modal input 480 end */
+    }
+
+    /* Mobile touch target for title pencil button */
+    .titlePencilBtn {
+        /* Minimum touch height */
+        min-height: 36px;
+        /* Minimum touch width */
+        min-width: 36px;
+    /* Title pencil btn 480 end */
+    }
+
+    /* Mobile touch target for card pencil button */
+    .cardPencilBtn {
+        /* Minimum touch height */
+        min-height: 34px;
+        /* Minimum touch width */
+        min-width: 34px;
+    /* Card pencil btn 480 end */
+    }
 /* Media query max-width 480px end */
+}
+
+/* Button to sync inspected month with actual non-simulation database records */
+.syncMonthBtn {
+    /* Align icon and text horizontally */
+    display: inline-flex;
+    /* Center align flex items vertically */
+    align-items: center;
+    /* Spacing between icon and label */
+    gap: 0.25rem;
+    /* Translucent blue background */
+    background: rgba(33, 150, 243, 0.1);
+    /* Border matching theme blue */
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    /* Font color */
+    color: #64B5F6;
+    /* Compact padding */
+    padding: 0.18rem 0.45rem;
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Compact font size */
+    font-size: 0.72rem;
+    /* Medium font weight */
+    font-weight: 500;
+    /* Pointer cursor on hover */
+    cursor: pointer;
+    /* Smooth transitions */
+    transition: all 0.2s ease;
+}
+
+/* Hover state for active sync month button */
+.syncMonthBtn:hover:not(:disabled) {
+    /* Brighter background */
+    background: rgba(33, 150, 243, 0.2);
+    /* Highlight border */
+    border-color: rgba(33, 150, 243, 0.5);
+}
+
+/* Disabled state when no actual data exists */
+.syncMonthBtn:disabled {
+    /* Dim opacity */
+    opacity: 0.45;
+    /* Prohibited cursor */
+    cursor: not-allowed;
+    /* Gray border */
+    border-color: rgba(255, 255, 255, 0.1);
+    /* Dim text color */
+    color: var(--text-secondary);
+    /* Dim background */
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Modal backdrop overlay for sync confirmation dialog */
+.confirmOverlay {
+    /* Fixed viewport positioning */
+    position: fixed;
+    /* Align to top */
+    top: 0;
+    /* Align to left */
+    left: 0;
+    /* Cover full viewport width */
+    width: 100vw;
+    /* Cover full viewport height */
+    height: 100vh;
+    /* Dark semi-transparent background */
+    background: rgba(0, 0, 0, 0.75);
+    /* High z-index */
+    z-index: 9999;
+    /* Flexbox centering */
+    display: flex;
+    /* Center horizontally */
+    justify-content: center;
+    /* Center vertically */
+    align-items: center;
+    /* Subtle backdrop blur */
+    backdrop-filter: blur(4px);
+    /* Padding on small screens */
+    padding: 1rem;
+    /* Border box sizing */
+    box-sizing: border-box;
+}
+
+/* Modal window container for sync confirmation */
+.confirmModal {
+    /* Deep dark background */
+    background: #151515;
+    /* System border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 12px;
+    /* Inner padding */
+    padding: 1.5rem;
+    /* Max width */
+    max-width: 440px;
+    /* Responsive width */
+    width: 100%;
+    /* Soft elevation shadow */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    /* Flex column flow */
+    display: flex;
+    /* Vertical layout */
+    flex-direction: column;
+    /* Gap between elements */
+    gap: 0.75rem;
+}
+
+/* Dialog heading title */
+.confirmTitle {
+    /* Font size */
+    font-size: 1rem;
+    /* Bold text */
+    font-weight: 600;
+    /* White text color */
+    color: var(--text-primary);
+    /* Flex alignment */
+    display: flex;
+    /* Center items */
+    align-items: center;
+    /* Gap for icon */
+    gap: 0.5rem;
+}
+
+/* Confirmation message text */
+.confirmText {
+    /* Margin reset */
+    margin: 0;
+    /* Font size */
+    font-size: 0.88rem;
+    /* Line height */
+    line-height: 1.45;
+    /* Primary text color */
+    color: var(--text-primary);
+}
+
+/* Warning explanation subtext */
+.confirmSubtext {
+    /* Margin reset */
+    margin: 0;
+    /* Compact font size */
+    font-size: 0.8rem;
+    /* Line height */
+    line-height: 1.4;
+    /* Secondary text color */
+    color: var(--text-secondary);
+}
+
+/* Button container for confirmation dialog */
+.confirmActions {
+    /* Flex display */
+    display: flex;
+    /* Align buttons to the right */
+    justify-content: flex-end;
+    /* Spacing between buttons */
+    gap: 0.75rem;
+    /* Top margin */
+    margin-top: 0.5rem;
+}
+
+/* Button wrapping pencil icon in month inspector header */
+.titlePencilBtn {
+    /* Transparent background */
+    background: transparent;
+    /* Reset border */
+    border: none;
+    /* Inline flex alignment */
+    display: inline-flex;
+    /* Center items horizontally */
+    align-items: center;
+    /* Center items vertically */
+    justify-content: center;
+    /* Compact padding */
+    padding: 0.25rem;
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Smooth transition */
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+/* Hover state for title pencil button */
+.titlePencilBtn:hover {
+    /* Subtle background highlight */
+    background: rgba(255, 183, 77, 0.15);
+    /* Slight scale on hover */
+    transform: scale(1.08);
+}
+
+/* Button wrapping pencil icon on individual metric stat cards */
+.cardPencilBtn {
+    /* Transparent background */
+    background: transparent;
+    /* Reset border */
+    border: none;
+    /* Inline flex alignment */
+    display: inline-flex;
+    /* Center items horizontally */
+    align-items: center;
+    /* Center items vertically */
+    justify-content: center;
+    /* Secondary text color */
+    color: var(--text-secondary);
+    /* Compact padding */
+    padding: 0.2rem 0.35rem;
+    /* Rounded corners */
+    border-radius: 4px;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Smooth transitions */
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+/* Hover state for card pencil button */
+.cardPencilBtn:hover {
+    /* Bright white color on hover */
+    color: var(--text-primary);
+    /* Subtle background highlight */
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Modal window container for editing month values */
+.editValuesModal {
+    /* Deep dark background */
+    background: #161616;
+    /* System border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 12px;
+    /* Inner padding */
+    padding: 1.5rem;
+    /* Max width */
+    max-width: 480px;
+    /* Responsive width */
+    width: 100%;
+    /* Soft elevation shadow */
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+    /* Flex column flow */
+    display: flex;
+    /* Vertical layout */
+    flex-direction: column;
+    /* Gap between elements */
+    gap: 1rem;
+}
+
+/* Header row inside edit modal */
+.modalHeaderRow {
+    /* Flexbox display */
+    display: flex;
+    /* Space between title and close */
+    justify-content: space-between;
+    /* Center align vertically */
+    align-items: center;
+}
+
+/* Close icon button for modal */
+.modalCloseBtn {
+    /* Transparent background */
+    background: transparent;
+    /* Reset border */
+    border: none;
+    /* Secondary color */
+    color: var(--text-secondary);
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Padding */
+    padding: 0.35rem;
+    /* Rounded radius */
+    border-radius: 4px;
+    /* Inline flex display */
+    display: inline-flex;
+    /* Center align */
+    align-items: center;
+    /* Center justify */
+    justify-content: center;
+    /* Smooth transitions */
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+/* Hover state for modal close button */
+.modalCloseBtn:hover {
+    /* Primary text color */
+    color: var(--text-primary);
+    /* Subtle hover background */
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Form inputs container inside edit modal */
+.modalFormGrid {
+    /* Flex column flow */
+    display: flex;
+    /* Vertical column direction */
+    flex-direction: column;
+    /* Spacing gap between fields */
+    gap: 0.85rem;
+}
+
+/* Field label with color dot in modal */
+.modalFieldLabel {
+    /* Flex alignment */
+    display: flex;
+    /* Center items */
+    align-items: center;
+    /* Gap between indicator and text */
+    gap: 0.45rem;
+    /* Font size */
+    font-size: 0.82rem;
+    /* Medium weight */
+    font-weight: 500;
+    /* Secondary text color */
+    color: var(--text-secondary);
+}
+
+/* Unified numeric input field inside edit modal */
+.modalInput {
+    /* Dark input background */
+    background: rgba(0, 0, 0, 0.35);
+    /* Subtle theme border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 6px;
+    /* White text */
+    color: var(--text-primary);
+    /* Inner padding */
+    padding: 0.65rem 0.85rem;
+    /* Font size */
+    font-size: 0.95rem;
+    /* Full width */
+    width: 100%;
+    /* Smooth border transition */
+    transition: border-color 0.2s ease;
+}
+
+/* Focus state for modal input */
+.modalInput:focus {
+    /* Highlight border */
+    border-color: #64B5F6;
+    /* Remove default outline */
+    outline: none;
 }
