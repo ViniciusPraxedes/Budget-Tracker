@@ -21,6 +21,12 @@
     border-left: 4px solid #2196F3;
 }
 
+/* Category budgets box card container styling */
+.categoryBudgetsBox {
+    /* Left border highlighted with cyan accent color */
+    border-left: 4px solid #29B6F6;
+}
+
 /* Deposit box card container styling */
 .depositBox {
     /* Left border highlighted with green accent color */

@@ -4364,13 +4364,6 @@
               "order": 1,
               "expenses": [
                 {
-                  "id": "kw2b9k0zl",
-                  "name": "Boplats Swish Boplat",
-                  "amount": 200,
-                  "paymentDay": 26,
-                  "isRecurring": false
-                },
-                {
                   "id": "r3gkikmof",
                   "name": "+ trip to Ikea Swish",
                   "amount": 250,

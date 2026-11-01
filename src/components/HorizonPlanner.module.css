@@ -1033,6 +1033,41 @@
         min-width: 34px;
     /* Card pencil btn 480 end */
     }
+
+    /* Mobile responsive category detail modal */
+    .categoryDetailModal {
+        /* Full width */
+        width: 100%;
+        /* Max height on small screens */
+        max-height: 88vh;
+        /* Padding */
+        padding: 1rem;
+        /* Gap */
+        gap: 0.75rem;
+    /* Category detail modal 480 end */
+    }
+
+    /* Mobile responsive copy modal */
+    .copyModal {
+        /* Full width */
+        width: 100%;
+        /* Max height on small screens */
+        max-height: 90vh;
+        /* Padding */
+        padding: 1rem;
+        /* Gap */
+        gap: 0.75rem;
+    /* Copy modal 480 end */
+    }
+
+    /* Mobile responsive category row card */
+    .categoryRowCard {
+        /* Mobile padding */
+        padding: 0.7rem 0.8rem;
+        /* Minimum touch height */
+        min-height: 48px;
+    /* Category row card 480 end */
+    }
 /* Media query max-width 480px end */
 }
 
@@ -1372,4 +1407,240 @@
     border-color: #64B5F6;
     /* Remove default outline */
     outline: none;
+}
+
+/* Clickable category card in month simulation list */
+.categoryRowCard {
+    /* Flexbox layout */
+    display: flex;
+    /* Space between left title and right amounts */
+    justify-content: space-between;
+    /* Center align vertically */
+    align-items: center;
+    /* Touch-friendly padding */
+    padding: 0.75rem 0.85rem;
+    /* Dark semi-transparent background */
+    background: rgba(255, 255, 255, 0.03);
+    /* Subtle theme border */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Bottom margin */
+    margin-bottom: 0.5rem;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Minimum touch height */
+    min-height: 48px;
+    /* Box sizing */
+    box-sizing: border-box;
+    /* Smooth hover transitions */
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+/* Category row card hover */
+.categoryRowCard:hover {
+    /* Slightly lighter background */
+    background: rgba(255, 255, 255, 0.06);
+    /* Highlight border */
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Category row card active touch */
+.categoryRowCard:active {
+    /* Slight press down scale */
+    transform: scale(0.99);
+}
+
+/* Modal window container for category details and expenses */
+.categoryDetailModal {
+    /* Deep dark background */
+    background: #161616;
+    /* System border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 14px;
+    /* Inner padding */
+    padding: 1.25rem;
+    /* Max width */
+    max-width: 480px;
+    /* Max height on mobile viewports */
+    max-height: 85vh;
+    /* Full width up to max */
+    width: 100%;
+    /* Soft elevation shadow */
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+    /* Flex column flow */
+    display: flex;
+    /* Vertical layout */
+    flex-direction: column;
+    /* Gap between elements */
+    gap: 0.85rem;
+    /* Box sizing */
+    box-sizing: border-box;
+    /* Overflow hidden for container */
+    overflow: hidden;
+}
+
+/* Modal window container for copy month tool */
+.copyModal {
+    /* Deep dark background */
+    background: #161616;
+    /* System border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 14px;
+    /* Inner padding */
+    padding: 1.25rem;
+    /* Max width */
+    max-width: 480px;
+    /* Max height on mobile viewports */
+    max-height: 88vh;
+    /* Full width up to max */
+    width: 100%;
+    /* Soft elevation shadow */
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+    /* Flex column flow */
+    display: flex;
+    /* Vertical layout */
+    flex-direction: column;
+    /* Gap between elements */
+    gap: 0.85rem;
+    /* Box sizing */
+    box-sizing: border-box;
+    /* Allow scrolling inside modal body */
+    overflow-y: auto;
+}
+
+/* Summary card inside category detail modal */
+.catDialogSummaryCard {
+    /* Dark translucent background */
+    background: rgba(255, 255, 255, 0.03);
+    /* Border outline */
+    border: 1px solid var(--border-color);
+    /* Rounded corners */
+    border-radius: 8px;
+    /* Padding */
+    padding: 0.75rem 0.9rem;
+    /* Box sizing */
+    box-sizing: border-box;
+}
+
+/* Quick add expense form inside category dialog */
+.catQuickAddForm {
+    /* Flex layout */
+    display: flex;
+    /* Gap between inputs and button */
+    gap: 0.4rem;
+    /* Align items */
+    align-items: center;
+    /* Full width */
+    width: 100%;
+    /* Box sizing */
+    box-sizing: border-box;
+}
+
+/* Quick add expense name input */
+.catQuickInputName {
+    /* Flex grow to fill space */
+    flex: 1;
+    /* Minimum width */
+    min-width: 0;
+    /* Dark background */
+    background: rgba(0, 0, 0, 0.35);
+    /* Theme border */
+    border: 1px solid var(--border-color);
+    /* Rounded radius */
+    border-radius: 6px;
+    /* White text */
+    color: var(--text-primary);
+    /* Padding */
+    padding: 0.55rem 0.7rem;
+    /* Font size */
+    font-size: 0.85rem;
+    /* Box sizing */
+    box-sizing: border-box;
+}
+
+/* Quick add expense amount input */
+.catQuickInputAmount {
+    /* Fixed width for amount */
+    width: 85px;
+    /* Dark background */
+    background: rgba(0, 0, 0, 0.35);
+    /* Theme border */
+    border: 1px solid var(--border-color);
+    /* Rounded radius */
+    border-radius: 6px;
+    /* White text */
+    color: var(--text-primary);
+    /* Padding */
+    padding: 0.55rem 0.7rem;
+    /* Font size */
+    font-size: 0.85rem;
+    /* Box sizing */
+    box-sizing: border-box;
+}
+
+/* Quick add submit button */
+.catQuickAddBtn {
+    /* Accent green background */
+    background: var(--firebase-green, #00E676);
+    /* Dark text for contrast */
+    color: #121212;
+    /* Bold text */
+    font-weight: 600;
+    /* Font size */
+    font-size: 0.82rem;
+    /* Remove default border */
+    border: none;
+    /* Rounded corners */
+    border-radius: 6px;
+    /* Padding */
+    padding: 0.55rem 0.85rem;
+    /* Pointer cursor */
+    cursor: pointer;
+    /* Minimum touch height */
+    min-height: 38px;
+    /* Smooth transition */
+    transition: opacity 0.15s ease;
+    /* Flex centered */
+    display: inline-flex;
+    /* Center horizontal */
+    align-items: center;
+    /* Center vertical */
+    justify-content: center;
+    /* Prevent shrinking */
+    flex-shrink: 0;
+}
+
+/* Hover state for quick add button */
+.catQuickAddBtn:hover:not(:disabled) {
+    /* Slight opacity reduction */
+    opacity: 0.9;
+}
+
+/* Disabled state for quick add button */
+.catQuickAddBtn:disabled {
+    /* Dim opacity */
+    opacity: 0.4;
+    /* Not allowed cursor */
+    cursor: not-allowed;
+}
+
+/* Scrollable expenses container inside category dialog */
+.catExpensesScrollArea {
+    /* Vertical scroll */
+    overflow-y: auto;
+    /* Max height */
+    max-height: 280px;
+    /* Flex column */
+    display: flex;
+    /* Vertical layout */
+    flex-direction: column;
+    /* Gap between expense rows */
+    gap: 0.4rem;
+    /* Right padding for scrollbar */
+    padding-right: 0.2rem;
+    /* Touch scrolling */
+    -webkit-overflow-scrolling: touch;
 }

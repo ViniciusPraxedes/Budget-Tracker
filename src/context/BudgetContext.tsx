@@ -8,6 +8,8 @@ import { db } from '../firebase';
 import { doc, getDoc, collection, query, orderBy, limit, getDocs, setDoc } from 'firebase/firestore';
 import { useFirestoreSync } from './useFirestoreSync';
 import { useAuth } from './AuthContext';
+// Import toast notification hook for user feedback
+import { useToast } from './ToastContext';
 
 const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
 
@@ -15,6 +17,8 @@ const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
 const getMonthKey = (month: number, year: number) => `${year}-${month}`;
 
 export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Access toast dispatch method
+    const { addToast } = useToast();
     const { user } = useAuth();
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -718,17 +722,77 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateFirestoreWrapper(income, newCategories);
     };
 
+    // Function to delete an expense from a category
     const deleteExpense = (categoryId: string, expenseId: string) => {
+        // Find matching category before deletion
+        const targetCat = categories.find(c => c.id === categoryId);
+        // Find deleted expense object
+        const deletedExpense = targetCat?.expenses.find(e => e.id === expenseId);
+        // Find original index of expense in category
+        const deletedIndex = targetCat ? targetCat.expenses.findIndex(e => e.id === expenseId) : -1;
+        // Filter out deleted expense
         const newCategories = categories.map(cat => {
+            // Check matching category
             if (cat.id === categoryId) {
+                // Return category with filtered expenses
                 return {
+                    // Spread category properties
                     ...cat,
+                    // Filter expenses list
                     expenses: cat.expenses.filter(exp => exp.id !== expenseId)
                 };
             }
+            // Return unchanged category
             return cat;
         });
+        // Persist updated categories to database
         updateFirestoreWrapper(income, newCategories);
+        // Trigger revertable notification if deleted expense was identified
+        if (deletedExpense) {
+            // Display toast with revert action
+            addToast(`Expense "${deletedExpense.name}" was deleted`, 'info', {
+                // Revert action label
+                label: 'Revert',
+                // Click handler restoring deleted expense
+                onClick: () => {
+                    // Update state and restore item
+                    setCategoriesState(prev => {
+                        // Map current categories
+                        const restored = prev.map(cat => {
+                            // Check matching category
+                            if (cat.id === categoryId) {
+                                // Guard against duplicate insertion if expense already restored
+                                if (cat.expenses.some(e => e.id === deletedExpense.id)) {
+                                    // Return category unchanged
+                                    return cat;
+                                    // End duplicate guard check
+                                }
+                                // Clone expenses array
+                                const expList = [...cat.expenses];
+                                // Splice at original index if valid, otherwise append
+                                if (deletedIndex >= 0 && deletedIndex <= expList.length) {
+                                    // Insert at original index
+                                    expList.splice(deletedIndex, 0, deletedExpense);
+                                } else {
+                                    // Append to end
+                                    expList.push(deletedExpense);
+                                }
+                                // Return category with restored expenses
+                                return { ...cat, expenses: expList };
+                            }
+                            // Return unchanged category
+                            return cat;
+                        });
+                        // Persist restored categories to firestore
+                        updateFirestoreWrapper(income, restored);
+                        // Return restored categories array
+                        return restored;
+                    });
+                    // Show confirmation notification
+                    addToast(`Restored "${deletedExpense.name}"`, 'success');
+                }
+            });
+        }
     };
 
     const moveExpense = (oldCategoryId: string, newCategoryId: string, expense: Expense) => {

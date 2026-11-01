@@ -45,6 +45,8 @@ const Summary: React.FC = () => {
 
     // Calculate effective monthly budget target amount preserving zero
     const effectiveMonthlyBudget = monthlyBudget !== undefined ? monthlyBudget : categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
+    // Calculate total sum of all individual category budgets
+    const totalCategoryBudgets = categories.reduce((sum, cat) => sum + (cat.budget || 0), 0);
 
     // Calculate total planned budgeted expenses or actual expenses if higher
     const plannedExpenses = monthlyBudget !== undefined 
@@ -204,6 +206,21 @@ const Summary: React.FC = () => {
                             borderRadius: '3px',
                             transition: 'width 0.3s ease'
                         }} />
+                    </div>
+                </div>
+            </Box>
+
+            {/* Category Budgets Total summary card */}
+            <Box title="Category Budgets Total" className={styles.categoryBudgetsBox}>
+                {/* Vertical column wrapper */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    {/* Sum of all category budgets formatted text */}
+                    <div className={styles.savingsDisplay} style={{ color: '#29B6F6' }}>
+                        {formatCurrency(totalCategoryBudgets)}
+                    </div>
+                    {/* Subtext info */}
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                        Sum of all category budgets
                     </div>
                 </div>
             </Box>

@@ -175,17 +175,17 @@ export default function HorizonPlanner() {
     const [editCatColor, setEditCatColor] = useState<string>('#4CAF50');
     // Edited category budget limit input state
     const [editCatBudget, setEditCatBudget] = useState<string>('');
-    // State to toggle copy tool accordion expansion
-    const [isCopyToolOpen, setIsCopyToolOpen] = useState<boolean>(false);
-    // State to toggle copy tool confirmation modal
-    const [showCopyConfirm, setShowCopyConfirm] = useState<boolean>(false);
+    // State to toggle copy month modal dialog visibility
+    const [isCopyDialogOpen, setIsCopyDialogOpen] = useState<boolean>(false);
+    // State for copy month modal view mode
+    const [copyDialogView, setCopyDialogView] = useState<'configure' | 'confirm'>('configure');
 
     // Hook effect to lock background scrolling when modal is active
     useEffect(() => {
         // Guard check for document availability
         if (typeof document === 'undefined') return;
-        // Check if copy confirmation dialog is open
-        if (showCopyConfirm) {
+        // Check if copy dialog is open
+        if (isCopyDialogOpen) {
             // Cache previous body overflow setting
             const prevOverflow = document.body.style.overflow;
             // Prevent background page scrolling
@@ -194,12 +194,12 @@ export default function HorizonPlanner() {
             return () => {
                 // Re-enable original body scrolling behavior
                 document.body.style.overflow = prevOverflow;
-            // Close cleanup arrow function block
+                // Close cleanup arrow function block
             };
-        // Close conditional block
+            // Close conditional block
         }
-    // Track modal display state dependency
-    }, [showCopyConfirm]);
+        // Track modal display state dependency
+    }, [isCopyDialogOpen]);
     // State to track raw input string values for monthly parameters while editing
     const [editingMonthFields, setEditingMonthFields] = useState<Record<string, string>>({});
     // State to track raw input string values for itemized expense amounts while editing
@@ -212,6 +212,14 @@ export default function HorizonPlanner() {
     const [startTotalSavingsInput, setStartTotalSavingsInput] = useState<string | null>(null);
     // State for tracked expanded category IDs in the breakdown list
     const [expandedCategoryIds, setExpandedCategoryIds] = useState<string[]>([]);
+    // State to track currently active category opened in modal dialog
+    const [activeCategoryModalId, setActiveCategoryModalId] = useState<string | null>(null);
+    // State for new expense name inside active category modal dialog
+    const [catModalExpName, setCatModalExpName] = useState<string>('');
+    // State for new expense amount inside active category modal dialog
+    const [catModalExpAmount, setCatModalExpAmount] = useState<string>('');
+    // State to track current sub-view mode inside active category modal ('details' | 'edit' | 'delete')
+    const [categoryModalView, setCategoryModalView] = useState<'details' | 'edit' | 'delete'>('details');
 
     // Helper to toggle category expansion in breakdown
     const toggleCategoryExpand = (catId: string) => {
@@ -884,6 +892,32 @@ export default function HorizonPlanner() {
         // Re-evaluate when inspector key or data records change
     }, [activeInspectorKey, activeMonthItem, simulationMonths, rangeBaseline, firstMonthKey]);
 
+    // Retrieve currently selected category for the dialog view
+    const activeDialogCategory = useMemo(() => {
+        // Locate target category from active month data
+        const matchedCategory = activeMonthData?.categories.find(c => c.id === activeCategoryModalId);
+        // Guard if category is not found
+        if (!matchedCategory) return null;
+        // Deduplicate expenses array by unique expense id
+        const uniqueExpenses = (matchedCategory.expenses || []).filter((exp, idx, arr) => {
+            // Check if current expense index matches first occurrence index
+            return arr.findIndex(e => e.id === exp.id) === idx;
+            // End filter check
+        });
+        // Return category with deduplicated expenses
+        return { ...matchedCategory, expenses: uniqueExpenses };
+        // End useMemo dependencies
+    }, [activeMonthData, activeCategoryModalId]);
+
+    // Calculate total expenses spent for currently selected dialog category
+    const activeDialogCategorySpent = useMemo(() => {
+        // Guard if no active dialog category
+        if (!activeDialogCategory) return 0;
+        // Calculate sum of category expenses
+        return (activeDialogCategory.expenses || []).reduce((sum, e) => sum + (e.amount || 0), 0);
+        // End useMemo dependencies
+    }, [activeDialogCategory]);
+
     // State to toggle sync confirmation dialog for inspected month
     const [isConfirmSyncOpen, setIsConfirmSyncOpen] = useState(false);
     // State to toggle the date range selector dialog box
@@ -1164,6 +1198,8 @@ export default function HorizonPlanner() {
             ? activeMonthData.monthlyBudget 
             // Fallback to sum of individual category budgets
             : (activeMonthData.categories || []).reduce((sum, cat) => sum + (cat.budget || 0), 0);
+        // Sum of all individual category budgets
+        const categoryBudgetsTotal = (activeMonthData.categories || []).reduce((sum, cat) => sum + (cat.budget || 0), 0);
         // Calculate total planned budgeted expenses or actual expenses if higher
         const plannedExpenses = activeMonthData.monthlyBudget !== undefined 
             // Use max of budget and total expenses if custom budget is defined
@@ -1228,6 +1264,8 @@ export default function HorizonPlanner() {
             totalExpenses: Math.round(expensesSum * 100) / 100,
             // Effective monthly budget target
             effectiveMonthlyBudget,
+            // Category budgets total sum
+            categoryBudgetsTotal,
             // Planned expenses
             plannedExpenses,
             // Net savings
@@ -1385,6 +1423,12 @@ export default function HorizonPlanner() {
     const handleDeleteSingleExpense = (categoryId: string, expenseId: string) => {
         // Return if active month data not loaded
         if (!activeMonthData) return;
+        // Locate matching category before removal
+        const targetCategory = activeMonthData.categories.find(c => c.id === categoryId);
+        // Locate deleted expense record for reversal
+        const deletedExpense = targetCategory?.expenses.find(e => e.id === expenseId);
+        // Record deleted expense position within category
+        const deletedExpenseIndex = targetCategory ? targetCategory.expenses.findIndex(e => e.id === expenseId) : -1;
         // Clean up transient input if active
         setEditingExpenseAmounts(prev => {
             // Clone map
@@ -1417,6 +1461,56 @@ export default function HorizonPlanner() {
         const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
         // Save to simulation state
         saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Trigger revertable notification if deleted expense was identified
+        if (deletedExpense) {
+            // Enqueue deletion toast with revert action callback
+            addToast(`Expense "${deletedExpense.name}" was deleted`, 'info', {
+                // Revert button text
+                label: 'Revert',
+                // Action callback function
+                onClick: () => {
+                    // Re-insert deleted expense back into the post-deletion categories snapshot
+                    const restoredCats = updatedMonth.categories.map(cat => {
+                        // Match target category
+                        if (cat.id === categoryId) {
+                            // Guard against duplicate insertion if expense already restored
+                            if (cat.expenses.some(e => e.id === deletedExpense.id)) {
+                                // Return category unchanged
+                                return cat;
+                                // End duplicate guard check
+                            }
+                            // Clone expenses array
+                            const restoredExpenses = [...cat.expenses];
+                            // Insert at original index if valid, otherwise append to end
+                            if (deletedExpenseIndex >= 0 && deletedExpenseIndex <= restoredExpenses.length) {
+                                // Splice item back at original index
+                                restoredExpenses.splice(deletedExpenseIndex, 0, deletedExpense);
+                                // End index check
+                            } else {
+                                // Append item to end of array
+                                restoredExpenses.push(deletedExpense);
+                                // End else
+                            }
+                            // Return updated category with restored item
+                            return { ...cat, expenses: restoredExpenses };
+                            // End matching category check
+                        }
+                        // Return unchanged category
+                        return cat;
+                        // End categories map
+                    });
+                    // Construct restored month from updated month snapshot
+                    const restoredMonth: MonthData = { ...updatedMonth, categories: restoredCats };
+                    // Persist restored month data in simulation state
+                    saveSimulationState({ [activeInspectorKey]: restoredMonth });
+                    // Show confirmation notification
+                    addToast(`Restored "${deletedExpense.name}"`, 'success');
+                    // End revert action
+                }
+                // End action config
+            });
+            // End deletedExpense check
+        }
         // End of handleDeleteSingleExpense definition
     };
 
@@ -1501,6 +1595,53 @@ export default function HorizonPlanner() {
         // Show success notification
         addToast(`Added "${newExp.name}" to simulation`, 'success');
         // End of handleAddSingleExpense definition
+    };
+
+    // Helper to add a new expense inside the active category modal dialog
+    const handleAddExpenseToActiveCategory = (categoryId: string) => {
+        // Guard if no active month data or invalid expense input
+        if (!activeMonthData || !catModalExpName.trim() || !catModalExpAmount) return;
+        // Parse numerical expense amount
+        const amountNum = parseFloat(catModalExpAmount);
+        // Guard against NaN or negative
+        if (isNaN(amountNum) || amountNum < 0) return;
+        // Construct new expense object
+        const newExp: Expense = {
+            // Unique timestamp ID
+            id: 'exp_' + Date.now().toString(),
+            // Expense name
+            name: catModalExpName.trim(),
+            // Expense amount
+            amount: amountNum,
+            // Payment day
+            paymentDay: 1,
+            // Recurring flag
+            isRecurring: true,
+            // End of expense object
+        };
+        // Update categories array
+        const newCats = activeMonthData.categories.map(cat => {
+            // Check matching category
+            if (cat.id === categoryId) {
+                // Return category with new expense appended
+                return { ...cat, expenses: [...(cat.expenses || []), newExp] };
+                // End match
+            }
+            // Return unchanged category
+            return cat;
+            // End map
+        });
+        // Updated month
+        const updatedMonth: MonthData = { ...activeMonthData, categories: newCats };
+        // Save to simulation state
+        saveSimulationState({ [activeInspectorKey]: updatedMonth });
+        // Clear modal expense name input
+        setCatModalExpName('');
+        // Clear modal expense amount input
+        setCatModalExpAmount('');
+        // Show toast notification
+        addToast(`Added "${newExp.name}" to simulation`, 'success');
+        // End handleAddExpenseToActiveCategory
     };
 
     // Handler to add a new category to the currently inspected month
@@ -1593,6 +1734,8 @@ export default function HorizonPlanner() {
         saveSimulationState({ [activeInspectorKey]: updatedMonth });
         // Close edit mode
         setEditingCatId(null);
+        // Reset category dialog view to details if editing active category in place
+        setCategoryModalView('details');
         // Show success notification
         addToast('Category updated', 'success');
         // End of handleSaveEditCategory definition
@@ -1610,6 +1753,14 @@ export default function HorizonPlanner() {
         saveSimulationState({ [activeInspectorKey]: updatedMonth });
         // Reset category pending deletion state
         setCategoryToDelete(null);
+        // Also close category dialog if deleting active category
+        if (activeCategoryModalId === categoryId) {
+            // Close active category modal
+            setActiveCategoryModalId(null);
+            // Reset category dialog view to details
+            setCategoryModalView('details');
+            // End category dialog close check
+        }
         // Show notification
         addToast('Category removed', 'info');
         // End of handleDeleteSingleCategory definition
@@ -1738,6 +1889,10 @@ export default function HorizonPlanner() {
         saveSimulationState(batchPayload);
         // Source month label
         const sourceLabel = sourceItem ? sourceItem.label : copySourceKey;
+        // Close copy month dialog
+        setIsCopyDialogOpen(false);
+        // Reset copy dialog view back to configure
+        setCopyDialogView('configure');
         // Show success notification
         addToast(`Copied ${sourceLabel} data to ${selectedBatchKeys.length} target months!`, 'success');
         // End handleExecuteCopyData definition
@@ -2074,24 +2229,54 @@ export default function HorizonPlanner() {
                             </span>
                             {/* Closing cardTitle div */}
                         </div>
-                        {/* Sync actual month data button positioned on the right */}
-                        <button
-                            type="button"
-                            className={styles.syncMonthBtn}
-                            onClick={() => setIsConfirmSyncOpen(true)}
-                            disabled={!actualMonthData}
-                            title={actualMonthData ? "Sync and override simulation data with actual database records" : "No actual database records exist for this month"}
-                        >
-                            {/* Sync circular arrows icon */}
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                {/* Top arrow arc */}
-                                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                                {/* Closing svg */}
-                            </svg>
-                            {/* Button label text */}
-                            <span>Sync</span>
-                            {/* Closing button */}
-                        </button>
+                        {/* Action buttons group positioned on the right */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            {/* Copy month data button */}
+                            <button
+                                type="button"
+                                className={styles.syncMonthBtn}
+                                onClick={() => {
+                                    // Set copy source to current inspected month
+                                    setCopySourceKey(activeInspectorKey);
+                                    // Set initial view to configure
+                                    setCopyDialogView('configure');
+                                    // Open copy month dialog
+                                    setIsCopyDialogOpen(true);
+                                }}
+                                title="Copy simulation data to/from other months"
+                            >
+                                {/* Copy vector icon */}
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Copy icon back rect */}
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                    {/* Copy icon front path */}
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                    {/* Closing svg */}
+                                </svg>
+                                {/* Button label text */}
+                                <span>Copy</span>
+                                {/* Closing copy button */}
+                            </button>
+                            {/* Sync actual month data button positioned on the right */}
+                            <button
+                                type="button"
+                                className={styles.syncMonthBtn}
+                                onClick={() => setIsConfirmSyncOpen(true)}
+                                disabled={!actualMonthData}
+                                title={actualMonthData ? "Sync and override simulation data with actual database records" : "No actual database records exist for this month"}
+                            >
+                                {/* Sync circular arrows icon */}
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {/* Top arrow arc */}
+                                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+                                    {/* Closing svg */}
+                                </svg>
+                                {/* Button label text */}
+                                <span>Sync</span>
+                                {/* Closing button */}
+                            </button>
+                            {/* Closing action buttons group */}
+                        </div>
                         {/* Closing cardHeader div */}
                     </div>
 
@@ -2229,6 +2414,25 @@ export default function HorizonPlanner() {
                                     />
                                 </div>
                             )}
+                            {/* Closing card div */}
+                        </div>
+
+                        {/* Stat Card: Category Budgets Total */}
+                        <div className={styles.statCard}>
+                            {/* Card Header label */}
+                            <span className={styles.statHeader}>
+                                Category Budgets Total
+                            </span>
+                            {/* Card Value display */}
+                            <div className={styles.statValue} style={{ color: '#29B6F6' }}>
+                                {/* Value amount text */}
+                                <span>{formatCurrency(inspectedMetrics.categoryBudgetsTotal)}</span>
+                                {/* Closing value div */}
+                            </div>
+                            {/* Explanatory subtext description */}
+                            <span className={styles.statSubtext}>
+                                Sum of all category budgets
+                            </span>
                             {/* Closing card div */}
                         </div>
 
@@ -2911,125 +3115,556 @@ export default function HorizonPlanner() {
                         document.body
                     )}
 
-                    {/* Category and expenses breakdown list */}
+                    {/* Category list where each category row opens its details dialog */}
                     <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
                         {/* Map categories */}
                         {activeMonthData.categories.map(cat => (
-                            <div key={cat.id} className={styles.categoryBlock}>
-                                {/* Category title and action row */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => toggleCategoryExpand(cat.id)}>
-                                    {/* Name, dot, and edit/delete actions */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        {/* Collapse chevron icon */}
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedCategoryIds.includes(cat.id) ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease', color: 'var(--text-secondary)' }}>
-                                            <polyline points="9 18 15 12 9 6" />
-                                        </svg>
-                                        {/* Color dot */}
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color }} />
-                                        {/* Name */}
-                                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{cat.name}</span>
-                                        {/* Category actions */}
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }} onClick={(e) => e.stopPropagation()}>
-                                            {/* Edit Category Button */}
-                                            <button
-                                                type="button"
-                                                className={styles.iconButton}
-                                                title="Edit category"
-                                                onClick={() => handleStartEditCategory(cat)}
-                                            >
+                            <div
+                                key={cat.id}
+                                className={styles.categoryRowCard}
+                                onClick={() => {
+                                    // Open category modal for target category
+                                    setActiveCategoryModalId(cat.id);
+                                    // Initialize in-place view mode to details
+                                    setCategoryModalView('details');
+                                }}
+                            >
+                                {/* Left column: color dot, category name, and count */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
+                                    {/* Color dot */}
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: cat.color || '#4CAF50', flexShrink: 0 }} />
+                                    {/* Name and expense count container */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                        {/* Category name */}
+                                        <span style={{ fontWeight: 600, fontSize: '0.88rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {cat.name}
+                                        </span>
+                                        {/* Expense count */}
+                                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                            {(cat.expenses || []).length} { (cat.expenses || []).length === 1 ? 'expense' : 'expenses' }
+                                        </span>
+                                    </div>
+                                </div>
+                                {/* Right column: total spent, optional budget, and chevron */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                                    {/* Amount and budget limit container */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                        {/* Spent amount */}
+                                        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                                            {formatCurrency((cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}
+                                        </span>
+                                        {/* Budget limit if configured */}
+                                        {cat.budget !== undefined && cat.budget > 0 && (
+                                            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                Budget: {formatCurrency(cat.budget)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* Navigation chevron icon */}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-secondary)' }}>
+                                        {/* Right chevron polyline */}
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ))}
+                        {/* Empty state when no categories exist */}
+                        {activeMonthData.categories.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-secondary)', fontSize: '0.82rem', fontStyle: 'italic' }}>
+                                No categories created yet. Click &quot;Add Category&quot; to begin.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Active Category Detail Modal Dialog */}
+                    {activeCategoryModalId !== null && activeDialogCategory && typeof document !== 'undefined' && createPortal(
+                        <div
+                            className={styles.confirmOverlay}
+                            onClick={() => {
+                                // Close active category modal on backdrop click
+                                setActiveCategoryModalId(null);
+                                // Reset sub-view to details
+                                setCategoryModalView('details');
+                            }}
+                        >
+                            {/* Modal card container */}
+                            <div
+                                className={styles.categoryDetailModal}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* In-place Edit Category View */}
+                                {categoryModalView === 'edit' && (
+                                    <>
+                                        {/* Modal Header Row */}
+                                        <div className={styles.modalHeaderRow}>
+                                            {/* Edit mode title with pencil icon */}
+                                            <div className={styles.confirmTitle}>
                                                 {/* Edit pencil icon */}
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: editCatColor || '#64B5F6' }}>
+                                                    {/* Pencil body */}
                                                     <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                                                 </svg>
-                                            </button>
-                                            {/* Delete Category Button */}
+                                                {/* Title text */}
+                                                <span>Edit Category</span>
+                                            </div>
+                                            {/* Close button returning to details */}
                                             <button
                                                 type="button"
-                                                className={styles.iconButton}
-                                                title="Delete category"
-                                                onClick={() => setCategoryToDelete(cat)}
+                                                className={styles.modalCloseBtn}
+                                                onClick={() => setCategoryModalView('details')}
+                                                title="Back to category details"
                                             >
-                                                {/* Trash icon */}
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="3 6 5 6 21 6" />
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                {/* Cross icon */}
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    {/* Line 1 */}
+                                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                                    {/* Line 2 */}
+                                                    <line x1="6" y1="6" x2="18" y2="18" />
                                                 </svg>
                                             </button>
                                         </div>
-                                    </div>
-                                    {/* Category total */}
-                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                        {formatCurrency((cat.expenses || []).reduce((s, e) => s + (e.amount || 0), 0))}
-                                    </span>
-                                </div>
 
-                                {/* Render expenses list when category is expanded */}
-                                {expandedCategoryIds.includes(cat.id) && (
-                                    <>
-                                        {/* Category expenses list */}
-                                        {(cat.expenses || []).map(exp => (
-                                            <div key={exp.id} className={styles.expenseRow}>
-                                                {/* Expense title with text truncation guard */}
-                                                <span style={{ fontSize: '0.82rem', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.name}</span>
-                                                {/* Amount and delete */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                    {/* Amount input */}
+                                        {/* Modal Subtitle explanation */}
+                                        <p className={styles.confirmSubtext}>
+                                            Update the category settings for {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}.
+                                        </p>
+
+                                        {/* Edit Category Form */}
+                                        <form
+                                            onSubmit={(e) => {
+                                                // Prevent default browser form submission
+                                                e.preventDefault();
+                                                // Execute save category edits handler
+                                                handleSaveEditCategory(activeDialogCategory.id);
+                                            }}
+                                        >
+                                            {/* Form Inputs Grid */}
+                                            <div className={styles.modalFormGrid}>
+                                                {/* Category Name Field */}
+                                                <div className={styles.formGroup}>
+                                                    {/* Label with icon */}
+                                                    <label className={styles.modalFieldLabel}>
+                                                        {/* Indicator bar */}
+                                                        <span style={{ width: '3px', height: '12px', background: editCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                        {/* Label text */}
+                                                        <span>Category Name</span>
+                                                    </label>
+                                                    {/* Input */}
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        className={styles.modalInput}
+                                                        placeholder="Category Name"
+                                                        value={editCatName}
+                                                        onChange={(e) => setEditCatName(e.target.value)}
+                                                    />
+                                                </div>
+
+                                                {/* Budget Limit Field */}
+                                                <div className={styles.formGroup}>
+                                                    {/* Label with icon */}
+                                                    <label className={styles.modalFieldLabel}>
+                                                        {/* Indicator bar */}
+                                                        <span style={{ width: '3px', height: '12px', background: 'var(--firebase-red)', borderRadius: '2px', display: 'inline-block' }} />
+                                                        {/* Label text */}
+                                                        <span>Budget Limit (Optional)</span>
+                                                    </label>
+                                                    {/* Input */}
                                                     <input
                                                         type="number"
-                                                        className={styles.inlineInput}
+                                                        className={styles.modalInput}
                                                         placeholder="0"
-                                                        value={editingExpenseAmounts[exp.id] !== undefined ? editingExpenseAmounts[exp.id] : (exp.amount === 0 ? '' : exp.amount)}
-                                                        onChange={(e) => {
-                                                            // Raw string value from input
-                                                            const val = e.target.value;
-                                                            // Update transient editing state
-                                                            setEditingExpenseAmounts(prev => ({ ...prev, [exp.id]: val }));
-                                                            // Propagate to simulation update handler
-                                                            handleUpdateSingleExpenseAmount(cat.id, exp.id, val);
-                                                            // End onChange
-                                                        }}
-                                                        onBlur={() => {
-                                                            // Clear transient expense string on blur
-                                                            setEditingExpenseAmounts(prev => {
-                                                                // Clone map
-                                                                const next = { ...prev };
-                                                                // Delete key
-                                                                delete next[exp.id];
-                                                                // Return updated map
-                                                                return next;
-                                                                // End reducer
-                                                            });
-                                                            // End onBlur
-                                                        }}
+                                                        value={editCatBudget}
+                                                        onChange={(e) => setEditCatBudget(e.target.value)}
                                                     />
-                                                    {/* Delete expense button */}
-                                                    <button
-                                                        type="button"
-                                                        className={styles.dangerButton}
-                                                        onClick={() => handleDeleteSingleExpense(cat.id, exp.id)}
-                                                        title="Delete expense from this month"
-                                                    >
-                                                        {/* Cross delete icon */}
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="18" y1="6" x2="6" y2="18" />
-                                                            <line x1="6" y1="6" x2="18" y2="18" />
-                                                        </svg>
-                                                    </button>
+                                                </div>
+
+                                                {/* Color Palette Field */}
+                                                <div className={styles.formGroup}>
+                                                    {/* Label with icon */}
+                                                    <label className={styles.modalFieldLabel}>
+                                                        {/* Indicator bar */}
+                                                        <span style={{ width: '3px', height: '12px', background: editCatColor, borderRadius: '2px', display: 'inline-block' }} />
+                                                        {/* Label text */}
+                                                        <span>Theme Color</span>
+                                                    </label>
+                                                    {/* Color Palette container */}
+                                                    <div className={styles.colorPalette} style={{ marginTop: '0.25rem' }}>
+                                                        {/* Map preset color swatches */}
+                                                        {COLOR_PRESETS.map(color => (
+                                                            <button
+                                                                key={color}
+                                                                type="button"
+                                                                className={`${styles.colorSwatch} ${editCatColor === color ? styles.colorSwatchActive : ''}`}
+                                                                style={{ backgroundColor: color }}
+                                                                onClick={() => setEditCatColor(color)}
+                                                            />
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        ))}
 
-                                        {/* Empty state if no expenses in category */}
-                                        {(!cat.expenses || cat.expenses.length === 0) && (
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '0.25rem 0' }}>
-                                                No expenses in this category
+                                            {/* Modal Action Buttons */}
+                                            <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                                                {/* Cancel button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.secondaryButton}
+                                                    onClick={() => setCategoryModalView('details')}
+                                                >
+                                                    {/* Cancel text */}
+                                                    Cancel
+                                                </button>
+                                                {/* Save button */}
+                                                <button
+                                                    type="submit"
+                                                    className={styles.primaryButton}
+                                                >
+                                                    {/* Save text */}
+                                                    Save Changes
+                                                </button>
                                             </div>
-                                        )}
+                                        </form>
+                                    </>
+                                )}
+
+                                {/* In-place Delete Category Confirmation View */}
+                                {categoryModalView === 'delete' && (
+                                    <>
+                                        {/* Modal Header Row */}
+                                        <div className={styles.modalHeaderRow}>
+                                            {/* Danger trash title */}
+                                            <div className={styles.confirmTitle}>
+                                                {/* Danger trash icon */}
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--firebase-red)' }}>
+                                                    {/* Trash top line */}
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    {/* Trash can body */}
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                </svg>
+                                                {/* Title text */}
+                                                <span>Delete Category</span>
+                                            </div>
+                                            {/* Close button returning to details */}
+                                            <button
+                                                type="button"
+                                                className={styles.modalCloseBtn}
+                                                onClick={() => setCategoryModalView('details')}
+                                                title="Back to category details"
+                                            >
+                                                {/* Cross icon */}
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    {/* Line 1 */}
+                                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                                    {/* Line 2 */}
+                                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Confirmation description text */}
+                                        <p className={styles.confirmText}>
+                                            Are you sure you want to delete the category <strong>&quot;{activeDialogCategory.name}&quot;</strong> for <strong>{MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}</strong>?
+                                        </p>
+                                        {/* Warning subtext */}
+                                        <p className={styles.confirmSubtext}>
+                                            This will also remove all itemized expenses ({activeDialogCategory.expenses?.length || 0}) listed under this category for this simulation month.
+                                        </p>
+
+                                        {/* Modal Action Buttons */}
+                                        <div className={styles.confirmActions} style={{ marginTop: '1rem' }}>
+                                            {/* Cancel button */}
+                                            <button
+                                                type="button"
+                                                className={styles.secondaryButton}
+                                                onClick={() => setCategoryModalView('details')}
+                                            >
+                                                {/* Cancel text */}
+                                                Cancel
+                                            </button>
+                                            {/* Delete confirmation button */}
+                                            <button
+                                                type="button"
+                                                className={styles.dangerButton}
+                                                style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                                                onClick={() => handleDeleteSingleCategory(activeDialogCategory.id)}
+                                            >
+                                                {/* Delete button text */}
+                                                Delete Category
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Standard Category Details View */}
+                                {categoryModalView === 'details' && (
+                                    <>
+                                        {/* Modal Header Row */}
+                                        <div className={styles.modalHeaderRow}>
+                                            {/* Left title with category color indicator */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                                                {/* Category color indicator dot */}
+                                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: activeDialogCategory.color || '#4CAF50', flexShrink: 0 }} />
+                                                {/* Category Title Heading */}
+                                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {activeDialogCategory.name}
+                                                </h3>
+                                            </div>
+                                            {/* Header action buttons */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                {/* Edit Category settings button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.iconButton}
+                                                    title="Edit category settings"
+                                                    onClick={() => {
+                                                        // Pre-fill name
+                                                        setEditCatName(activeDialogCategory.name);
+                                                        // Pre-fill color
+                                                        setEditCatColor(activeDialogCategory.color || '#4CAF50');
+                                                        // Pre-fill budget
+                                                        setEditCatBudget(activeDialogCategory.budget ? activeDialogCategory.budget.toString() : '');
+                                                        // Transition view to edit in-place
+                                                        setCategoryModalView('edit');
+                                                    }}
+                                                >
+                                                    {/* Edit pencil icon */}
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        {/* Pencil path */}
+                                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                                    </svg>
+                                                </button>
+                                                {/* Delete Category button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.iconButton}
+                                                    title="Delete category"
+                                                    onClick={() => {
+                                                        // Transition view to delete in-place
+                                                        setCategoryModalView('delete');
+                                                    }}
+                                                >
+                                                    {/* Trash can icon */}
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--firebase-red)' }}>
+                                                        {/* Top line */}
+                                                        <polyline points="3 6 5 6 21 6" />
+                                                        {/* Body */}
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                    </svg>
+                                                </button>
+                                                {/* Close modal cross button */}
+                                                <button
+                                                    type="button"
+                                                    className={styles.modalCloseBtn}
+                                                    onClick={() => {
+                                                        // Close active category modal
+                                                        setActiveCategoryModalId(null);
+                                                        // Reset view mode to details
+                                                        setCategoryModalView('details');
+                                                    }}
+                                                    title="Close dialog"
+                                                >
+                                                    {/* Cross icon */}
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        {/* Diagonal 1 */}
+                                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                                        {/* Diagonal 2 */}
+                                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Month context subtitle */}
+                                        <p className={styles.confirmSubtext} style={{ marginTop: '-0.3rem', marginBottom: 0 }}>
+                                            Simulated expenses for {MONTH_NAMES[activeMonthData.month]} {activeMonthData.year}
+                                        </p>
+
+                                        {/* Category Budget & Spending Summary Card */}
+                                        <div className={styles.catDialogSummaryCard}>
+                                            {/* Top row with spent and optional budget numbers */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                {/* Total Spent Column */}
+                                                <div>
+                                                    {/* Small label */}
+                                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                        Total Spent
+                                                    </div>
+                                                    {/* Spent value */}
+                                                    <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>
+                                                        {formatCurrency(activeDialogCategorySpent)}
+                                                    </div>
+                                                </div>
+                                                {/* Budget Limit Column if present */}
+                                                {activeDialogCategory.budget !== undefined && activeDialogCategory.budget > 0 && (
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        {/* Small label */}
+                                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                            Budget Limit
+                                                        </div>
+                                                        {/* Budget value */}
+                                                        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: activeDialogCategorySpent > activeDialogCategory.budget ? 'var(--firebase-red)' : 'var(--text-secondary)', marginTop: '2px' }}>
+                                                            {formatCurrency(activeDialogCategory.budget)}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Budget progress bar row if budget limit configured */}
+                                            {activeDialogCategory.budget !== undefined && activeDialogCategory.budget > 0 && (
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    {/* Progress bar background */}
+                                                    <div style={{ height: '6px', width: '100%', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                        {/* Progress bar fill */}
+                                                        <div
+                                                            style={{
+                                                                height: '100%',
+                                                                width: `${Math.min(100, Math.round((activeDialogCategorySpent / activeDialogCategory.budget) * 100))}%`,
+                                                                background: activeDialogCategorySpent > activeDialogCategory.budget ? 'var(--firebase-red)' : (activeDialogCategory.color || '#4CAF50'),
+                                                                transition: 'width 0.3s ease',
+                                                                borderRadius: '3px'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    {/* Progress bar percentage and remaining description */}
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                                                        {/* Percentage used */}
+                                                        <span>{Math.round((activeDialogCategorySpent / activeDialogCategory.budget) * 100)}% used</span>
+                                                        {/* Remaining or over budget label */}
+                                                        <span>
+                                                            {activeDialogCategory.budget >= activeDialogCategorySpent
+                                                                ? `${formatCurrency(activeDialogCategory.budget - activeDialogCategorySpent)} remaining`
+                                                                : `${formatCurrency(activeDialogCategorySpent - activeDialogCategory.budget)} over budget`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Quick Add Expense section form */}
+                                        <form
+                                            onSubmit={(e) => {
+                                                // Prevent default page reload
+                                                e.preventDefault();
+                                                // Execute add expense to active category
+                                                handleAddExpenseToActiveCategory(activeDialogCategory.id);
+                                            }}
+                                            className={styles.catQuickAddForm}
+                                        >
+                                            {/* Expense name input */}
+                                            <input
+                                                type="text"
+                                                placeholder="New expense name..."
+                                                value={catModalExpName}
+                                                onChange={(e) => setCatModalExpName(e.target.value)}
+                                                className={styles.catQuickInputName}
+                                            />
+                                            {/* Expense amount input */}
+                                            <input
+                                                type="number"
+                                                placeholder="$0"
+                                                value={catModalExpAmount}
+                                                onChange={(e) => setCatModalExpAmount(e.target.value)}
+                                                className={styles.catQuickInputAmount}
+                                            />
+                                            {/* Submit add button */}
+                                            <button
+                                                type="submit"
+                                                className={styles.catQuickAddBtn}
+                                                disabled={!catModalExpName.trim() || !catModalExpAmount}
+                                            >
+                                                + Add
+                                            </button>
+                                        </form>
+
+                                        {/* Scrollable list of expenses */}
+                                        <div className={styles.catExpensesScrollArea}>
+                                            {/* Map category expense items */}
+                                            {(activeDialogCategory.expenses || []).map(exp => (
+                                                <div key={exp.id} className={styles.expenseRow}>
+                                                    {/* Expense title with text truncation guard */}
+                                                    <span style={{ fontSize: '0.85rem', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {exp.name}
+                                                    </span>
+                                                    {/* Amount input and delete action button container */}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                        {/* Amount input */}
+                                                        <input
+                                                            type="number"
+                                                            className={styles.inlineInput}
+                                                            placeholder="0"
+                                                            value={editingExpenseAmounts[exp.id] !== undefined ? editingExpenseAmounts[exp.id] : (exp.amount === 0 ? '' : exp.amount)}
+                                                            onChange={(e) => {
+                                                                // Raw string value from input
+                                                                const val = e.target.value;
+                                                                // Update transient editing state
+                                                                setEditingExpenseAmounts(prev => ({ ...prev, [exp.id]: val }));
+                                                                // Propagate to simulation update handler
+                                                                handleUpdateSingleExpenseAmount(activeDialogCategory.id, exp.id, val);
+                                                                // End onChange
+                                                            }}
+                                                            onBlur={() => {
+                                                                // Clear transient expense string on blur
+                                                                setEditingExpenseAmounts(prev => {
+                                                                    // Clone map
+                                                                    const next = { ...prev };
+                                                                    // Delete key
+                                                                    delete next[exp.id];
+                                                                    // Return updated map
+                                                                    return next;
+                                                                    // End reducer
+                                                                });
+                                                                // End onBlur
+                                                            }}
+                                                        />
+                                                        {/* Delete expense button */}
+                                                        <button
+                                                            type="button"
+                                                            className={styles.dangerButton}
+                                                            onClick={() => handleDeleteSingleExpense(activeDialogCategory.id, exp.id)}
+                                                            title="Delete expense from this month"
+                                                        >
+                                                            {/* Cross delete icon */}
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                {/* Line 1 */}
+                                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                                {/* Line 2 */}
+                                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {/* Empty state when no expenses exist */}
+                                            {(!activeDialogCategory.expenses || activeDialogCategory.expenses.length === 0) && (
+                                                <div style={{ textAlign: 'center', padding: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.82rem', fontStyle: 'italic' }}>
+                                                    No expenses in this category yet.
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Modal footer action row */}
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                                            {/* Done button */}
+                                            <button
+                                                type="button"
+                                                className={styles.primaryButton}
+                                                style={{ width: '100%', justifyContent: 'center' }}
+                                                onClick={() => {
+                                                    // Close active category modal
+                                                    setActiveCategoryModalId(null);
+                                                    // Reset view mode to details
+                                                    setCategoryModalView('details');
+                                                }}
+                                            >
+                                                Done
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                        </div>,
+                        document.body
+                    )}
 
                     {/* Edit Category Modal Dialog */}
                     {editingCatId !== null && typeof document !== 'undefined' && createPortal(
@@ -3240,295 +3875,6 @@ export default function HorizonPlanner() {
                 </div>
             )}
 
-            {/* Multi-Month Data Copy Tool Card */}
-            <div className={styles.panelCard}>
-                {/* Collapsible Card Header */}
-                <div
-                    className={styles.cardHeader}
-                    style={{ cursor: 'pointer', marginBottom: isCopyToolOpen ? '1rem' : 0 }}
-                    onClick={() => setIsCopyToolOpen(prev => !prev)}
-                >
-                    {/* Title */}
-                    <div className={styles.cardTitle}>
-                        {/* Copy vector icon */}
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
-                            {/* Copy icon back rect */}
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            {/* Copy icon front path */}
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            {/* Closing svg tag */}
-                        </svg>
-                        {/* Text */}
-                        <span>Copy Month</span>
-                    </div>
-                    {/* Expand or collapse chevron button */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                        {/* Status label */}
-                        <span>{isCopyToolOpen ? 'Hide' : 'Configure'}</span>
-                        {/* Chevron SVG */}
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isCopyToolOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
-                            <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                    </div>
-                </div>
-
-                {/* Collapsible Content */}
-                {isCopyToolOpen && (
-                    // Collapsible Content Wrapper
-                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {/* Source and Data Scope Columns Container */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                            {/* Source Month Column */}
-                            <div>
-                                {/* Source Header Container */}
-                                <div style={{ marginBottom: '0.4rem' }}>
-                                    {/* Source Section Title */}
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {/* Source Title Text */}
-                                        Source Month
-                                        {/* Source Section Title End */}
-                                    </span>
-                                    {/* Source Header Container End */}
-                                </div>
-                                {/* Source Month Select Dropdown */}
-                                <select
-                                    className={styles.select}
-                                    value={copySourceKey}
-                                    onChange={(e) => setCopySourceKey(e.target.value)}
-                                    style={{ width: '100%' }}
-                                >
-                                    {/* Map horizon months for source selection */}
-                                    {horizonSequence.map(item => (
-                                        // Option element
-                                        <option key={item.key} value={item.key}>
-                                            {/* Option label text */}
-                                            {item.label} {item.key === firstMonthKey ? '(Baseline)' : ''}
-                                            {/* Option element end */}
-                                        </option>
-                                        // Map close
-                                    ))}
-                                    {/* Select Dropdown End */}
-                                </select>
-                                {/* Source Month Column End */}
-                            </div>
-
-                            {/* Data Scope Column */}
-                            <div>
-                                {/* Data Scope Header Container */}
-                                <div style={{ marginBottom: '0.4rem' }}>
-                                    {/* Data Scope Section Title */}
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        {/* Scope Title Text */}
-                                        Data Scope
-                                        {/* Data Scope Section Title End */}
-                                    </span>
-                                    {/* Data Scope Header Container End */}
-                                </div>
-                                {/* Scope Options Container */}
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', minHeight: '38px', alignItems: 'center' }}>
-                                    {/* Scope Option 1: Monthly Parameters */}
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.82rem' }}>
-                                        {/* Parameters Checkbox */}
-                                        <input
-                                            type="checkbox"
-                                            checked={copyScopeIncomeSavings}
-                                            onChange={(e) => setCopyScopeIncomeSavings(e.target.checked)}
-                                            style={{ accentColor: '#2196F3', cursor: 'pointer' }}
-                                        />
-                                        {/* Parameters Label Text */}
-                                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                                            {/* Text */}
-                                            Monthly Parameters
-                                            {/* Parameters Label Text End */}
-                                        </span>
-                                        {/* Scope Option 1 End */}
-                                    </label>
-                                    {/* Scope Option 2: Categories & Expenses */}
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.82rem' }}>
-                                        {/* Categories Checkbox */}
-                                        <input
-                                            type="checkbox"
-                                            checked={copyScopeCategories}
-                                            onChange={(e) => setCopyScopeCategories(e.target.checked)}
-                                            style={{ accentColor: '#2196F3', cursor: 'pointer' }}
-                                        />
-                                        {/* Categories Label Text */}
-                                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                                            {/* Text */}
-                                            Categories & Expenses
-                                            {/* Categories Label Text End */}
-                                        </span>
-                                        {/* Scope Option 2 End */}
-                                    </label>
-                                    {/* Scope Options Container End */}
-                                </div>
-                                {/* Data Scope Column End */}
-                            </div>
-                            {/* Source and Data Scope Columns Container End */}
-                        </div>
-
-                        {/* Target Months Section */}
-                        <div>
-                            {/* Target Header Container */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                                {/* Target Section Title */}
-                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    {/* Title Text */}
-                                    Target Months ({selectedBatchKeys.length} Selected)
-                                    {/* Target Section Title End */}
-                                </span>
-                                {/* Quick Selection Actions */}
-                                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                    {/* Select All Eligible Months */}
-                                    <button
-                                        type="button"
-                                        className={styles.secondaryButton}
-                                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem' }}
-                                        onClick={handleSelectAllBatch}
-                                    >
-                                        {/* Button Label */}
-                                        Select All
-                                        {/* Select All Button End */}
-                                    </button>
-                                    {/* Clear All Selection */}
-                                    <button
-                                        type="button"
-                                        className={styles.secondaryButton}
-                                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem' }}
-                                        onClick={handleDeselectAllBatch}
-                                    >
-                                        {/* Button Label */}
-                                        Clear
-                                        {/* Clear Button End */}
-                                    </button>
-                                    {/* Quick Selection Actions End */}
-                                </div>
-                                {/* Target Header Container End */}
-                            </div>
-
-                            {/* Target Months Chip Selector Strip */}
-                            <div className={styles.checkboxBar} style={{ padding: '0.4rem', background: 'rgba(0, 0, 0, 0.15)', borderRadius: '6px' }}>
-                                {/* Iterate over horizon sequence */}
-                                {horizonSequence.map(item => {
-                                    // Flag for baseline month
-                                    const isBase = item.key === firstMonthKey;
-                                    // Flag for copy source month
-                                    const isSource = item.key === copySourceKey;
-                                    // Flag for selected target month
-                                    const isSelected = selectedBatchKeys.includes(item.key);
-
-                                    // Render disabled chip for baseline starting month
-                                    if (isBase) {
-                                        // Return disabled baseline chip
-                                        return (
-                                            // Disabled chip element
-                                            <span
-                                                key={item.key}
-                                                className={styles.checkboxChip}
-                                                style={{ opacity: 0.45, cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.02)', fontSize: '0.75rem' }}
-                                                title="Baseline starting month cannot be overwritten"
-                                            >
-                                                {/* Chip Text */}
-                                                {item.label} (Base)
-                                                {/* Disabled chip element end */}
-                                            </span>
-                                            // Return end
-                                        );
-                                        // Baseline check end
-                                    }
-
-                                    // Render disabled chip for active source month
-                                    if (isSource) {
-                                        // Return disabled source chip
-                                        return (
-                                            // Disabled source chip element
-                                            <span
-                                                key={item.key}
-                                                className={styles.checkboxChip}
-                                                style={{ opacity: 0.65, cursor: 'not-allowed', background: 'rgba(33, 150, 243, 0.1)', color: '#64B5F6', fontSize: '0.75rem' }}
-                                                title="Source month cannot copy into itself"
-                                            >
-                                                {/* Chip Text */}
-                                                {item.label} (Source)
-                                                {/* Disabled source chip element end */}
-                                            </span>
-                                            // Return end
-                                        );
-                                        // Source check end
-                                    }
-
-                                    // Return selectable target month chip
-                                    return (
-                                        // Label chip element
-                                        <label
-                                            key={item.key}
-                                            className={styles.checkboxChip}
-                                            style={{
-                                                cursor: 'pointer',
-                                                fontSize: '0.75rem',
-                                                background: isSelected ? 'rgba(33, 150, 243, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                                                border: isSelected ? '1px solid #2196F3' : '1px solid var(--border-color)',
-                                                color: isSelected ? '#ffffff' : 'var(--text-secondary)'
-                                            }}
-                                        >
-                                            {/* Checkbox input */}
-                                            <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => toggleBatchKey(item.key)}
-                                                style={{ accentColor: '#2196F3', cursor: 'pointer', width: '12px', height: '12px' }}
-                                            />
-                                            {/* Month label */}
-                                            <span>{item.label}</span>
-                                            {/* Label chip element end */}
-                                        </label>
-                                        // Return end
-                                    );
-                                    // Map end
-                                })}
-                                {/* Target Months Chip Selector Strip End */}
-                            </div>
-                            {/* Target Months Section End */}
-                        </div>
-
-                        {/* Execute Action Row */}
-                        <div className={styles.copyExecuteRow}>
-                            {/* Execute copy button */}
-                            <button
-                                type="button"
-                                className={styles.primaryButton}
-                                onClick={() => setShowCopyConfirm(true)}
-                                disabled={selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)}
-                                style={{
-                                    padding: '0.55rem 1.25rem',
-                                    fontSize: '0.85rem',
-                                    fontWeight: 600,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.45rem',
-                                    opacity: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 0.5 : 1,
-                                    cursor: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 'not-allowed' : 'pointer'
-                                }}
-                            >
-                                {/* Copy vector icon in button */}
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    {/* Copy icon back rect */}
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                                    {/* Copy icon front path */}
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                                    {/* Closing svg */}
-                                </svg>
-                                {/* Button label text */}
-                                <span>Copy to {selectedBatchKeys.length} Month{selectedBatchKeys.length === 1 ? '' : 's'}</span>
-                                {/* Execute copy button end */}
-                            </button>
-                            {/* Execute Action Row End */}
-                        </div>
-                        {/* Collapsible Content Wrapper End */}
-                    </div>
-                )}
-            </div>
-
             {/* Horizon AI Analysis Section */}
             <div style={{ marginTop: '1.25rem' }}>
                 {/* Mount AiAnalysis with Horizon Simulation Data */}
@@ -3544,164 +3890,438 @@ export default function HorizonPlanner() {
             {/* Close Horizon AI Analysis container */}
             </div>
 
-            {/* Render copy confirmation dialog modal via portal directly on document body */}
-            {showCopyConfirm && typeof document !== 'undefined' && createPortal(
+            {/* Copy Month Modal Dialog */}
+            {isCopyDialogOpen && typeof document !== 'undefined' && createPortal(
                 // Modal overlay backdrop
                 <div
-                    onClick={() => setShowCopyConfirm(false)}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        width: '100vw',
-                        height: '100vh',
-                        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-                        backdropFilter: 'blur(3px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 99999,
-                        padding: '1rem'
+                    className={styles.confirmOverlay}
+                    onClick={() => {
+                        // Close copy dialog
+                        setIsCopyDialogOpen(false);
+                        // Reset view back to configure
+                        setCopyDialogView('configure');
                     }}
                 >
                     {/* Modal card content container */}
                     <div
+                        className={styles.copyModal}
                         onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#1e222d',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '12px',
-                            padding: '1.5rem',
-                            maxWidth: '440px',
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '1.1rem',
-                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
-                        }}
                     >
-                        {/* Modal Header Container */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                            {/* Warning alert icon badge */}
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255, 183, 77, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#FFB74D' }}>
-                                {/* Alert triangle/circle vector icon */}
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    {/* Alert circle */}
-                                    <circle cx="12" cy="12" r="10" />
-                                    {/* Alert upper line */}
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    {/* Alert lower dot */}
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                    {/* Closing svg */}
-                                </svg>
-                                {/* Warning alert icon badge end */}
-                            </div>
-                            {/* Modal Title and subtitle container */}
-                            <div>
-                                {/* Modal heading */}
-                                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                    {/* Title text */}
-                                    Confirm Month Data Copy
-                                    {/* Heading end */}
-                                </h3>
-                                {/* Subtitle warning note */}
+                        {/* Configure View Condition */}
+                        {copyDialogView === 'configure' && (
+                            <>
+                                {/* Modal header with title and close button */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    {/* Title group with icon */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        {/* Copy vector icon */}
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64B5F6' }}>
+                                            {/* Copy icon back rect */}
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                            {/* Copy icon front path */}
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                        {/* Closing svg tag */}
+                                        </svg>
+                                        {/* Dialog title */}
+                                        <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            Copy Month
+                                        </h3>
+                                    {/* Title group end */}
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // Close copy dialog
+                                            setIsCopyDialogOpen(false);
+                                            // Reset view back to configure
+                                            setCopyDialogView('configure');
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            padding: '0.25rem',
+                                            fontSize: '1.1rem',
+                                            lineHeight: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                        title="Close dialog"
+                                    >
+                                        ✕
+                                    </button>
+                                {/* Header row end */}
+                                </div>
+
+                                {/* Subtitle description */}
                                 <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                                    {/* Warning text */}
-                                    This action will overwrite target simulation data.
-                                    {/* Subtitle end */}
+                                    Duplicate simulation parameters and category expenses to target months in your horizon timeline.
                                 </p>
-                                {/* Title container end */}
-                            </div>
-                            {/* Modal Header Container End */}
-                        </div>
 
-                        {/* Modal Summary Details Box */}
-                        <div style={{ background: 'rgba(0, 0, 0, 0.25)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
-                            {/* Source Month Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                                {/* Label */}
-                                <span>Source Month:</span>
-                                {/* Value */}
-                                <strong style={{ color: 'var(--text-primary)' }}>
-                                    {/* Interpolated source month label */}
-                                    {horizonSequence.find(i => i.key === copySourceKey)?.label || copySourceKey}
-                                    {/* Value end */}
-                                </strong>
-                                {/* Source Month Row End */}
-                            </div>
-                            {/* Target Months Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                                {/* Label */}
-                                <span>Target Months:</span>
-                                {/* Value */}
-                                <strong style={{ color: '#64B5F6' }}>
-                                    {/* Selected batch keys count label */}
-                                    {selectedBatchKeys.length} month{selectedBatchKeys.length === 1 ? '' : 's'}
-                                    {/* Value end */}
-                                </strong>
-                                {/* Target Months Row End */}
-                            </div>
-                            {/* Scope Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                                {/* Label */}
-                                <span>Data Scope:</span>
-                                {/* Value */}
-                                <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
-                                    {/* Formatted scope summary string */}
-                                    {[copyScopeIncomeSavings ? 'Parameters' : '', copyScopeCategories ? 'Categories & Expenses' : ''].filter(Boolean).join(' + ')}
-                                    {/* Value end */}
-                                </span>
-                                {/* Scope Row End */}
-                            </div>
-                            {/* Modal Summary Details Box End */}
-                        </div>
+                                {/* Source month selector section */}
+                                <div>
+                                    {/* Source section title */}
+                                    <div style={{ marginBottom: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Source Month
+                                    </div>
+                                    {/* Source month select dropdown */}
+                                    <select
+                                        className={styles.select}
+                                        value={copySourceKey}
+                                        onChange={(e) => setCopySourceKey(e.target.value)}
+                                        style={{ width: '100%' }}
+                                    >
+                                        {/* Map horizon months for source selection */}
+                                        {horizonSequence.map(item => (
+                                            // Option element
+                                            <option key={item.key} value={item.key}>
+                                                {/* Option label text */}
+                                                {item.label} {item.key === firstMonthKey ? '(Baseline)' : ''}
+                                            {/* Option element end */}
+                                            </option>
+                                        ))}
+                                    {/* Select Dropdown End */}
+                                    </select>
+                                {/* Source month selector section end */}
+                                </div>
 
-                        {/* Action Buttons Row */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.25rem' }}>
-                            {/* Cancel Button */}
-                            <button
-                                type="button"
-                                className={styles.secondaryButton}
-                                onClick={() => setShowCopyConfirm(false)}
-                                style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
-                            >
-                                {/* Cancel label */}
-                                Cancel
-                                {/* Cancel button end */}
-                            </button>
-                            {/* Confirm Action Button */}
-                            <button
-                                type="button"
-                                className={styles.primaryButton}
-                                onClick={() => {
-                                    // Close confirm modal dialog
-                                    setShowCopyConfirm(false);
-                                    // Trigger copy data execution
-                                    handleExecuteCopyData();
-                                }}
-                                style={{ padding: '0.55rem 1.15rem', fontSize: '0.85rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-                            >
-                                {/* Checkmark SVG icon */}
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    {/* Check polyline */}
-                                    <polyline points="20 6 9 17 4 12" />
-                                    {/* Closing svg */}
-                                </svg>
-                                {/* Button confirm label text */}
-                                <span>Confirm & Copy</span>
-                                {/* Confirm button end */}
-                            </button>
-                            {/* Action Buttons Row End */}
-                        </div>
-                        {/* Modal card content container end */}
+                                {/* Data scope selection section */}
+                                <div>
+                                    {/* Scope section title */}
+                                    <div style={{ marginBottom: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Data Scope
+                                    </div>
+                                    {/* Scope checkboxes container */}
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+                                        {/* Parameters checkbox label */}
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                                            {/* Parameters input */}
+                                            <input
+                                                type="checkbox"
+                                                checked={copyScopeIncomeSavings}
+                                                onChange={(e) => setCopyScopeIncomeSavings(e.target.checked)}
+                                                style={{ accentColor: '#2196F3', cursor: 'pointer' }}
+                                            />
+                                            {/* Parameters label text */}
+                                            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                                                Monthly Parameters
+                                            </span>
+                                        {/* Parameters checkbox label end */}
+                                        </label>
+                                        {/* Categories checkbox label */}
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                                            {/* Categories input */}
+                                            <input
+                                                type="checkbox"
+                                                checked={copyScopeCategories}
+                                                onChange={(e) => setCopyScopeCategories(e.target.checked)}
+                                                style={{ accentColor: '#2196F3', cursor: 'pointer' }}
+                                            />
+                                            {/* Categories label text */}
+                                            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                                                Categories & Expenses
+                                            </span>
+                                        {/* Categories checkbox label end */}
+                                        </label>
+                                    {/* Scope checkboxes container end */}
+                                    </div>
+                                {/* Data scope selection section end */}
+                                </div>
+
+                                {/* Target months section */}
+                                <div>
+                                    {/* Target header container with title and select all / clear buttons */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                                        {/* Target section title */}
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            Target Months ({selectedBatchKeys.length} Selected)
+                                        </span>
+                                        {/* Quick select buttons */}
+                                        <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                            {/* Select all button */}
+                                            <button
+                                                type="button"
+                                                className={styles.secondaryButton}
+                                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem' }}
+                                                onClick={handleSelectAllBatch}
+                                            >
+                                                Select All
+                                            </button>
+                                            {/* Clear all button */}
+                                            <button
+                                                type="button"
+                                                className={styles.secondaryButton}
+                                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.72rem' }}
+                                                onClick={handleDeselectAllBatch}
+                                            >
+                                                Clear
+                                            </button>
+                                        {/* Quick select buttons end */}
+                                        </div>
+                                    {/* Target header container end */}
+                                    </div>
+
+                                    {/* Target months chips strip */}
+                                    <div className={styles.checkboxBar} style={{ padding: '0.4rem', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                                        {/* Iterate horizon sequence */}
+                                        {horizonSequence.map(item => {
+                                            // Flag for baseline month
+                                            const isBase = item.key === firstMonthKey;
+                                            // Flag for copy source month
+                                            const isSource = item.key === copySourceKey;
+                                            // Flag for selected target month
+                                            const isSelected = selectedBatchKeys.includes(item.key);
+
+                                            // Render disabled chip for baseline starting month
+                                            if (isBase) {
+                                                return (
+                                                    <span
+                                                        key={item.key}
+                                                        className={styles.checkboxChip}
+                                                        style={{ opacity: 0.45, cursor: 'not-allowed', background: 'rgba(255, 255, 255, 0.02)', fontSize: '0.75rem' }}
+                                                        title="Baseline starting month cannot be overwritten"
+                                                    >
+                                                        {item.label} (Base)
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Render disabled chip for active source month
+                                            if (isSource) {
+                                                return (
+                                                    <span
+                                                        key={item.key}
+                                                        className={styles.checkboxChip}
+                                                        style={{ opacity: 0.65, cursor: 'not-allowed', background: 'rgba(33, 150, 243, 0.1)', color: '#64B5F6', fontSize: '0.75rem' }}
+                                                        title="Source month cannot copy into itself"
+                                                    >
+                                                        {item.label} (Source)
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Return selectable target month chip
+                                            return (
+                                                <label
+                                                    key={item.key}
+                                                    className={styles.checkboxChip}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.75rem',
+                                                        background: isSelected ? 'rgba(33, 150, 243, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                                                        border: isSelected ? '1px solid #2196F3' : '1px solid var(--border-color)',
+                                                        color: isSelected ? '#ffffff' : 'var(--text-secondary)'
+                                                    }}
+                                                >
+                                                    {/* Checkbox input */}
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => toggleBatchKey(item.key)}
+                                                        style={{ accentColor: '#2196F3', cursor: 'pointer', width: '12px', height: '12px' }}
+                                                    />
+                                                    {/* Month label */}
+                                                    <span>{item.label}</span>
+                                                {/* Target month chip label end */}
+                                                </label>
+                                            );
+                                            // Map end
+                                        })}
+                                    {/* Target months chips strip end */}
+                                    </div>
+                                {/* Target months section end */}
+                                </div>
+
+                                {/* Action buttons row */}
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.4rem' }}>
+                                    {/* Cancel button */}
+                                    <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => {
+                                            // Close copy dialog
+                                            setIsCopyDialogOpen(false);
+                                            // Reset view back to configure
+                                            setCopyDialogView('configure');
+                                        }}
+                                        style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    {/* Continue to confirmation button */}
+                                    <button
+                                        type="button"
+                                        className={styles.primaryButton}
+                                        onClick={() => setCopyDialogView('confirm')}
+                                        disabled={selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)}
+                                        style={{
+                                            padding: '0.55rem 1.25rem',
+                                            fontSize: '0.85rem',
+                                            fontWeight: 600,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.45rem',
+                                            opacity: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 0.5 : 1,
+                                            cursor: (selectedBatchKeys.length === 0 || (!copyScopeIncomeSavings && !copyScopeCategories)) ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        {/* Button text */}
+                                        <span>Continue</span>
+                                        {/* Forward chevron */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Forward line */}
+                                            <polyline points="9 18 15 12 9 6" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                    </button>
+                                {/* Action buttons row end */}
+                                </div>
+                            </>
+                        )}
+
+                        {/* Confirm View Condition */}
+                        {copyDialogView === 'confirm' && (
+                            <>
+                                {/* Header with warning icon and title */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    {/* Title group */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                        {/* Warning icon badge */}
+                                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'rgba(255, 183, 77, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#FFB74D' }}>
+                                            {/* Alert circle vector */}
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                {/* Outer circle */}
+                                                <circle cx="12" cy="12" r="10" />
+                                                {/* Top line */}
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                {/* Bottom dot */}
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            {/* Closing alert svg */}
+                                            </svg>
+                                        {/* Warning icon badge end */}
+                                        </div>
+                                        {/* Title text container */}
+                                        <div>
+                                            {/* Modal heading */}
+                                            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                Confirm Month Data Copy
+                                            </h3>
+                                            {/* Warning text */}
+                                            <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                                This will overwrite target simulation months.
+                                            </p>
+                                        {/* Title text container end */}
+                                        </div>
+                                    {/* Title group end */}
+                                    </div>
+                                    {/* Close button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // Close copy dialog
+                                            setIsCopyDialogOpen(false);
+                                            // Reset view back to configure
+                                            setCopyDialogView('configure');
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            padding: '0.25rem',
+                                            fontSize: '1.1rem',
+                                            lineHeight: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                        title="Close dialog"
+                                    >
+                                        ✕
+                                    </button>
+                                {/* Header with warning icon and title end */}
+                                </div>
+
+                                {/* Summary details box */}
+                                <div style={{ background: 'rgba(0, 0, 0, 0.25)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+                                    {/* Source month row */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                                        {/* Source label */}
+                                        <span>Source Month:</span>
+                                        {/* Source value */}
+                                        <strong style={{ color: 'var(--text-primary)' }}>
+                                            {horizonSequence.find(i => i.key === copySourceKey)?.label || copySourceKey}
+                                        </strong>
+                                    {/* Source month row end */}
+                                    </div>
+                                    {/* Target months count row */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                                        {/* Target count label */}
+                                        <span>Target Months:</span>
+                                        {/* Target count value */}
+                                        <strong style={{ color: '#64B5F6' }}>
+                                            {selectedBatchKeys.length} month{selectedBatchKeys.length === 1 ? '' : 's'}
+                                        </strong>
+                                    {/* Target months count row end */}
+                                    </div>
+                                    {/* Target month labels list */}
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.02)', padding: '0.4rem 0.5rem', borderRadius: '4px', maxHeight: '60px', overflowY: 'auto' }}>
+                                        {selectedBatchKeys.map(k => horizonSequence.find(i => i.key === k)?.label || k).join(', ')}
+                                    {/* Target month labels list end */}
+                                    </div>
+                                    {/* Data scope row */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                                        {/* Scope label */}
+                                        <span>Data Scope:</span>
+                                        {/* Scope value */}
+                                        <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>
+                                            {[copyScopeIncomeSavings ? 'Parameters' : '', copyScopeCategories ? 'Categories & Expenses' : ''].filter(Boolean).join(' + ')}
+                                        </span>
+                                    {/* Data scope row end */}
+                                    </div>
+                                {/* Summary details box end */}
+                                </div>
+
+                                {/* Confirmation action buttons */}
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', marginTop: '0.4rem' }}>
+                                    {/* Back button */}
+                                    <button
+                                        type="button"
+                                        className={styles.secondaryButton}
+                                        onClick={() => setCopyDialogView('configure')}
+                                        style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+                                    >
+                                        Back
+                                    </button>
+                                    {/* Confirm copy execute button */}
+                                    <button
+                                        type="button"
+                                        className={styles.primaryButton}
+                                        onClick={handleExecuteCopyData}
+                                        style={{ padding: '0.55rem 1.15rem', fontSize: '0.85rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                                    >
+                                        {/* Checkmark icon */}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            {/* Check polyline */}
+                                            <polyline points="20 6 9 17 4 12" />
+                                        {/* Closing svg */}
+                                        </svg>
+                                        {/* Confirm label text */}
+                                        <span>Confirm & Copy</span>
+                                    </button>
+                                {/* Confirmation action buttons end */}
+                                </div>
+                            </>
+                        )}
+                    {/* Modal card content container end */}
                     </div>
-                    {/* Modal overlay backdrop end */}
+                {/* Modal overlay backdrop end */}
                 </div>,
                 // Direct portal render target to document body
-                document.body
-            )}
+                document.body            )}
         </div>
     );
 }
